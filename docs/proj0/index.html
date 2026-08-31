@@ -3,58 +3,62 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>proj0</title>
+    <meta name="description" content="CS180 proj0: perspective, focal length, and the dolly zoom." />
+    <title>proj0 | CS180</title>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
+    <header class="site-header">
+      <a class="brand" href="../">CS180</a>
+      <nav aria-label="Project navigation">
+        <a href="../">Projects</a>
+        <a class="active" href="./">proj0</a>
+      </nav>
+    </header>
+
     <main>
-      <p><a href="../">CS180 Projects</a></p>
-      <h1>proj0: Becoming Friends with Your Camera</h1>
-      <p>Kevin Chu</p>
-      <p class="intro">A few perspective experiments taken around Berkeley.</p>
+      <p class="eyebrow">Kevin Chu · Fall 2026</p>
+      <h1>proj0</h1>
+      <p class="subtitle">Becoming Friends with Your Camera</p>
 
-      <h2>Part 1: Selfie</h2>
-      <div class="image-pair selfie-pair">
-        <div class="image-item">
-          <p class="image-label">Close up</p>
-          <img src="assets/selfie-close.jpg" alt="Close-up selfie" />
+      <section>
+        <div class="section-heading"><span>01</span><h2>Selfie</h2></div>
+        <div class="image-pair selfie-pair">
+          <div class="image-item">
+            <p class="image-label">Close up</p>
+            <img src="assets/selfie-close.jpg" alt="Close-up selfie" />
+          </div>
+          <div class="image-item">
+            <p class="image-label">Farther away + zoomed in</p>
+            <img src="assets/selfie-far.jpg" alt="Selfie taken farther away and zoomed in" />
+          </div>
         </div>
-        <div class="image-item">
-          <p class="image-label">Farther away + zoomed in</p>
-          <img src="assets/selfie-far.jpg" alt="Selfie taken farther away and zoomed in" />
-        </div>
-      </div>
-      <p>
-        The close-up photo makes my nose look bigger because it is much closer to the
-        camera than the rest of my face. In the second photo, I stepped back and
-        zoomed in to keep my face about the same size. It looks less distorted because
-        the camera is farther away.
-      </p>
+      </section>
 
-      <h2>Part 2: Architectural Perspective Compression</h2>
-      <div class="image-pair building-pair">
-        <div class="image-item">
-          <p class="image-label">Farther away + zoomed in</p>
-          <img src="assets/building-far.jpg" alt="Building photographed from farther away and zoomed in" loading="lazy" />
+      <section>
+        <div class="section-heading"><span>02</span><h2>Architectural Perspective Compression</h2></div>
+        <div class="image-pair building-pair">
+          <div class="image-item">
+            <p class="image-label">Farther away + zoomed in</p>
+            <img src="assets/building-far.jpg" alt="Building photographed from farther away and zoomed in" loading="lazy" />
+          </div>
+          <div class="image-item">
+            <p class="image-label">Closer + not zoomed in</p>
+            <img src="assets/building-near.jpg" alt="Building photographed from nearby without zoom" loading="lazy" />
+          </div>
         </div>
-        <div class="image-item">
-          <p class="image-label">Closer + not zoomed in</p>
-          <img src="assets/building-near.jpg" alt="Building photographed from nearby without zoom" loading="lazy" />
-        </div>
-      </div>
-      <p>
-        The zoomed-in photo looks flatter because the different parts of the building
-        are relatively similar distances from the camera. When I moved closer, the
-        depth and the angle of the building became more noticeable.
-      </p>
+        <p class="note">
+          The zoomed-in photo looks flatter because the different parts of the building
+          are relatively similar distances from the camera. When I moved closer, the
+          depth and angle of the building became more noticeable.
+        </p>
+      </section>
 
-      <h2>Part 3: Dolly Zoom</h2>
-      <p class="image-label">Water bottle dolly zoom · 12 photos</p>
-      <img class="gif" src="assets/dolly-zoom.gif" alt="Dolly zoom GIF of a water bottle" loading="lazy" />
-      <p>
-        I moved backward while zooming in and tried to keep the water bottle in the
-        same place. The background changes size and looks like it is moving behind it.
-      </p>
+      <section>
+        <div class="section-heading"><span>03</span><h2>Dolly Zoom</h2></div>
+        <p class="image-label">Water bottle · 12 photos</p>
+        <img class="gif" src="assets/dolly-zoom.gif" alt="Dolly zoom GIF of a water bottle" loading="lazy" />
+      </section>
     </main>
   </body>
 </html>
