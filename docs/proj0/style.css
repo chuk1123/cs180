@@ -31,7 +31,6 @@ nav { display: flex; gap: 18px; }
 nav a { color: var(--muted); font-size: .9rem; text-decoration: none; }
 nav a:hover { color: var(--link); }
 nav a.active { color: var(--ink); font-weight: 600; }
-.avatar { width: 30px; height: 30px; border: 1px solid var(--line); border-radius: 50%; object-fit: cover; object-position: center top; }
 
 main { padding: 62px 0 78px; }
 .eyebrow { margin: 0 0 7px; color: var(--muted); font-size: .9rem; }
