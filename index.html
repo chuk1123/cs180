@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="CS180 Project 0: an exploration of perspective, focal length, and dolly zooms."
+    />
+    <title>Project 0 — Becoming Friends with My Camera</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <nav class="nav wrap" aria-label="Primary navigation">
+        <a class="wordmark" href="#top">CS180 <span>/</span> Project 0</a>
+        <a class="nav-link" href="#dolly-zoom">Dolly zoom ↓</a>
+      </nav>
+      <div class="hero-copy wrap" id="top">
+        <p class="eyebrow">Kevin Chu · Fall 2026</p>
+        <h1>Becoming friends<br />with my camera.</h1>
+        <p class="lede">
+          A small study of the surprising relationship between where a camera stands,
+          how much it zooms, and the space it creates.
+        </p>
+      </div>
+      <div class="hero-mark" aria-hidden="true">01</div>
+    </header>
+
+    <main>
+      <section class="intro wrap" aria-label="Project introduction">
+        <p>
+          Perspective is controlled by camera position—not by focal length alone. In
+          each comparison below, I changed my position and used zoom only to keep the
+          subject at a similar size in the frame.
+        </p>
+      </section>
+
+      <section class="project-section wrap" id="selfie">
+        <div class="section-heading">
+          <p class="section-number">Part 1</p>
+          <div>
+            <h2>Selfie: wrong way vs. right way</h2>
+            <p class="section-kicker">Same framing. A completely different face.</p>
+          </div>
+        </div>
+
+        <div class="comparison selfie-grid">
+          <figure class="photo-card">
+            <img src="assets/selfie-close.jpg" alt="Close-up selfie taken from a short distance" />
+            <figcaption><span>Too close</span><span>Wide view</span></figcaption>
+          </figure>
+          <figure class="photo-card">
+            <img src="assets/selfie-far.jpg" alt="Selfie taken farther away and zoomed to match framing" />
+            <figcaption><span>Stepped back</span><span>Zoomed in</span></figcaption>
+          </figure>
+        </div>
+
+        <p class="reflection">
+          When the camera is close, my nose is much nearer to the lens than the rest
+          of my face, so it appears disproportionately large. Stepping back makes the
+          relative distances across my face smaller; zooming then restores the framing
+          without restoring that close-up distortion.
+        </p>
+      </section>
+
+      <section class="project-section wrap" id="architecture">
+        <div class="section-heading">
+          <p class="section-number">Part 2</p>
+          <div>
+            <h2>Architectural perspective compression</h2>
+            <p class="section-kicker">Distance flattens; proximity exaggerates depth.</p>
+          </div>
+        </div>
+
+        <div class="comparison architecture-grid">
+          <figure class="photo-card">
+            <img src="assets/building-far.jpg" alt="Bancroft Library photographed from farther away with zoom" loading="lazy" />
+            <figcaption><span>Far away</span><span>Zoomed in</span></figcaption>
+          </figure>
+          <figure class="photo-card">
+            <img src="assets/building-near.jpg" alt="Bancroft Library photographed from nearby at a wide angle" loading="lazy" />
+            <figcaption><span>Closer</span><span>Wide view</span></figcaption>
+          </figure>
+        </div>
+
+        <p class="reflection">
+          From far away, the front and receding parts of Bancroft Library are at more
+          similar distances from the camera, so the facade looks flatter. Near the
+          building, those distance differences become much larger: the lines recede
+          faster and the structure gains a stronger sense of depth.
+        </p>
+      </section>
+
+      <section class="project-section dolly-section" id="dolly-zoom">
+        <div class="wrap">
+          <div class="section-heading">
+            <p class="section-number">Part 3</p>
+            <div>
+              <h2>The dolly zoom</h2>
+              <p class="section-kicker">One bottle. Twelve steps backward. A shifting world.</p>
+            </div>
+          </div>
+
+          <div class="dolly-layout">
+            <figure class="gif-card">
+              <img
+                src="assets/dolly-zoom.gif"
+                alt="Animated dolly zoom of a water bottle on a campus balustrade, with the background expanding as the camera moves back"
+              />
+              <figcaption>Camera moves back while the bottle stays fixed in the frame.</figcaption>
+            </figure>
+            <div class="dolly-note">
+              <p class="note-label">How it works</p>
+              <p>
+                I placed a water bottle on a campus balustrade, then moved the camera
+                farther away for each still while zooming in to keep the bottle
+                centered and nearly the same size. The changing focal length magnifies
+                the increasingly distant background, creating the characteristic
+                <em>Vertigo</em> effect.
+              </p>
+              <p class="note-detail">12 stills · aligned foreground · animated GIF</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer wrap">
+      <p>CS180: Intro to Computer Vision and Computational Photography</p>
+      <p>Project 0 · Kevin Chu</p>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,6 @@
+.DS_Store
+
+# Source camera originals are intentionally kept local; the optimized web assets live in /assets.
+*.HEIC
+IMG_*.JPG
+Dolly Zoom/
