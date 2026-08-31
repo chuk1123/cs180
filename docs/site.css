@@ -1,0 +1,50 @@
+:root {
+  --ink: #1f2933;
+  --muted: #5f6c78;
+  --line: #d9dee3;
+  --link: #1d5f98;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  color: var(--ink);
+  background: #fff;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.container { width: min(900px, calc(100% - 40px)); margin-inline: auto; }
+.site-header { padding: 54px 0 38px; border-bottom: 1px solid var(--line); }
+.course, .student { margin: 0; color: var(--muted); }
+.course { font-size: .92rem; }
+h1 { margin: 8px 0 4px; font-size: 2.25rem; font-weight: 650; letter-spacing: -.02em; }
+main { padding-block: 42px 70px; }
+h2 { margin: 0 0 16px; font-size: 1.2rem; }
+.project-list { border-top: 1px solid var(--line); }
+.project-link {
+  display: grid;
+  grid-template-columns: 95px 1fr auto;
+  gap: 18px;
+  align-items: baseline;
+  padding: 20px 4px;
+  color: inherit;
+  border-bottom: 1px solid var(--line);
+  text-decoration: none;
+}
+.project-link:hover { background: #f6f8fa; }
+.project-name { color: var(--link); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 700; }
+.project-description { font-weight: 600; }
+.project-status { color: var(--link); font-size: .9rem; }
+.future { margin-top: 54px; color: var(--muted); }
+.future p { margin: 0; }
+code { padding: 2px 5px; background: #f1f3f5; color: var(--ink); }
+footer { padding-block: 24px 40px; color: var(--muted); border-top: 1px solid var(--line); font-size: .88rem; }
+
+@media (max-width: 620px) {
+  .container { width: min(100% - 32px, 900px); }
+  .site-header { padding-block: 38px 28px; }
+  .project-link { grid-template-columns: 1fr; gap: 5px; }
+}
