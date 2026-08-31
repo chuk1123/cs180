@@ -3,89 +3,57 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="CS180 proj0: perspective, focal length, and the dolly zoom." />
-    <title>proj0 | CS180</title>
+    <title>proj0</title>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <header class="site-header">
-      <div class="container">
-        <a class="back-link" href="../">← CS180 Projects</a>
-        <p class="project-label">proj0</p>
-        <h1>Becoming Friends with Your Camera</h1>
-        <p class="byline">Kevin Chu · CS180 · Fall 2026</p>
+    <main>
+      <p><a href="../">CS180 Projects</a></p>
+      <h1>proj0: Becoming Friends with Your Camera</h1>
+      <p>Kevin Chu</p>
+
+      <h2>Part 1: Selfie</h2>
+      <div class="image-pair selfie-pair">
+        <div>
+          <p>Close up</p>
+          <img src="assets/selfie-close.jpg" alt="Close-up selfie" />
+        </div>
+        <div>
+          <p>Farther away and zoomed in</p>
+          <img src="assets/selfie-far.jpg" alt="Selfie taken farther away and zoomed in" />
+        </div>
       </div>
-    </header>
+      <p>
+        The close-up photo makes my nose look bigger because it is much closer to the
+        camera than the rest of my face. In the second photo, I stepped back and
+        zoomed in to keep my face about the same size. It looks less distorted because
+        the camera is farther away.
+      </p>
 
-    <main class="container">
-      <section class="overview" aria-labelledby="overview-heading">
-        <h2 id="overview-heading">Overview</h2>
-        <p>
-          This project explores how perspective changes with camera position. For the
-          first two comparisons, I used zoom to match the framing after moving the
-          camera; the visible difference comes from the change in position.
-        </p>
-      </section>
-
-      <section aria-labelledby="part1-heading">
-        <h2 id="part1-heading">Part 1: Selfie — the wrong way vs. the right way</h2>
-        <div class="image-pair selfie-pair">
-          <figure>
-            <img src="assets/selfie-close.jpg" alt="Close-up selfie taken from a short distance" />
-            <figcaption>Close to the camera</figcaption>
-          </figure>
-          <figure>
-            <img src="assets/selfie-far.jpg" alt="Selfie taken farther away and zoomed to match framing" />
-            <figcaption>Farther away, then zoomed in</figcaption>
-          </figure>
+      <h2>Part 2: Architectural Perspective Compression</h2>
+      <div class="image-pair building-pair">
+        <div>
+          <p>Farther away and zoomed in</p>
+          <img src="assets/building-far.jpg" alt="Building photographed from farther away and zoomed in" loading="lazy" />
         </div>
-        <p>
-          In the close selfie, my nose is much closer to the camera than the rest of
-          my face, so it appears disproportionately large. After stepping back, the
-          relative depth across my face is smaller. Zooming restores the framing but
-          does not restore the close-up perspective distortion.
-        </p>
-      </section>
-
-      <section aria-labelledby="part2-heading">
-        <h2 id="part2-heading">Part 2: Architectural perspective compression</h2>
-        <div class="image-pair building-pair">
-          <figure>
-            <img src="assets/building-far.jpg" alt="Bancroft Library photographed from farther away with zoom" loading="lazy" />
-            <figcaption>Far away, zoomed in</figcaption>
-          </figure>
-          <figure>
-            <img src="assets/building-near.jpg" alt="Bancroft Library photographed from nearby at a wide angle" loading="lazy" />
-            <figcaption>Closer, without zoom</figcaption>
-          </figure>
+        <div>
+          <p>Closer and not zoomed in</p>
+          <img src="assets/building-near.jpg" alt="Building photographed from nearby without zoom" loading="lazy" />
         </div>
-        <p>
-          From farther away, the front and receding portions of Bancroft Library are
-          at more similar distances from the camera, so the facade appears flatter.
-          Moving closer enlarges those distance differences, making the receding lines
-          and depth more noticeable.
-        </p>
-      </section>
+      </div>
+      <p>
+        The zoomed-in photo looks flatter because the different parts of the building
+        are relatively similar distances from the camera. When I moved closer, the
+        depth and the angle of the building became more noticeable.
+      </p>
 
-      <section aria-labelledby="part3-heading">
-        <h2 id="part3-heading">Part 3: Dolly zoom</h2>
-        <figure class="gif-figure">
-          <img
-            src="assets/dolly-zoom.gif"
-            alt="Animated dolly zoom of a water bottle on a campus balustrade"
-            loading="lazy"
-          />
-          <figcaption>Water bottle foreground subject; 12 aligned stills.</figcaption>
-        </figure>
-        <p>
-          I placed a water bottle on a campus balustrade, then moved the camera back
-          while zooming in to keep the bottle at nearly the same size in the frame.
-          As the background is magnified more strongly, its apparent depth changes to
-          create the dolly-zoom effect.
-        </p>
-      </section>
+      <h2>Part 3: Dolly Zoom</h2>
+      <p>Water bottle dolly zoom (12 photos).</p>
+      <img class="gif" src="assets/dolly-zoom.gif" alt="Dolly zoom GIF of a water bottle" loading="lazy" />
+      <p>
+        I moved backward while zooming in and tried to keep the water bottle in the
+        same place. The background changes size and looks like it is moving behind it.
+      </p>
     </main>
-
-    <footer class="container">CS180: Intro to Computer Vision and Computational Photography</footer>
   </body>
 </html>
