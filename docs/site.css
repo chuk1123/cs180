@@ -25,9 +25,11 @@ body {
 }
 
 .brand { color: var(--ink); font-weight: 700; text-decoration: none; }
+.header-actions { display: flex; align-items: center; gap: 16px; }
 nav { display: flex; gap: 18px; }
 nav a { color: var(--muted); font-size: .9rem; text-decoration: none; }
 nav a.active { color: var(--ink); font-weight: 600; }
+.avatar { width: 30px; height: 30px; border: 1px solid var(--line); border-radius: 50%; object-fit: cover; object-position: center top; }
 
 main { padding: 66px 0; }
 .eyebrow { margin: 0 0 9px; color: var(--muted); font-size: .9rem; }

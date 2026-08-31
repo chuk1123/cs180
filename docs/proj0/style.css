@@ -26,10 +26,12 @@ body {
 }
 
 .brand { color: var(--ink); font-weight: 700; text-decoration: none; }
+.header-actions { display: flex; align-items: center; gap: 16px; }
 nav { display: flex; gap: 18px; }
 nav a { color: var(--muted); font-size: .9rem; text-decoration: none; }
 nav a:hover { color: var(--link); }
 nav a.active { color: var(--ink); font-weight: 600; }
+.avatar { width: 30px; height: 30px; border: 1px solid var(--line); border-radius: 50%; object-fit: cover; object-position: center top; }
 
 main { padding: 62px 0 78px; }
 .eyebrow { margin: 0 0 7px; color: var(--muted); font-size: .9rem; }
@@ -55,4 +57,26 @@ h2 { margin: 0; font-size: 1.45rem; letter-spacing: -.02em; line-height: 1.3; }
   main { padding: 46px 0 58px; }
   section { margin-top: 52px; }
   .image-pair { grid-template-columns: 1fr; }
+}
+
+@media print {
+  @page { margin: .45in; }
+
+  body {
+    width: auto;
+    margin: 0;
+    color: #000;
+    background: #fff;
+    font-size: 10pt;
+  }
+
+  .site-header { padding: 0 0 12px; }
+  main { padding: 24px 0 0; }
+  section { margin-top: 30px; padding-top: 16px; break-inside: avoid-page; }
+  section:nth-of-type(2),
+  section:nth-of-type(3) { break-before: page; }
+  .image-pair { gap: 12px; }
+  .selfie-pair img { height: auto; }
+  .building-pair img { height: 2.2in; }
+  .gif { width: 3.6in; }
 }
