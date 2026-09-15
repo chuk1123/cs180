@@ -72,7 +72,15 @@
     <section>
       <div class="section-heading"><span>03</span><h2>Fixing Emir</h2></div>
       <div class="prose">
-        <p>NCC can handle an overall brightness change, but different color channels do not always preserve the same light-and-dark pattern. Emir’s blue robe looks very different in the red and blue exposures. Direct red-to-blue NCC selected a large incorrect shift, producing the double image shown below.</p>
+        <p>Here are the three grayscale exposures from Emir’s original glass plate. His robe looks bright in the blue exposure and dark in the red exposure.</p>
+      </div>
+      <div class="gallery exposures">
+        <figure><img src="assets/emir-blue-exposure.jpg" alt="Original Emir blue-filter grayscale exposure, showing a bright robe" loading="lazy" /><figcaption><b>Blue exposure (B)</b></figcaption></figure>
+        <figure><img src="assets/emir-green-exposure.jpg" alt="Original Emir green-filter grayscale exposure" loading="lazy" /><figcaption><b>Green exposure (G)</b></figcaption></figure>
+        <figure><img src="assets/emir-red-exposure.jpg" alt="Original Emir red-filter grayscale exposure, showing a dark robe" loading="lazy" /><figcaption><b>Red exposure (R)</b></figcaption></figure>
+      </div>
+      <div class="prose">
+        <p>NCC can handle an overall brightness change, but here the robe changes brightness differently from the rest of the scene. The red and blue exposures do not preserve the same light-and-dark pattern. Direct red-to-blue NCC selected a large incorrect shift, producing the double image shown below.</p>
         <p>I tried changing the reference while keeping the same pyramid search and NCC score. First, align red to the original green channel. Then align green to blue and move the already-aligned red along with it. In code, I add the red-to-green and green-to-blue shifts to get red’s final shift relative to blue.</p>
         <p>Red and green matched better for this image. The final red shift changed from (−483, 400) to (41, 106), removing the large double image. Green’s shift remained (24, 49). Both final shifts still use blue as the reference.</p>
       </div>
