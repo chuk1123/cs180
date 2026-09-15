@@ -8,9 +8,9 @@ Place the provided JPG/TIFF glass plates in project1/data, then run:
   .venv/bin/python project1/main.py
 
 Results are written as JPG files in project1/output. The program prints offsets
-in NumPy order (dy, dx); the webpage reports the same offsets as (x, y).
+as (x, y), matching the webpage. Functions internally return (dy, dx).
 
-Run the optional Emir raw/gradient comparison with:
+Run the optional Emir baseline, red-through-green, and gradient experiments with:
   .venv/bin/python project1/main.py --emir-experiments
 
 Project webpage:

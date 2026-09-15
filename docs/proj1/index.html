@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="CS180 Project 1: colorizing Prokudin-Gorskii glass plates." />
-  <title>proj1 | CS180</title>
+  <title>Colorizing the Prokudin-Gorskii Photo Collection | CS180</title>
   <link rel="icon" href="../favicon.png" />
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -12,15 +12,17 @@
   <header class="site-header"><a class="brand" href="../">CS180</a><nav><a href="../">Projects</a><a class="active" href="./">proj1</a></nav></header>
   <main>
     <p class="eyebrow">Kevin Chu · Fall 2026</p>
-    <h1>Images of the Russian Empire</h1>
-    <p class="subtitle">Colorizing the Prokudin-Gorskii photo collection</p>
+    <h1>Colorizing the Prokudin-Gorskii Photo Collection</h1>
 
     <section>
       <div class="section-heading"><span>01</span><h2>Approach</h2></div>
       <div class="prose">
         <p>Each glass plate stores three grayscale exposures in B, G, R order. I split it into thirds, kept blue fixed, and shifted green and red until they matched blue.</p>
-        <p>For each shift, I ignored a 10% border and scored only the interior. L2 adds squared pixel differences, so lower is better. Normalized cross-correlation (NCC) compares mean-centered, normalized images, so higher is better. I used NCC below.</p>
-        <p>Small JPGs search every displacement from −15 to 15 pixels. Large TIFFs use an image pyramid: shrink by half until small, find a coarse shift, double it at the next level, then search nearby. This keeps each image well under one minute.</p>
+        <p>I used normalized cross-correlation (NCC) to score each shift. First, subtract each image’s average intensity. Then add the products of corresponding pixels and divide by the product of the images’ L2 norms. A larger score means the patterns agree better. Mean subtraction and normalization reduce sensitivity to overall brightness differences.</p>
+        <p>The alternative L2 score adds squared pixel differences; smaller is better. My implementation omits the square root because it does not change which shift wins. All displayed results use NCC on the original channel intensities.</p>
+        <p>I scored only interior pixels, excluding a border proportional to image size (10% of the shorter dimension). This prevents scan borders from dominating the score. The crop also covers wrapped pixels from <code>np.roll</code>; refinement adds the estimated displacement and local search radius to the border margin. Saved images remain uncropped.</p>
+        <p>For single-scale alignment, two loops test every horizontal and vertical shift from −15 to 15 pixels, and keep the shift with the highest NCC score. The winning shifts are applied to the original channels, which are stacked in R, G, B order.</p>
+        <p>For large TIFFs, I recursively halve both images with anti-aliased resizing until either dimension is below 200 pixels. At that smallest level, I search ±15 pixels. Moving back toward full resolution, I double the estimated offset, shift the channel, and search ±2 pixels for a correction. Adding each correction gives the final full-resolution displacement. This avoids a huge exhaustive search on the original TIFF.</p>
       </div>
     </section>
 
@@ -66,13 +68,14 @@
     </section>
 
     <section>
-      <div class="section-heading"><span>05</span><h2>Better features: fixing Emir</h2></div>
-      <p class="intro">Raw NCC fails because Emir’s blue robe has very different intensity across channels. I aligned gradient magnitudes instead, then applied those offsets to the original channels.</p>
+      <div class="section-heading"><span>05</span><h2>Fixing Emir with a different reference</h2></div>
+      <p class="intro">Direct red-to-blue NCC failed on Emir. His blue robe has very different brightness in the red and blue exposures, so raw-pixel similarity selected an incorrect shift. I tried aligning red to green first, then moving the aligned red and green together into blue’s coordinate system.</p>
+      <p class="intro">I used the same pyramid and NCC metric: estimate red’s shift relative to the original green, estimate green’s shift relative to blue, then add those offsets to obtain red’s final shift relative to blue. Red and green matched better for this image. The resulting offsets are still reported relative to blue.</p>
       <div class="gallery two">
-        <figure><img src="assets/emir-raw.jpg" alt="Emir before gradient alignment" loading="lazy" /><figcaption><b>Raw-pixel NCC</b><span>R (−483, 400) · failed</span></figcaption></figure>
-        <figure><img src="assets/emir-gradient.jpg" alt="Emir after gradient alignment" loading="lazy" /><figcaption><b>Gradient NCC</b><span>G (24, 49) · R (40, 107)</span></figcaption></figure>
+        <figure><img src="assets/emir-raw.jpg" alt="Emir before chained alignment" loading="lazy" /><figcaption><b>Direct red-to-blue NCC</b><span>R (−483, 400) · failed</span></figcaption></figure>
+        <figure><img src="assets/emir-via-green.jpg" alt="Emir after red-through-green alignment" loading="lazy" /><figcaption><b>Red → green → blue, using NCC</b><span>G (24, 49) · R (41, 106)</span></figcaption></figure>
       </div>
-      <p class="note">Gradient alignment removes the large double image. Colored outer strips come from scan borders and wrapped pixels; I did not implement automatic cropping.</p>
+      <p class="note">This reference change removes the large double image. It was tested as an additional experiment on Emir; the gallery above retains the required direct-to-blue baseline. Colored outer strips come from scan borders and wrapped pixels. I did not implement automatic cropping or claim this experiment as the “better features” extension.</p>
     </section>
   </main>
 </body>
