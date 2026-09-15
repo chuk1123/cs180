@@ -18,6 +18,10 @@
       <div class="section-heading"><span>01</span><h2>Single-scale alignment</h2></div>
       <div class="prose">
         <p>Prokudin-Gorskii photographed the same scene three times through blue, green, and red filters. Each scan contains those three grayscale exposures stacked vertically. Putting them together gives us color, but the exposures are slightly displaced. Without alignment, edges appear doubled or have colored fringes.</p>
+        <div class="reference-pair">
+          <figure><img src="assets/cathedral-plate.jpg" alt="Original Cathedral glass plate with three stacked grayscale exposures" /><figcaption><b>Original glass plate</b><span>Top to bottom: blue, green, red exposures</span></figcaption></figure>
+          <figure><img src="assets/cathedral.jpg" alt="Cathedral color image reconstructed from the original glass plate" /><figcaption><b>After alignment</b><span>Shift the channels, then combine them into RGB</span></figcaption></figure>
+        </div>
         <p>I first split each scan into three equal parts in B, G, R order. I kept blue fixed and searched for the horizontal and vertical shifts that best aligned green and red with it. For the small JPGs, I tried every combination of shifts from −15 to 15 pixels in both directions.</p>
         <p>To choose the best shift, I used normalized cross-correlation (NCC). The idea is to compare the pattern of light and dark regions rather than require identical brightness. I subtract each channel’s average intensity, multiply corresponding pixels, and add those products. Dividing by the product of the channels’ vector lengths puts the score on a common scale. Higher NCC means the patterns agree more closely.</p>
         <p>I only compared interior pixels. The scans have bright and dark borders that can line up even when the scene does not, so I excluded roughly 10% of the shorter dimension from the edges. This also keeps pixels wrapped around by shifting from affecting the score.</p>
