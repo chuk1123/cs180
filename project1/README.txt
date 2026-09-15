@@ -9,9 +9,9 @@ Create data/ beside main.py and place the 14 provided JPG/TIFF glass plates in i
 Use the original full-resolution TIFF scans, not resized previews. Then run:
   python main.py
 
-The program runs NCC and L2 pyramid alignment on every scan, plus both
-single-scale searches on the small JPGs. Results go into output/pyramid/ncc,
-output/pyramid/l2, output/single_scale/ncc, and output/single_scale/l2.
+The program runs NCC pyramid alignment on every scan, plus NCC single-scale
+searches on the small JPGs. Results go into output/pyramid/ncc and
+output/single_scale/ncc.
 Offsets are printed and saved in output/offsets.csv as (x, y), matching the
 webpage. Functions internally return (dy, dx). Use Python 3.10 or newer.
 
