@@ -23,10 +23,11 @@
           <figure><img src="assets/cathedral.jpg" alt="Cathedral color image reconstructed from the original glass plate" /><figcaption><b>After alignment</b><span>Shift the channels, then combine them into RGB</span></figcaption></figure>
         </div>
         <p>I first split each scan into three equal parts in B, G, R order. I kept blue fixed and searched for the horizontal and vertical shifts that best aligned green and red with it. For the small JPGs, I tried every combination of shifts from −15 to 15 pixels in both directions.</p>
-        <p>To choose the best shift, I used normalized cross-correlation (NCC). In the formula below, A is the shifted channel and B is the blue reference, using only the pixels being scored.</p>
+        <p>To choose the best shift, I used normalized cross-correlation (NCC). In the formula below, A contains pixel values from the shifted channel and B contains the corresponding pixel values from the blue channel.</p>
         <p class="formula">NCC(A, B) = [(A − Ā) · (B − B̄)] / [‖A − Ā‖₂ ‖B − B̄‖₂]</p>
         <p>Ā and B̄ are the average pixel values. Subtracting them removes an overall brightness difference, and dividing by the vector lengths makes the score compare the light-and-dark patterns. Larger is better, so I chose the shift with the highest NCC.</p>
-        <p>One challenge was that the scans have bright and dark borders. Including them in the score can make the algorithm line up the borders instead of the scene. To avoid this, I only calculated NCC on the interior pixels. I excluded a margin around each edge, roughly 10% of the shorter image dimension and at least as wide as the search radius. This scoring margin also excludes pixels that wrap around to the opposite edge when I shift a channel with <code>np.roll</code>.</p>
+        <p>One challenge was that the scans have bright and dark borders. Including these border pixels in the NCC score can make the algorithm line up the borders instead of the scene. I excluded border pixels when calculating NCC, using a strip along each edge about 10% of the shorter image dimension and at least 15 pixels wide.</p>
+        <p>I shifted each channel with <code>np.roll</code>. When pixels move past one edge, <code>np.roll</code> places them at the opposite edge. I excluded these border pixels too, so they do not affect the NCC score. Excluding border pixels only changes the NCC calculation. It does not crop the final image.</p>
         <p>After finding the best shifts, I moved the original green and red channels and stacked them with blue in RGB order. Here are the three single-scale results. Each caption lists the green and red shifts relative to blue as (x, y): positive x moves right, and positive y moves down.</p>
       </div>
       <div class="gallery">
@@ -40,9 +41,9 @@
       <div class="section-heading"><span>02</span><h2>Pyramid alignment</h2></div>
       <div class="prose">
         <p>The same search becomes expensive on the large TIFFs. Each comparison involves millions of pixels, and the channels can be displaced much farther than 15 pixels. Increasing the search window would mean testing too many more shifts on much larger images.</p>
-        <p>I used an image pyramid to find the shift in stages. First, I repeatedly resized both channels to half their size, smoothing during downsampling to avoid aliasing. Once either dimension was below 200 pixels, I ran the same ±15-pixel search on that small image. A large displacement in the original scan becomes a small displacement at this scale.</p>
-        <p>Then I worked back toward full resolution. At each level, I doubled the previous offset because the image was twice as large, applied that rough shift, and searched ±2 pixels for fine-tuning corrections. I added the correction to the estimate and repeated. The smaller images help find the general position, and the larger images refine the details.</p>
-        <p>The border problem also matters during fine-tuning. Even though I only search ±2 pixels, the channel has already moved by the larger shift estimated at the previous level. Its borders and wrapped pixels can now extend farther into the image. I increased the scoring margin to cover that shift plus the small correction window, so NCC still compares only the scene’s interior.</p>
+        <p>I used an image pyramid to find the shift in stages. First, I repeatedly resized both channels to half their size, smoothing during downsampling to avoid aliasing. Once either dimension was below 200 pixels, I ran the same ±15-pixel search on that small image. A large shift in the original scan becomes a small shift at this scale.</p>
+        <p>Then I worked back toward full resolution. At each level, I doubled the previous shift because the image was twice as large and applied that shift. For fine-tuning, I searched ±2 pixels for an additional shift and added it to the previous shift. I repeated this until I reached full resolution. The smaller images help find the overall shift, and fine-tuning on the larger images makes that shift more accurate.</p>
+        <p>During fine-tuning, I also excluded border pixels. The previous shift can move the scan borders farther into the image, so I excluded a wider strip along each edge. Its width included the original border width, the previous shift, and 2 more pixels for fine-tuning. This keeps the scan borders and the pixels moved to the opposite edge by <code>np.roll</code> out of the NCC calculation.</p>
         <p>I used NCC with the same search and border settings for every image. The score compares the original channel intensities. The alignment is estimated using smaller images, but the final shifts are applied to the original full-resolution channels.</p>
         <p>Below are all 14 provided results. The pyramid agrees with single-scale alignment on the three JPGs. Direct NCC fails on Emir, which I explain and improve at the end.</p>
       </div>
@@ -75,14 +76,14 @@
       <div class="section-heading"><span>03</span><h2>Fixing Emir</h2></div>
       <div class="prose">
         <p>NCC can handle an overall brightness change, but different color channels do not always preserve the same light-and-dark pattern. Emir’s blue robe looks very different in the red and blue exposures. Direct red-to-blue NCC selected a large incorrect shift, producing the double image shown below.</p>
-        <p>I tried changing the reference while keeping the same pyramid search and NCC score. First, align red to the original green channel. Then align green to blue and move the already-aligned red along with it. In code, I add the red-to-green and green-to-blue offsets to get red’s final displacement relative to blue.</p>
-        <p>Red and green matched better for this image. The final red shift changed from (−483, 400) to (41, 106), removing the large double image. Green’s shift remained (24, 49). Both final offsets still use blue as the reference.</p>
+        <p>I tried changing the reference while keeping the same pyramid search and NCC score. First, align red to the original green channel. Then align green to blue and move the already-aligned red along with it. In code, I add the red-to-green and green-to-blue shifts to get red’s final shift relative to blue.</p>
+        <p>Red and green matched better for this image. The final red shift changed from (−483, 400) to (41, 106), removing the large double image. Green’s shift remained (24, 49). Both final shifts still use blue as the reference.</p>
       </div>
       <div class="gallery two">
         <figure><img src="assets/emir-raw.jpg" alt="Emir before chained alignment" loading="lazy" /><figcaption><b>Direct red-to-blue NCC</b><span>R (−483, 400) · failed</span></figcaption></figure>
         <figure><img src="assets/emir-via-green.jpg" alt="Emir after red-through-green alignment" loading="lazy" /><figcaption><b>Red → green → blue, using NCC</b><span>G (24, 49) · R (41, 106)</span></figcaption></figure>
       </div>
-      <p class="note">The gallery keeps the direct-to-blue results for comparison. The reference change is an additional experiment on Emir. All images are shown uncropped. The colored strips at their edges come from the original scan borders and pixels wrapping around during shifting.</p>
+      <p class="note">The gallery keeps the direct-to-blue results for comparison. The reference change is an additional experiment on Emir. All images are shown uncropped. The colored strips at their edges come from the scan borders and the pixels moved to the opposite edge by <code>np.roll</code>. These border pixels remain visible because I only excluded border pixels when calculating NCC.</p>
     </section>
   </main>
 </body>
