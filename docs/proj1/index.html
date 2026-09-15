@@ -80,9 +80,8 @@
         <figure><img src="assets/emir-red-exposure.jpg" alt="Original Emir red-filter grayscale exposure, showing a dark robe" loading="lazy" /><figcaption><b>Red exposure (R)</b></figcaption></figure>
       </div>
       <div class="prose">
-        <p>NCC can handle an overall brightness change, but here the robe changes brightness differently from the rest of the scene. The red and blue exposures do not preserve the same light-and-dark pattern. Direct red-to-blue NCC selected a large incorrect shift, producing the double image shown below.</p>
-        <p>I tried changing the reference while keeping the same pyramid search and NCC score. First, align red to the original green channel. Then align green to blue and move the already-aligned red along with it. In code, I add the red-to-green and green-to-blue shifts to get red’s final shift relative to blue.</p>
-        <p>Red and green matched better for this image. The final red shift changed from (−483, 400) to (41, 106), removing the large double image. Green’s shift remained (24, 49). Both final shifts still use blue as the reference.</p>
+        <p>NCC matches light-and-dark patterns, but Emir’s robe looks too different in the red and blue exposures. Aligning red directly to blue gave an incorrect shift and produced the double image below.</p>
+        <p>The red and green exposures matched better. I aligned red to green first, then aligned green to blue and moved red along with it. Adding these two shifts gave red’s final shift relative to blue. This fixed the large double image while using the same pyramid search and NCC score.</p>
       </div>
       <div class="gallery two">
         <figure><img src="assets/emir-raw.jpg" alt="Emir before chained alignment" loading="lazy" /><figcaption><b>Direct red-to-blue NCC</b><span>R (−483, 400) · failed</span></figcaption></figure>
