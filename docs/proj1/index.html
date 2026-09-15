@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="CS180 Project 1: colorizing Prokudin-Gorskii glass plates." />
+  <title>proj1 | CS180</title>
+  <link rel="icon" href="../favicon.png" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="site-header"><a class="brand" href="../">CS180</a><nav><a href="../">Projects</a><a class="active" href="./">proj1</a></nav></header>
+  <main>
+    <p class="eyebrow">Kevin Chu · Fall 2026</p>
+    <h1>Images of the Russian Empire</h1>
+    <p class="subtitle">Colorizing the Prokudin-Gorskii photo collection</p>
+
+    <section>
+      <div class="section-heading"><span>01</span><h2>Approach</h2></div>
+      <div class="prose">
+        <p>Each glass plate stores three grayscale exposures in B, G, R order. I split it into thirds, kept blue fixed, and shifted green and red until they matched blue.</p>
+        <p>For each shift, I ignored a 10% border and scored only the interior. L2 adds squared pixel differences, so lower is better. Normalized cross-correlation (NCC) compares mean-centered, normalized images, so higher is better. I used NCC below.</p>
+        <p>Small JPGs search every displacement from −15 to 15 pixels. Large TIFFs use an image pyramid: shrink by half until small, find a coarse shift, double it at the next level, then search nearby. This keeps each image well under one minute.</p>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-heading"><span>02</span><h2>Single-scale alignment</h2></div>
+      <p class="intro">Exhaustive NCC search on low-resolution images. Offsets use (x, y).</p>
+      <div class="gallery three">
+        <figure><img src="assets/single-cathedral.jpg" alt="Cathedral" /><figcaption><b>Cathedral</b><span>G (2, 5) · R (3, 12)</span></figcaption></figure>
+        <figure><img src="assets/single-monastery.jpg" alt="Monastery" /><figcaption><b>Monastery</b><span>G (2, −3) · R (2, 3)</span></figcaption></figure>
+        <figure><img src="assets/single-tobolsk.jpg" alt="Tobolsk" /><figcaption><b>Tobolsk</b><span>G (3, 3) · R (3, 6)</span></figcaption></figure>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-heading"><span>03</span><h2>Image-pyramid results</h2></div>
+      <p class="intro">Same NCC metric on all 14 provided images, now using coarse-to-fine alignment.</p>
+      <div class="gallery">
+        <figure><img src="assets/cathedral.jpg" alt="Cathedral" loading="lazy" /><figcaption><b>Cathedral</b><span>G (2, 5) · R (3, 12)</span></figcaption></figure>
+        <figure><img src="assets/church.jpg" alt="Church" loading="lazy" /><figcaption><b>Church</b><span>G (4, 25) · R (−4, 58)</span></figcaption></figure>
+        <figure><img src="assets/emir-raw.jpg" alt="Failed Emir alignment" loading="lazy" /><figcaption><b>Emir</b><span>G (24, 49) · R (−483, 400) · failed</span></figcaption></figure>
+        <figure><img src="assets/harvesters.jpg" alt="Harvesters" loading="lazy" /><figcaption><b>Harvesters</b><span>G (17, 60) · R (14, 124)</span></figcaption></figure>
+        <figure><img src="assets/icon.jpg" alt="Icon" loading="lazy" /><figcaption><b>Icon</b><span>G (17, 41) · R (23, 89)</span></figcaption></figure>
+        <figure><img src="assets/ilemselga.jpg" alt="Ilemselga" loading="lazy" /><figcaption><b>Ilemselga</b><span>G (7, 40) · R (11, 130)</span></figcaption></figure>
+        <figure><img src="assets/melons.jpg" alt="Melons" loading="lazy" /><figcaption><b>Melons</b><span>G (10, 81) · R (14, 178)</span></figcaption></figure>
+        <figure><img src="assets/monastery.jpg" alt="Monastery" loading="lazy" /><figcaption><b>Monastery</b><span>G (2, −3) · R (2, 3)</span></figcaption></figure>
+        <figure><img src="assets/religous_painting.jpg" alt="Religious painting" loading="lazy" /><figcaption><b>Religious painting</b><span>G (3, 28) · R (7, 68)</span></figcaption></figure>
+        <figure><img src="assets/self_portrait.jpg" alt="Self portrait" loading="lazy" /><figcaption><b>Self portrait</b><span>G (29, 79) · R (37, 176)</span></figcaption></figure>
+        <figure><img src="assets/siren.jpg" alt="Siren flowers" loading="lazy" /><figcaption><b>Siren</b><span>G (−6, 49) · R (−25, 96)</span></figcaption></figure>
+        <figure><img src="assets/three_generations.jpg" alt="Three generations" loading="lazy" /><figcaption><b>Three generations</b><span>G (14, 53) · R (11, 111)</span></figcaption></figure>
+        <figure><img src="assets/tobolsk.jpg" alt="Tobolsk" loading="lazy" /><figcaption><b>Tobolsk</b><span>G (3, 3) · R (3, 6)</span></figcaption></figure>
+        <figure><img src="assets/wharf.jpg" alt="Wharf" loading="lazy" /><figcaption><b>Wharf</b><span>G (−7, 15) · R (−16, 82)</span></figcaption></figure>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-heading"><span>04</span><h2>My chosen images</h2></div>
+      <p class="intro">Three additional full-resolution plates from the Library of Congress.</p>
+      <div class="gallery three">
+        <figure><img src="assets/lugano.jpg" alt="Lugano" loading="lazy" /><figcaption><b><a href="https://www.loc.gov/pictures/item/2018679128/">Lugano</a></b><span>G (−16, 41) · R (−29, 93)</span></figcaption></figure>
+        <figure><img src="assets/bashkir_woman_folk_costume.jpg" alt="Bashkir woman in folk costume" loading="lazy" /><figcaption><b><a href="https://www.loc.gov/pictures/item/2018679647/">Bashkir woman in folk costume</a></b><span>G (−5, 60) · R (−21, 130)</span></figcaption></figure>
+        <figure><img src="assets/compound_locomotive.jpg" alt="Compound locomotive" loading="lazy" /><figcaption><b><a href="https://www.loc.gov/pictures/item/2018679302/">Compound locomotive</a></b><span>G (6, 42) · R (32, 87)</span></figcaption></figure>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-heading"><span>05</span><h2>Better features: fixing Emir</h2></div>
+      <p class="intro">Raw NCC fails because Emir’s blue robe has very different intensity across channels. I aligned gradient magnitudes instead, then applied those offsets to the original channels.</p>
+      <div class="gallery two">
+        <figure><img src="assets/emir-raw.jpg" alt="Emir before gradient alignment" loading="lazy" /><figcaption><b>Raw-pixel NCC</b><span>R (−483, 400) · failed</span></figcaption></figure>
+        <figure><img src="assets/emir-gradient.jpg" alt="Emir after gradient alignment" loading="lazy" /><figcaption><b>Gradient NCC</b><span>G (24, 49) · R (40, 107)</span></figcaption></figure>
+      </div>
+      <p class="note">Gradient alignment removes the large double image. Colored outer strips come from scan borders and wrapped pixels; I did not implement automatic cropping.</p>
+    </section>
+  </main>
+</body>
+</html>

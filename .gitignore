@@ -1,4 +1,15 @@
 .DS_Store
+.venv/
+__pycache__/
+*.py[cod]
+
+# Project 1 source scans and generated results stay local. Web-sized copies live in docs/.
+project1/data/
+project1/output/
+project1/main.py
+
+# Local submission artifacts
+/output/
 
 # Source camera originals are intentionally kept local; the optimized web assets live in /assets.
 *.HEIC
