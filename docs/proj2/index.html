@@ -17,7 +17,7 @@
   <main>
     <p class="eyebrow">Kevin Chu · Fall 2026</p>
     <h1>Fun with Filters and Frequencies</h1>
-    <p class="lede">I started by writing convolution from scratch, then kept reusing the same basic idea—separating low and high frequencies—to find edges, sharpen images, make hybrids, and blend images together.</p>
+    <p class="lede">This project ended up feeling like one long chain of ideas. I started by writing convolution from scratch, and somehow that same operation kept coming back for edges, sharpening, hybrid images, and finally blending.</p>
 
     <nav class="contents" aria-label="Project sections">
       <a href="#part-1-1">1.1 Convolution</a><a href="#part-1-2">1.2 Edges</a>
@@ -29,9 +29,9 @@
     <section id="part-1-1">
       <div class="section-heading"><span>1.1</span><h2>Convolutions from scratch</h2></div>
       <div class="prose">
-        <p>A convolution takes the same small filter and applies it to every patch of an image. At each location, I multiply the filter with the pixels underneath it and add the products to get one output pixel. I flip the filter horizontally and vertically first; without that flip, the operation would be cross-correlation instead.</p>
-        <p>I implemented this twice using only NumPy. The direct version has four loops: two move across the image and two move across the filter. The faster version keeps the two image loops but multiplies and sums an entire patch at once. At the boundary there are not enough neighboring pixels, so I use zero padding. <code>same</code> mode returns the original image size, while <code>full</code> mode keeps every partial overlap and therefore produces a larger result.</p>
-        <p>On a 50 × 50 crop with a 9 × 9 box filter, one representative run took 0.0678 seconds with four loops, 0.0065 seconds with two loops, and 0.0004 seconds with <code>scipy.signal.convolve2d</code>. Both of my versions matched SciPy with <code>np.allclose</code>. The patch version is about ten times faster than four explicit loops, but SciPy is still much faster because its inner work runs in optimized compiled code.</p>
+        <p>The four-loop version is basically the definition of convolution written out literally. For every output pixel, I walk over every filter value, multiply it by the image pixel underneath, and add everything together. The one easy-to-miss detail is flipping the filter horizontally and vertically first. I forgot why that mattered at first, but without the flip I would be implementing cross-correlation instead.</p>
+        <p>I then rewrote it with two loops. The outer loops still move across the image, but NumPy multiplies and sums the entire patch at once. Padding was the part that took me the most time to reason through because pixels near the edge do not have a complete neighborhood. I used zeros outside the image: <code>same</code> returns the original size, while <code>full</code> keeps every partial overlap and produces a larger result.</p>
+        <p>The timing difference was bigger than I expected. On a 50 × 50 crop with a 9 × 9 box filter, one run took 0.0678 seconds with four loops, 0.0065 seconds with two loops, and 0.0004 seconds with <code>scipy.signal.convolve2d</code>. Both of my versions matched SciPy with <code>np.allclose</code>. Vectorizing the two inner loops helps a lot, although SciPy still wins easily because its inner work is compiled.</p>
       </div>
       <div class="code-grid">
         <div><h3>Four-loop version</h3><pre><code>for i in range(output_h):
@@ -67,7 +67,7 @@ Dy = np.array([[1], [0], [-1]])</code></pre>
       <div class="section-heading"><span>1.2</span><h2>Finite difference operator</h2></div>
       <div class="prose">
         <p>I convolved the cameraman with Dx and Dy to measure how quickly brightness changes in each direction. Neither derivative alone contains every edge, so I combined them into the gradient magnitude <span class="formula">√(Dx² + Dy²)</span>. Large values mean the image changes sharply at that pixel.</p>
-        <p>The magnitude image still contains grass, texture, and other weak responses that I would not call meaningful edges. I tried several thresholds and binarized the normalized magnitude at 0.23: values above it become 1 and everything else becomes 0. Lower thresholds preserved more faint edges but also kept much more background noise. At 0.23, the cameraman, camera, tripod, and buildings remain reasonably clear without keeping all of the grass.</p>
+        <p>Choosing the threshold was honestly more of a judgment call than a mathematical answer. The magnitude image contains grass and texture that are technically brightness changes, but I did not really want them in the final edge map. I tried several values and settled on 0.23: anything above it becomes 1 and everything else becomes 0. Lower values kept faint real edges, but they also brought back a lot of grass. At 0.23, the cameraman, camera, tripod, and buildings are still recognizable without as much background noise.</p>
       </div>
       <div class="gallery five">
         <figure><img src="assets/cameraman.jpg" alt="Original cameraman image" /><figcaption><b>Original</b></figcaption></figure>
@@ -81,8 +81,8 @@ Dy = np.array([[1], [0], [-1]])</code></pre>
     <section id="part-1-3">
       <div class="section-heading"><span>1.3</span><h2>Derivative of Gaussian</h2></div>
       <div class="prose">
-        <p>The problem with differentiating immediately is that noise is also made of rapid brightness changes, so the finite-difference filters emphasize it along with real boundaries. I first smoothed the cameraman with a 9 × 9 Gaussian with σ = 2, then repeated the Dx and Dy calculation.</p>
-        <p>The new edges are thicker because blurring spreads each transition over more pixels, but the result is much cleaner. The grass and small texture are suppressed while the main outline of the cameraman remains.</p>
+        <p>I originally thought blurring before edge detection might just erase useful edges. Instead, it mostly removes the tiny brightness changes that were creating noise. I smoothed the cameraman with a 9 × 9 Gaussian with σ = 2, then repeated the Dx and Dy calculation.</p>
+        <p>The tradeoff is easy to see: the new edges are thicker because each transition has been spread across more pixels, but they are also much cleaner. The grass and small texture fade away while the main outline of the cameraman stays visible. This was where the purpose of the Gaussian filter really clicked for me.</p>
         <p>Doing “blur, then differentiate” sounds like two separate convolutions, but convolution is associative. I convolved the Gaussian with Dx and Dy first to make two derivative-of-Gaussian filters, then applied each combined filter once. The maximum difference between the two pipelines was 1.16 × 10<sup>−15</sup>, and their thresholded edge maps had zero differing pixels, so they are the same apart from floating-point rounding.</p>
       </div>
       <div class="gallery four">
@@ -99,7 +99,7 @@ Dy = np.array([[1], [0], [-1]])</code></pre>
     <section id="part-2-1">
       <div class="section-heading"><span>2.1</span><h2>Image sharpening</h2></div>
       <div class="prose">
-        <p>To make an image look sharper, I amplify the high-frequency details that are already present. A Gaussian blur keeps the low frequencies, so subtracting that blur from the original leaves mostly edges and fine texture. I then add a scaled version back: <span class="formula">sharp = image + α(image − blur)</span>.</p>
+        <p>The name “unsharp mask” confused me at first because the result is supposed to be sharper. The idea is to use an unsharp, blurred copy only to find what detail is missing from it. A Gaussian blur keeps the low frequencies, so subtracting it from the original leaves mostly edges and fine texture. I then add a scaled version of that detail back: <span class="formula">sharp = image + α(image − blur)</span>.</p>
         <p>I combined those steps into the single unsharp-mask filter <span class="formula">(1 + α)I − αG</span>. Increasing α makes the Taj's windows and outlines more distinct, but α = 3 also creates obvious halos and harsh contrast. α = 1.5 gave the best balance here. Blurring and then sharpening again restores some edge contrast, but it cannot recover fine information that was already averaged away.</p>
       </div>
       <div class="gallery four">
@@ -123,8 +123,8 @@ Dy = np.array([[1], [0], [-1]])</code></pre>
     <section id="part-2-2">
       <div class="section-heading"><span>2.2</span><h2>Hybrid images</h2></div>
       <div class="prose">
-        <p>A hybrid image takes advantage of how viewing distance changes what we notice. Up close, sharp edges and small details are very noticeable. Farther away—or when the image is made small—those high frequencies disappear, leaving the broad low-frequency structure.</p>
-        <p>I high-pass filter one image by subtracting its Gaussian blur, low-pass filter the other image with a Gaussian, then add the two results. The equation is simple; the harder part is choosing images with matching shapes, aligning important features, and tuning both cutoff frequencies. If the eyes or outlines do not line up, the result just looks like two transparent images on top of each other.</p>
+        <p>Hybrid images were the most fun part of the project, but also much more finicky than I expected. Up close, sharp edges and small details grab my attention. When I shrink the image or step away, those details disappear and I mostly see the broad low-frequency structure.</p>
+        <p>The code itself is short: high-pass one image, low-pass the other, and add them. Getting a convincing result is the hard part. My first moon-and-eye attempt had a strong circular boundary that never disappeared, so it always looked pasted together. That failure made it pretty obvious that image choice and alignment matter as much as the filter. If the eyes, head shape, or other important features do not line up, no choice of sigma really saves it.</p>
         <p>For Derek and Nutmeg, I aligned their eyes and used σ = 2 for Derek's high-pass filter and σ = 5 for Nutmeg's low-pass filter. Derek's facial edges dominate nearby, while Nutmeg's smoother face becomes easier to recognize after shrinking the image or stepping back.</p>
       </div>
       <div class="gallery two">
@@ -171,7 +171,7 @@ Dy = np.array([[1], [0], [-1]])</code></pre>
     <section id="part-2-3">
       <div class="section-heading"><span>2.3</span><h2>Gaussian and Laplacian stacks</h2></div>
       <div class="prose">
-        <p>A single blur only separates an image into “low” and “high,” but blending works better when I can work with several ranges of feature sizes. I built a Gaussian stack by repeatedly blurring while doubling σ at each level. Unlike a pyramid, a stack never downsamples, so every level remains the original dimensions.</p>
+        <p>Gaussian and Laplacian stacks sounded abstract to me until I thought of them as sorting an image by feature size. One blur only gives me “low” and “high,” but blending needs more control than that. I built a Gaussian stack by repeatedly blurring while doubling σ at each level. Unlike a pyramid, a stack never downsamples, so every level remains the original dimensions.</p>
         <p>I formed each Laplacian level by subtracting adjacent Gaussian levels. The early levels contain small edges and texture, while later levels contain broader shapes and color changes. I keep the final Gaussian image as the lowest-frequency residual. These bands do not lose information: summing all six Laplacian levels reconstructs the original image.</p>
       </div>
       <h3>Apple Gaussian stack</h3>
@@ -195,7 +195,7 @@ Dy = np.array([[1], [0], [-1]])</code></pre>
     <section id="part-2-4">
       <div class="section-heading"><span>2.4</span><h2>Multiresolution blending</h2></div>
       <div class="prose">
-        <p>A hard cut between two images creates an obvious seam. Blurring that seam once is not enough either: a narrow transition works for tiny details but can leave a break in large color regions, while a wide transition hides broad changes but makes fine details ghost together.</p>
+        <p>A normal cut gives me an obvious seam, but simply making the seam very blurry is not a great fix either. If the transition is narrow, large color regions still look disconnected. If it is wide, small details from both images overlap and start to look ghosted. I ran into both problems while testing the blends.</p>
         <p>Multiresolution blending gives each frequency band its own transition width. I built Laplacian stacks for both images and a Gaussian stack for the mask. At every level I used <span class="formula">L blend = G mask · L A + (1 − G mask) · L B</span>, then summed the blended levels. High-frequency details change sides relatively quickly, while low-frequency lighting and color change over a wider area. This is what lets the apple and orange meet without one fixed blurry strip across every feature.</p>
       </div>
       <div class="gallery four">
@@ -224,7 +224,7 @@ Dy = np.array([[1], [0], [-1]])</code></pre>
 
     <section id="takeaway">
       <div class="section-heading"><span>★</span><h2>Most important thing I learned</h2></div>
-      <div class="prose"><p>The most important thing I learned is that the same image can behave very differently once it is split into frequency bands. Before this project, sharpening, hybrid images, and seamless blending seemed like unrelated tricks. Now they feel like variations of the same idea: sharpening strengthens high frequencies, hybrids give different subjects different frequency ranges, and multiresolution blending chooses a different seam width for every range. The code for each part was not too complicated by itself; understanding what each frequency band contributes was the part that made everything connect.</p></div>
+      <div class="prose"><p>The biggest thing I learned is that sharpening, hybrid images, and seamless blending are not really three unrelated tricks. They are all different ways of deciding what to do with each frequency band. Sharpening turns up the high frequencies, hybrids give different bands to different subjects, and multiresolution blending uses a different seam width for each band. None of the individual formulas was especially long. The part that took longer—and ended up being more interesting—was learning to predict what changing a frequency band would actually look like.</p></div>
     </section>
 
     <section id="sources">
