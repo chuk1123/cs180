@@ -89,7 +89,7 @@
       </div>
 
       <h3>Binarizing: two rejects, then the chosen cut</h3>
-      <p class="intro">I divided the magnitude by its max, then kept pixels above a threshold. That choice is qualitative: keep the tripod and buildings, kill as much grass as I can. 0.10 and 0.23 miss that tradeoff in opposite ways.</p>
+      <p class="intro">I divided the magnitude by its max, then kept pixels above a threshold. The goal is to keep the main cameraman and tripod edges while removing most of the grass texture. 0.10 leaves too much noise, while 0.50 cuts away important structure.</p>
       <div class="trial-grid">
         <figure>
           <span class="badge badge-reject">Rejected</span>
@@ -98,14 +98,14 @@
         </figure>
         <figure>
           <span class="badge badge-reject">Rejected</span>
-          <img src="assets/edges_0.23.png" alt="Rejected cameraman edges at threshold 0.23" />
-          <figcaption><b>Threshold 0.23</b><span>Grass is mostly gone, but the tripod, coat folds, and far buildings break up.</span></figcaption>
+          <img src="assets/edges_0.5.png" alt="Rejected cameraman edges at threshold 0.50" />
+          <figcaption><b>Threshold 0.50</b><span>Too high. Even the camera and tripod have broken or missing edges.</span></figcaption>
         </figure>
       </div>
       <figure class="final-result">
         <span class="badge badge-chosen">Chosen result</span>
-        <img src="assets/edges_0.15.png" alt="Chosen cameraman edge image at threshold 0.15" />
-        <figcaption><b>Threshold 0.15</b><span>This is the edge image I am presenting. Some grass remains, but the cameraman, tripod, and skyline stay connected. I would rather keep a little texture than erase real structure.</span></figcaption>
+        <img src="assets/edges_0.28.png" alt="Chosen cameraman edge image at threshold 0.28" />
+        <figcaption><b>Threshold 0.28</b><span>This is the edge image I am presenting. The person, camera, and tripod still read clearly, and most grass noise is gone. Some faint background edges disappear too.</span></figcaption>
       </figure>
     </section>
 
@@ -116,17 +116,17 @@
       </div>
 
       <h3>Method 1: blur the image, then take derivatives</h3>
-      <p class="intro">Convolve with G, then with Dx and Dy, then form the same magnitude and 0.15 threshold as in 1.2. The blur is the only new ingredient.</p>
+      <p class="intro">Convolve with G, then with Dx and Dy, then form the same magnitude and 0.28 threshold as in 1.2. The blur is the only new ingredient.</p>
       <div class="gallery narrow">
         <figure><img src="assets/cameraman_blurred.jpg" alt="Gaussian blurred cameraman" /><figcaption><b>After Gaussian blur</b><span>9 × 9, σ = 2. Compare with the original in 1.2.</span></figcaption></figure>
       </div>
       <div class="gallery two">
         <figure><img src="assets/blurred_gradient.jpg" alt="Gradient magnitude after Gaussian smoothing" /><figcaption><b>Gradient magnitude</b><span>Dx and Dy on the blurred image</span></figcaption></figure>
-        <figure><img src="assets/blurred_edges.png" alt="Thresholded edges after blur then derivative" /><figcaption><b>Binarized edges</b><span>Same threshold 0.15</span></figcaption></figure>
+        <figure><img src="assets/blurred_edges.png" alt="Thresholded edges after blur then derivative" /><figcaption><b>Binarized edges</b><span>Same threshold 0.28</span></figcaption></figure>
       </div>
 
       <h3>What changed versus finite differences</h3>
-      <p class="intro">Compare this edge map with the chosen 1.2 result above. Most grass speckle disappears. The remaining edges are thicker because the blur spreads each transition over more pixels before the derivative runs. The cameraman and tripod stay clear, although some faint background edges are lost too. Both maps were normalized by their own maximum before the 0.15 cut, so this is the same relative threshold, not the same raw gradient value.</p>
+      <p class="intro">Compare this edge map with the chosen 1.2 result above. The remaining edges are thicker because the blur spreads each transition over more pixels before the derivative runs. The cameraman and tripod stay clear, but more of the background disappears. Both maps were normalized by their own maximum before the 0.28 cut, so this is the same relative threshold, not the same raw gradient value.</p>
 
       <h3>Method 2: fuse the filters, then convolve once</h3>
       <p class="intro">Convolution is associative, so blur-then-Dx is the same as convolving the image with (G ∗ Dx). I convolved the Gaussian with Dx and with Dy to get two derivative-of-Gaussian filters, then applied each once to the original cameraman. Both methods use the same symmetric padding and crop only at the end. Cropping the intermediate blur would change the border pixels. The kernels below are shown pixelated so their positive and negative lobes are readable.</p>
@@ -135,7 +135,7 @@
         <figure><img src="assets/dog_y_filter.png" alt="Derivative of Gaussian filter in y, shown as a small kernel" /><figcaption><b>DoG y</b><span>G ∗ Dy</span></figcaption></figure>
       </div>
       <div class="gallery narrow">
-        <figure><img src="assets/dog_edges.png" alt="Thresholded edges using derivative of Gaussian" /><figcaption><b>DoG edges</b><span>Same result as method 1 at threshold 0.15</span></figcaption></figure>
+        <figure><img src="assets/dog_edges.png" alt="Thresholded edges using derivative of Gaussian" /><figcaption><b>DoG edges</b><span>Same result as method 1 at threshold 0.28</span></figcaption></figure>
       </div>
       <div class="prose">
         <p>These match method 1. Max absolute difference on the gradient maps was 1.16 × 10<sup>−15</sup>. The two binarized images differ in zero pixels. Each combined filter replaces blur-plus-derivative for one direction. The picture does not change.</p>
