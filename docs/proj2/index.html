@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="CS180 Project 2: filters, frequencies, hybrid images, and multiresolution blending." />
+  <title>Fun with Filters and Frequencies | CS180</title>
+  <link rel="icon" href="../favicon.png" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="../">CS180</a>
+    <nav><a href="../">Projects</a><a class="active" href="./">proj2</a></nav>
+  </header>
+
+  <main>
+    <p class="eyebrow">Kevin Chu · Fall 2026</p>
+    <h1>Fun with Filters and Frequencies</h1>
+    <p class="lede">I started by writing convolution from scratch, then kept reusing the same basic idea—separating low and high frequencies—to find edges, sharpen images, make hybrids, and blend images together.</p>
+
+    <nav class="contents" aria-label="Project sections">
+      <a href="#part-1-1">1.1 Convolution</a><a href="#part-1-2">1.2 Edges</a>
+      <a href="#part-1-3">1.3 DoG</a><a href="#part-2-1">2.1 Sharpening</a>
+      <a href="#part-2-2">2.2 Hybrids</a><a href="#part-2-3">2.3 Stacks</a>
+      <a href="#part-2-4">2.4 Blending</a>
+    </nav>
+
+    <section id="part-1-1">
+      <div class="section-heading"><span>1.1</span><h2>Convolutions from scratch</h2></div>
+      <div class="prose">
+        <p>A convolution takes the same small filter and applies it to every patch of an image. At each location, I multiply the filter with the pixels underneath it and add the products to get one output pixel. I flip the filter horizontally and vertically first; without that flip, the operation would be cross-correlation instead.</p>
+        <p>I implemented this twice using only NumPy. The direct version has four loops: two move across the image and two move across the filter. The faster version keeps the two image loops but multiplies and sums an entire patch at once. At the boundary there are not enough neighboring pixels, so I use zero padding. <code>same</code> mode returns the original image size, while <code>full</code> mode keeps every partial overlap and therefore produces a larger result.</p>
+        <p>On a 50 × 50 crop with a 9 × 9 box filter, one representative run took 0.0678 seconds with four loops, 0.0065 seconds with two loops, and 0.0004 seconds with <code>scipy.signal.convolve2d</code>. Both of my versions matched SciPy with <code>np.allclose</code>. The patch version is about ten times faster than four explicit loops, but SciPy is still much faster because its inner work runs in optimized compiled code.</p>
+      </div>
+      <div class="code-grid">
+        <div><h3>Four-loop version</h3><pre><code>for i in range(output_h):
+    for j in range(output_w):
+        for fi in range(fh):
+            for fj in range(fw):
+                output[i, j] += (
+                    padded[i + fi, j + fj]
+                    * flipped_filter[fi, fj]
+                )</code></pre></div>
+        <div><h3>Two-loop version</h3><pre><code>for i in range(output_h):
+    for j in range(output_w):
+        patch = padded[i:i+fh, j:j+fw]
+        output[i, j] = np.sum(
+            patch * flipped_filter
+        )</code></pre></div>
+      </div>
+      <div class="prose">
+        <p>I tested the implementation on my own grayscale image. The normalized 9 × 9 box filter replaces each pixel with a local average, so the result becomes blurred. The finite-difference filters instead respond to sudden brightness changes: Dx emphasizes vertical edges and Dy emphasizes horizontal edges.</p>
+        <pre><code>box_filter = np.ones((9, 9)) / 81
+Dx = np.array([[1, 0, -1]])
+Dy = np.array([[1], [0], [-1]])</code></pre>
+      </div>
+      <div class="gallery four">
+        <figure><img src="assets/box_filter_same.jpg" alt="Personal image blurred with same convolution" /><figcaption><b>9 × 9 box filter</b><span>Same mode</span></figcaption></figure>
+        <figure><img src="assets/box_filter_full.jpg" alt="Personal image blurred with full convolution" /><figcaption><b>9 × 9 box filter</b><span>Full mode adds an 8-pixel border</span></figcaption></figure>
+        <figure><img src="assets/dx.jpg" alt="Horizontal finite difference response on personal image" /><figcaption><b>Dx response</b><span>Emphasizes vertical edges</span></figcaption></figure>
+        <figure><img src="assets/dy.jpg" alt="Vertical finite difference response on personal image" /><figcaption><b>Dy response</b><span>Emphasizes horizontal edges</span></figcaption></figure>
+      </div>
+    </section>
+
+    <section id="part-1-2">
+      <div class="section-heading"><span>1.2</span><h2>Finite difference operator</h2></div>
+      <div class="prose">
+        <p>I convolved the cameraman with Dx and Dy to measure how quickly brightness changes in each direction. Neither derivative alone contains every edge, so I combined them into the gradient magnitude <span class="formula">√(Dx² + Dy²)</span>. Large values mean the image changes sharply at that pixel.</p>
+        <p>The magnitude image still contains grass, texture, and other weak responses that I would not call meaningful edges. I tried several thresholds and binarized the normalized magnitude at 0.23: values above it become 1 and everything else becomes 0. Lower thresholds preserved more faint edges but also kept much more background noise. At 0.23, the cameraman, camera, tripod, and buildings remain reasonably clear without keeping all of the grass.</p>
+      </div>
+      <div class="gallery five">
+        <figure><img src="assets/cameraman.jpg" alt="Original cameraman image" /><figcaption><b>Original</b></figcaption></figure>
+        <figure><img src="assets/cameraman_dx.jpg" alt="Cameraman partial derivative in x" /><figcaption><b>Partial derivative Dx</b></figcaption></figure>
+        <figure><img src="assets/cameraman_dy.jpg" alt="Cameraman partial derivative in y" /><figcaption><b>Partial derivative Dy</b></figcaption></figure>
+        <figure><img src="assets/cameraman_gradient.jpg" alt="Cameraman gradient magnitude" /><figcaption><b>Gradient magnitude</b></figcaption></figure>
+        <figure><img src="assets/cameraman_edges.jpg" alt="Thresholded cameraman edges" /><figcaption><b>Binarized edges</b><span>Threshold = 0.23</span></figcaption></figure>
+      </div>
+    </section>
+
+    <section id="part-1-3">
+      <div class="section-heading"><span>1.3</span><h2>Derivative of Gaussian</h2></div>
+      <div class="prose">
+        <p>The problem with differentiating immediately is that noise is also made of rapid brightness changes, so the finite-difference filters emphasize it along with real boundaries. I first smoothed the cameraman with a 9 × 9 Gaussian with σ = 2, then repeated the Dx and Dy calculation.</p>
+        <p>The new edges are thicker because blurring spreads each transition over more pixels, but the result is much cleaner. The grass and small texture are suppressed while the main outline of the cameraman remains.</p>
+        <p>Doing “blur, then differentiate” sounds like two separate convolutions, but convolution is associative. I convolved the Gaussian with Dx and Dy first to make two derivative-of-Gaussian filters, then applied each combined filter once. The maximum difference between the two pipelines was 1.16 × 10<sup>−15</sup>, and their thresholded edge maps had zero differing pixels, so they are the same apart from floating-point rounding.</p>
+      </div>
+      <div class="gallery four">
+        <figure><img src="assets/cameraman_blurred.jpg" alt="Gaussian blurred cameraman" /><figcaption><b>Gaussian blur</b><span>9 × 9, σ = 2</span></figcaption></figure>
+        <figure><img src="assets/dog_x_filter.jpg" alt="Derivative of Gaussian filter in x" /><figcaption><b>DoG x filter</b></figcaption></figure>
+        <figure><img src="assets/dog_y_filter.jpg" alt="Derivative of Gaussian filter in y" /><figcaption><b>DoG y filter</b></figcaption></figure>
+        <figure><img src="assets/blurred_gradient.jpg" alt="Gradient magnitude after Gaussian smoothing" /><figcaption><b>Blur then differentiate</b></figcaption></figure>
+        <figure><img src="assets/dog_gradient.jpg" alt="Gradient magnitude using derivative of Gaussian filters" /><figcaption><b>Single DoG convolution</b></figcaption></figure>
+        <figure><img src="assets/blurred_edges.jpg" alt="Thresholded edges after blur then derivative" /><figcaption><b>Two-step edges</b><span>Threshold = 0.15</span></figcaption></figure>
+        <figure><img src="assets/dog_edges.jpg" alt="Thresholded edges using derivative of Gaussian" /><figcaption><b>DoG edges</b><span>Identical to the two-step result</span></figcaption></figure>
+      </div>
+    </section>
+
+    <section id="part-2-1">
+      <div class="section-heading"><span>2.1</span><h2>Image sharpening</h2></div>
+      <div class="prose">
+        <p>To make an image look sharper, I amplify the high-frequency details that are already present. A Gaussian blur keeps the low frequencies, so subtracting that blur from the original leaves mostly edges and fine texture. I then add a scaled version back: <span class="formula">sharp = image + α(image − blur)</span>.</p>
+        <p>I combined those steps into the single unsharp-mask filter <span class="formula">(1 + α)I − αG</span>. Increasing α makes the Taj's windows and outlines more distinct, but α = 3 also creates obvious halos and harsh contrast. α = 1.5 gave the best balance here. Blurring and then sharpening again restores some edge contrast, but it cannot recover fine information that was already averaged away.</p>
+      </div>
+      <div class="gallery four">
+        <figure><img src="assets/taj_original.jpg" alt="Original Taj Mahal image" /><figcaption><b>Original Taj</b></figcaption></figure>
+        <figure><img src="assets/taj_blurred.jpg" alt="Blurred Taj Mahal image" /><figcaption><b>Gaussian blur</b><span>σ = 2</span></figcaption></figure>
+        <figure><img src="assets/taj_high_frequency.jpg" alt="High frequency details of Taj Mahal" /><figcaption><b>High frequencies</b><span>Shifted by 0.5 for display</span></figcaption></figure>
+        <figure><img src="assets/taj_sharpened_alpha_0.5.jpg" alt="Taj Mahal sharpened with alpha 0.5" /><figcaption><b>α = 0.5</b></figcaption></figure>
+        <figure><img src="assets/taj_sharpened_alpha_1.5.jpg" alt="Taj Mahal sharpened with alpha 1.5" /><figcaption><b>α = 1.5</b><span>Best balance</span></figcaption></figure>
+        <figure><img src="assets/taj_sharpened_alpha_3.jpg" alt="Taj Mahal sharpened with alpha 3" /><figcaption><b>α = 3</b><span>Strong halos and contrast</span></figcaption></figure>
+        <figure><img src="assets/taj_blurred_then_resharpened.jpg" alt="Taj Mahal blurred and then resharpened" /><figcaption><b>Blurred, then sharpened</b><span>Edges return, but lost detail does not</span></figcaption></figure>
+      </div>
+      <h3>Second example</h3>
+      <div class="gallery four">
+        <figure><img src="assets/kevin_original.jpg" alt="Original personal photograph" /><figcaption><b>Original</b></figcaption></figure>
+        <figure><img src="assets/kevin_blurred.jpg" alt="Blurred personal photograph" /><figcaption><b>Gaussian blur</b></figcaption></figure>
+        <figure><img src="assets/kevin_high_frequency.jpg" alt="High frequency details of personal photograph" /><figcaption><b>High frequencies</b></figcaption></figure>
+        <figure><img src="assets/kevin_sharpened_alpha_1.5.jpg" alt="Personal photograph sharpened with alpha 1.5" /><figcaption><b>Sharpened</b><span>α = 1.5</span></figcaption></figure>
+      </div>
+    </section>
+
+    <section id="part-2-2">
+      <div class="section-heading"><span>2.2</span><h2>Hybrid images</h2></div>
+      <div class="prose">
+        <p>A hybrid image takes advantage of how viewing distance changes what we notice. Up close, sharp edges and small details are very noticeable. Farther away—or when the image is made small—those high frequencies disappear, leaving the broad low-frequency structure.</p>
+        <p>I high-pass filter one image by subtracting its Gaussian blur, low-pass filter the other image with a Gaussian, then add the two results. The equation is simple; the harder part is choosing images with matching shapes, aligning important features, and tuning both cutoff frequencies. If the eyes or outlines do not line up, the result just looks like two transparent images on top of each other.</p>
+        <p>For Derek and Nutmeg, I aligned their eyes and used σ = 2 for Derek's high-pass filter and σ = 5 for Nutmeg's low-pass filter. Derek's facial edges dominate nearby, while Nutmeg's smoother face becomes easier to recognize after shrinking the image or stepping back.</p>
+      </div>
+      <div class="gallery two">
+        <figure><img src="assets/derek_nutmeg_high_original.jpg" alt="Original photograph of Derek" /><figcaption><b>High-frequency input</b><span>Derek</span></figcaption></figure>
+        <figure><img src="assets/derek_nutmeg_low_original.jpg" alt="Original photograph of Nutmeg" /><figcaption><b>Low-frequency input</b><span>Nutmeg</span></figcaption></figure>
+        <figure><img src="assets/derek_nutmeg_high_aligned.jpg" alt="Aligned photograph of Derek" /><figcaption><b>Aligned Derek</b></figcaption></figure>
+        <figure><img src="assets/derek_nutmeg_low_aligned.jpg" alt="Aligned photograph of Nutmeg" /><figcaption><b>Aligned Nutmeg</b></figcaption></figure>
+      </div>
+      <h3>Frequency analysis</h3>
+      <div class="gallery five spectra">
+        <figure><img src="assets/derek_nutmeg_high_original_fft.jpg" alt="Fourier spectrum of aligned Derek image" /><figcaption><b>Derek spectrum</b></figcaption></figure>
+        <figure><img src="assets/derek_nutmeg_low_original_fft.jpg" alt="Fourier spectrum of aligned Nutmeg image" /><figcaption><b>Nutmeg spectrum</b></figcaption></figure>
+        <figure><img src="assets/derek_nutmeg_high_frequency_fft.jpg" alt="Fourier spectrum of high-pass Derek image" /><figcaption><b>High-pass spectrum</b></figcaption></figure>
+        <figure><img src="assets/derek_nutmeg_low_frequency_fft.jpg" alt="Fourier spectrum of low-pass Nutmeg image" /><figcaption><b>Low-pass spectrum</b></figcaption></figure>
+        <figure><img src="assets/derek_nutmeg_hybrid_fft.jpg" alt="Fourier spectrum of final hybrid image" /><figcaption><b>Hybrid spectrum</b></figcaption></figure>
+      </div>
+      <div class="prose">
+        <p>The Fourier plots show the same filtering process in frequency space. Nutmeg's low-pass spectrum is concentrated near the bright center, where low frequencies live. Derek's high-pass spectrum removes much of that center and keeps energy farther outward. The final spectrum contains both, which is why the hybrid can support two interpretations at different distances.</p>
+      </div>
+      <div class="gallery three feature-row">
+        <figure><img src="assets/derek_nutmeg_high_frequency.jpg" alt="High-frequency component of Derek" /><figcaption><b>High-pass Derek</b><span>Displayed around middle gray</span></figcaption></figure>
+        <figure><img src="assets/derek_nutmeg_low_frequency.jpg" alt="Low-frequency component of Nutmeg" /><figcaption><b>Low-pass Nutmeg</b></figcaption></figure>
+        <figure><img src="assets/derek_nutmeg_hybrid.jpg" alt="Hybrid image combining Derek and Nutmeg" /><figcaption><b>Final hybrid</b><span>Derek nearby, Nutmeg at a distance</span></figcaption></figure>
+      </div>
+      <h3>Two more hybrid images</h3>
+      <div class="example-block">
+        <div class="gallery three">
+          <figure><img src="assets/cat_boxer_high_original.jpg" alt="Orange cat used as the high-frequency hybrid input" /><figcaption><b>High-frequency input</b><span>Orange cat</span></figcaption></figure>
+          <figure><img src="assets/cat_boxer_low_original.jpg" alt="Boxer used as the low-frequency hybrid input" /><figcaption><b>Low-frequency input</b><span>Boxer</span></figcaption></figure>
+          <figure><img src="assets/cat_boxer_hybrid.jpg" alt="Hybrid image combining an orange cat and a boxer" /><figcaption><b>Cat–boxer hybrid</b><span>σ high = 3, σ low = 7</span></figcaption></figure>
+        </div>
+        <p class="note">For this pair, matching the eyes mattered more than matching the outside of the heads. The cat's whiskers, fur, and eye outlines supply the sharp details nearby, while the boxer's broader face takes over at a distance.</p>
+      </div>
+      <div class="example-block">
+        <div class="gallery three">
+          <figure><img src="assets/kevin_skull_high_original.jpg" alt="Frontal skull used as the high-frequency hybrid input" /><figcaption><b>High-frequency input</b><span>Skull</span></figcaption></figure>
+          <figure><img src="assets/kevin_skull_low_original.jpg" alt="Portrait of Kevin used as the low-frequency hybrid input" /><figcaption><b>Low-frequency input</b><span>Portrait</span></figcaption></figure>
+          <figure><img src="assets/kevin_skull_hybrid.jpg" alt="Hybrid image changing between a skull and Kevin's portrait" /><figcaption><b>Portrait–skull hybrid</b><span>σ high = 1.5, σ low = 5</span></figcaption></figure>
+        </div>
+        <p class="note">This was the clearest custom result. I aligned the eye sockets with my eyes and matched the head sizes. I also reduced the skull's high-frequency weight so it would actually disappear when the image became small. Nearby it reads as a skull; farther away it changes back into my portrait.</p>
+      </div>
+    </section>
+
+    <section id="part-2-3">
+      <div class="section-heading"><span>2.3</span><h2>Gaussian and Laplacian stacks</h2></div>
+      <div class="prose">
+        <p>A single blur only separates an image into “low” and “high,” but blending works better when I can work with several ranges of feature sizes. I built a Gaussian stack by repeatedly blurring while doubling σ at each level. Unlike a pyramid, a stack never downsamples, so every level remains the original dimensions.</p>
+        <p>I formed each Laplacian level by subtracting adjacent Gaussian levels. The early levels contain small edges and texture, while later levels contain broader shapes and color changes. I keep the final Gaussian image as the lowest-frequency residual. These bands do not lose information: summing all six Laplacian levels reconstructs the original image.</p>
+      </div>
+      <h3>Apple Gaussian stack</h3>
+      <div class="stack-grid">
+        <figure><img src="assets/apple_gaussian_0.jpg" alt="Apple Gaussian level 0" /><figcaption>G0</figcaption></figure><figure><img src="assets/apple_gaussian_1.jpg" alt="Apple Gaussian level 1" /><figcaption>G1</figcaption></figure><figure><img src="assets/apple_gaussian_2.jpg" alt="Apple Gaussian level 2" /><figcaption>G2</figcaption></figure><figure><img src="assets/apple_gaussian_3.jpg" alt="Apple Gaussian level 3" /><figcaption>G3</figcaption></figure><figure><img src="assets/apple_gaussian_4.jpg" alt="Apple Gaussian level 4" /><figcaption>G4</figcaption></figure><figure><img src="assets/apple_gaussian_5.jpg" alt="Apple Gaussian level 5" /><figcaption>G5</figcaption></figure>
+      </div>
+      <h3>Apple Laplacian stack</h3>
+      <div class="stack-grid">
+        <figure><img src="assets/apple_laplacian_0.jpg" alt="Apple Laplacian level 0" /><figcaption>L0</figcaption></figure><figure><img src="assets/apple_laplacian_1.jpg" alt="Apple Laplacian level 1" /><figcaption>L1</figcaption></figure><figure><img src="assets/apple_laplacian_2.jpg" alt="Apple Laplacian level 2" /><figcaption>L2</figcaption></figure><figure><img src="assets/apple_laplacian_3.jpg" alt="Apple Laplacian level 3" /><figcaption>L3</figcaption></figure><figure><img src="assets/apple_laplacian_4.jpg" alt="Apple Laplacian level 4" /><figcaption>L4</figcaption></figure><figure><img src="assets/apple_laplacian_5.jpg" alt="Apple Laplacian residual" /><figcaption>L5 residual</figcaption></figure>
+      </div>
+      <h3>Orange Gaussian stack</h3>
+      <div class="stack-grid">
+        <figure><img src="assets/orange_gaussian_0.jpg" alt="Orange Gaussian level 0" /><figcaption>G0</figcaption></figure><figure><img src="assets/orange_gaussian_1.jpg" alt="Orange Gaussian level 1" /><figcaption>G1</figcaption></figure><figure><img src="assets/orange_gaussian_2.jpg" alt="Orange Gaussian level 2" /><figcaption>G2</figcaption></figure><figure><img src="assets/orange_gaussian_3.jpg" alt="Orange Gaussian level 3" /><figcaption>G3</figcaption></figure><figure><img src="assets/orange_gaussian_4.jpg" alt="Orange Gaussian level 4" /><figcaption>G4</figcaption></figure><figure><img src="assets/orange_gaussian_5.jpg" alt="Orange Gaussian level 5" /><figcaption>G5</figcaption></figure>
+      </div>
+      <h3>Orange Laplacian stack</h3>
+      <div class="stack-grid">
+        <figure><img src="assets/orange_laplacian_0.jpg" alt="Orange Laplacian level 0" /><figcaption>L0</figcaption></figure><figure><img src="assets/orange_laplacian_1.jpg" alt="Orange Laplacian level 1" /><figcaption>L1</figcaption></figure><figure><img src="assets/orange_laplacian_2.jpg" alt="Orange Laplacian level 2" /><figcaption>L2</figcaption></figure><figure><img src="assets/orange_laplacian_3.jpg" alt="Orange Laplacian level 3" /><figcaption>L3</figcaption></figure><figure><img src="assets/orange_laplacian_4.jpg" alt="Orange Laplacian level 4" /><figcaption>L4</figcaption></figure><figure><img src="assets/orange_laplacian_5.jpg" alt="Orange Laplacian residual" /><figcaption>L5 residual</figcaption></figure>
+      </div>
+    </section>
+
+    <section id="part-2-4">
+      <div class="section-heading"><span>2.4</span><h2>Multiresolution blending</h2></div>
+      <div class="prose">
+        <p>A hard cut between two images creates an obvious seam. Blurring that seam once is not enough either: a narrow transition works for tiny details but can leave a break in large color regions, while a wide transition hides broad changes but makes fine details ghost together.</p>
+        <p>Multiresolution blending gives each frequency band its own transition width. I built Laplacian stacks for both images and a Gaussian stack for the mask. At every level I used <span class="formula">L blend = G mask · L A + (1 − G mask) · L B</span>, then summed the blended levels. High-frequency details change sides relatively quickly, while low-frequency lighting and color change over a wider area. This is what lets the apple and orange meet without one fixed blurry strip across every feature.</p>
+      </div>
+      <div class="gallery four">
+        <figure><img src="assets/oraple_image1.jpg" alt="Apple used for multiresolution blending" /><figcaption><b>Apple</b></figcaption></figure>
+        <figure><img src="assets/oraple_image2.jpg" alt="Orange used for multiresolution blending" /><figcaption><b>Orange</b></figcaption></figure>
+        <figure><img src="assets/oraple_mask.jpg" alt="Vertical half mask used for Oraple" /><figcaption><b>Vertical mask</b></figcaption></figure>
+        <figure><img src="assets/oraple.jpg" alt="Final multiresolution blend of apple and orange" /><figcaption><b>Oraple</b></figcaption></figure>
+      </div>
+      <h3>Figure 3.42 recreation</h3>
+      <p class="intro">The top row shows masked Apple bands, the middle row shows masked Orange bands, and the bottom row adds each pair together. Moving left to right goes from fine details toward broad, low-frequency structure. The narrow high-frequency transition preserves texture near the seam, while the wider low-frequency transition makes the overall color change gradual.</p>
+      <div class="figure-grid">
+        <figure><img src="assets/figure_3_42_a.jpg" alt="Figure 3.42 panel a" /><figcaption>(a)</figcaption></figure><figure><img src="assets/figure_3_42_b.jpg" alt="Figure 3.42 panel b" /><figcaption>(b)</figcaption></figure><figure><img src="assets/figure_3_42_c.jpg" alt="Figure 3.42 panel c" /><figcaption>(c)</figcaption></figure><figure><img src="assets/figure_3_42_d.jpg" alt="Figure 3.42 panel d" /><figcaption>(d)</figcaption></figure>
+        <figure><img src="assets/figure_3_42_e.jpg" alt="Figure 3.42 panel e" /><figcaption>(e)</figcaption></figure><figure><img src="assets/figure_3_42_f.jpg" alt="Figure 3.42 panel f" /><figcaption>(f)</figcaption></figure><figure><img src="assets/figure_3_42_g.jpg" alt="Figure 3.42 panel g" /><figcaption>(g)</figcaption></figure><figure><img src="assets/figure_3_42_h.jpg" alt="Figure 3.42 panel h" /><figcaption>(h)</figcaption></figure>
+        <figure><img src="assets/figure_3_42_i.jpg" alt="Figure 3.42 panel i" /><figcaption>(i)</figcaption></figure><figure><img src="assets/figure_3_42_j.jpg" alt="Figure 3.42 panel j" /><figcaption>(j)</figcaption></figure><figure><img src="assets/figure_3_42_k.jpg" alt="Figure 3.42 panel k" /><figcaption>(k)</figcaption></figure><figure><img src="assets/figure_3_42_l.jpg" alt="Figure 3.42 panel l" /><figcaption>(l)</figcaption></figure>
+      </div>
+      <h3>Custom blends</h3>
+      <div class="gallery four">
+        <figure><img src="assets/campus_blend_image1.jpg" alt="Berkeley Campanile and Memorial Glade" /><figcaption><b>UC Berkeley</b><span>Campanile and Memorial Glade</span></figcaption></figure><figure><img src="assets/campus_blend_image2.jpg" alt="Central walkway on the UC Irvine campus" /><figcaption><b>UC Irvine</b><span>View from Watson Bridge</span></figcaption></figure><figure><img src="assets/campus_blend_mask.jpg" alt="Horizontal mask for the Berkeley and Irvine campus blend" /><figcaption><b>Horizontal mask</b></figcaption></figure><figure><img src="assets/campus_blend.jpg" alt="Multiresolution blend placing Berkeley above the UC Irvine walkway" /><figcaption><b>Berkeley × Irvine</b><span>The Campanile above UCI's walkway</span></figcaption></figure>
+      </div>
+      <p class="note">For the campus image, I used a horizontal mask so Berkeley supplies the skyline and UCI supplies the walkway. The geometry does not line up perfectly, but the gradual low-frequency transition makes the two campuses feel more like one scene.</p>
+      <div class="gallery four">
+        <figure><img src="assets/bottle_blend_image1.jpg" alt="First bottle photograph for blending" /><figcaption><b>Bottle view 1</b></figcaption></figure><figure><img src="assets/bottle_blend_image2.jpg" alt="Second bottle photograph for blending" /><figcaption><b>Bottle view 2</b></figcaption></figure><figure><img src="assets/bottle_blend_mask.jpg" alt="Circular irregular mask for bottle blend" /><figcaption><b>Irregular mask</b><span>A circle rather than a straight seam</span></figcaption></figure><figure><img src="assets/bottle_blend.jpg" alt="Multiresolution blend of two bottle views" /><figcaption><b>Bottle blend</b></figcaption></figure>
+      </div>
+      <p class="note">The bottle example uses a circular mask instead of a straight boundary. The bottle stays centered across both photographs, so the irregular blend keeps it stable while the surrounding viewpoint changes.</p>
+    </section>
+
+    <section id="takeaway">
+      <div class="section-heading"><span>★</span><h2>Most important thing I learned</h2></div>
+      <div class="prose"><p>The most important thing I learned is that the same image can behave very differently once it is split into frequency bands. Before this project, sharpening, hybrid images, and seamless blending seemed like unrelated tricks. Now they feel like variations of the same idea: sharpening strengthens high frequencies, hybrids give different subjects different frequency ranges, and multiresolution blending chooses a different seam width for every range. The code for each part was not too complicated by itself; understanding what each frequency band contributes was the part that made everything connect.</p></div>
+    </section>
+
+    <section id="sources">
+      <div class="section-heading"><span>↗</span><h2>Image credits</h2></div>
+      <div class="prose credits">
+        <p>The custom portrait–skull and cat–boxer hybrids and Berkeley–Irvine blend use reusable images from Wikimedia Commons:</p>
+        <ul>
+          <li><a href="https://commons.wikimedia.org/wiki/File:Human_skull_-_anterior_view.png">Human skull—anterior view</a> by Anatomography (CC BY-SA 2.1 Japan)</li>
+          <li><a href="https://commons.wikimedia.org/wiki/File:Cat03.jpg">Cat03.jpg</a> by Fir0002 (GFDL 1.2)</li>
+          <li><a href="https://commons.wikimedia.org/wiki/File:A_front_view_of_the_face_of_the_boxer_dog_breed.jpg">Front view of a boxer</a> by Martin Vorel (public domain)</li>
+          <li><a href="https://commons.wikimedia.org/wiki/File:Berkeley_glade_afternoon.jpg">Berkeley glade afternoon</a> by Gku (CC BY-SA 3.0)</li>
+          <li><a href="https://commons.wikimedia.org/wiki/File:UC_Irvine_view_from_Watson_Bridge_2.jpg">UC Irvine view from Watson Bridge 2</a> by Allyunion (CC BY-SA 4.0)</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

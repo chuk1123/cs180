@@ -1,0 +1,131 @@
+:root {
+  --ink: #202327;
+  --muted: #687078;
+  --line: #dedfdf;
+  --accent: #165f99;
+  --paper: #fbfbfa;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  width: min(1160px, calc(100% - 40px));
+  margin: 0 auto;
+  color: var(--ink);
+  background: var(--paper);
+  font-family: Arial, Helvetica, sans-serif;
+  line-height: 1.6;
+}
+
+.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.brand { color: var(--ink); font-weight: 700; text-decoration: none; }
+nav { display: flex; gap: 18px; }
+nav a { color: var(--muted); font-size: .9rem; text-decoration: none; }
+nav a.active { color: var(--ink); font-weight: 600; }
+
+main { padding: 66px 0 96px; }
+.eyebrow { margin: 0 0 9px; color: var(--muted); font-size: .9rem; }
+h1 { max-width: 850px; margin: 0; font-size: clamp(2.5rem, 7vw, 4.8rem); letter-spacing: -.05em; line-height: 1.03; }
+.lede { max-width: 720px; margin: 24px 0 72px; color: var(--muted); font-size: 1.15rem; }
+
+.contents {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: -40px 0 64px;
+}
+
+.contents a {
+  padding: 7px 11px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: .78rem;
+  text-decoration: none;
+}
+
+.contents a:hover { color: var(--accent); border-color: var(--accent); }
+
+section { padding: 52px 0; border-top: 1px solid var(--line); }
+.section-heading { display: grid; grid-template-columns: 64px 1fr; align-items: baseline; gap: 16px; }
+.section-heading span { color: var(--accent); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 700; }
+h2 { margin: 0; font-size: clamp(1.6rem, 4vw, 2.4rem); letter-spacing: -.025em; }
+
+h3 {
+  margin: 40px 0 0 80px;
+  font-size: 1.12rem;
+  letter-spacing: -.01em;
+}
+
+.prose, .intro, .note {
+  max-width: 800px;
+  margin-left: 80px;
+}
+
+.prose { margin-top: 22px; }
+.prose p { margin: 0 0 16px; }
+.intro { margin-top: 12px; color: var(--muted); }
+.note { margin-top: 14px; color: var(--muted); font-size: .94rem; }
+.formula { font-family: Georgia, 'Times New Roman', serif; }
+.credits a { color: var(--accent); }
+.credits li + li { margin-top: 6px; }
+
+code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+pre {
+  overflow-x: auto;
+  margin: 18px 0 0;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: #f1f3f4;
+  font-size: .82rem;
+  line-height: 1.55;
+}
+
+.code-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+  margin: 30px 0 0 80px;
+}
+.code-grid h3 { margin: 0 0 10px; }
+.code-grid pre { height: calc(100% - 34px); margin: 0; }
+
+img { display: block; width: 100%; height: auto; }
+figure { margin: 0; }
+figcaption { display: flex; flex-direction: column; margin-top: 9px; color: var(--muted); font-size: .86rem; line-height: 1.4; }
+figcaption b { color: var(--ink); }
+.gallery { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px 18px; margin: 28px 0 0 80px; }
+.gallery.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.gallery.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.gallery.five { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.spectra img { background: #050505; }
+.feature-row img { aspect-ratio: 4 / 5; object-fit: contain; background: #eef0f1; }
+.example-block + .example-block { margin-top: 48px; }
+
+.stack-grid, .figure-grid {
+  display: grid;
+  gap: 16px 10px;
+  margin: 22px 0 0 80px;
+}
+.stack-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.figure-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.stack-grid figcaption, .figure-grid figcaption { align-items: center; }
+.stack-grid img, .figure-grid img { background: #e8eaeb; }
+
+@media (max-width: 700px) {
+  body { width: min(100% - 32px, 1160px); }
+  main { padding-top: 48px; }
+  .section-heading { grid-template-columns: 48px 1fr; }
+  .prose, .intro, .note, h3, .gallery, .code-grid, .stack-grid, .figure-grid { margin-left: 0; }
+  .gallery, .gallery.two, .gallery.three, .gallery.four, .gallery.five, .code-grid { grid-template-columns: 1fr; }
+  .stack-grid, .figure-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
