@@ -74,7 +74,12 @@ Dy = np.array([[1], [0], [-1]])</code></pre>
         <figure><img src="assets/cameraman_dx.jpg" alt="Cameraman partial derivative in x" /><figcaption><b>Partial derivative Dx</b></figcaption></figure>
         <figure><img src="assets/cameraman_dy.jpg" alt="Cameraman partial derivative in y" /><figcaption><b>Partial derivative Dy</b></figcaption></figure>
         <figure><img src="assets/cameraman_gradient.jpg" alt="Cameraman gradient magnitude" /><figcaption><b>Gradient magnitude</b></figcaption></figure>
-        <figure><img src="assets/cameraman_edges.jpg" alt="Thresholded cameraman edges" /><figcaption><b>Binarized edges</b><span>Threshold = 0.23</span></figcaption></figure>
+        <figure><img src="assets/cameraman_edges.png" alt="Thresholded cameraman edges" /><figcaption><b>Binarized edges</b><span>Threshold = 0.23</span></figcaption></figure>
+      </div>
+      <div class="gallery three">
+        <figure><img src="assets/edges_0.12.png" alt="Cameraman edges at threshold 0.12" /><figcaption><b>0.12</b><span>Too much grass and background texture</span></figcaption></figure>
+        <figure><img src="assets/edges_0.23.png" alt="Cameraman edges at threshold 0.23" /><figcaption><b>0.23</b><span>My choice</span></figcaption></figure>
+        <figure><img src="assets/edges_0.35.png" alt="Cameraman edges at threshold 0.35" /><figcaption><b>0.35</b><span>Loses parts of the subject</span></figcaption></figure>
       </div>
     </section>
 
@@ -91,8 +96,8 @@ Dy = np.array([[1], [0], [-1]])</code></pre>
         <figure><img src="assets/dog_y_filter.jpg" alt="Derivative of Gaussian filter in y" /><figcaption><b>DoG y filter</b></figcaption></figure>
         <figure><img src="assets/blurred_gradient.jpg" alt="Gradient magnitude after Gaussian smoothing" /><figcaption><b>Blur then differentiate</b></figcaption></figure>
         <figure><img src="assets/dog_gradient.jpg" alt="Gradient magnitude using derivative of Gaussian filters" /><figcaption><b>Single DoG convolution</b></figcaption></figure>
-        <figure><img src="assets/blurred_edges.jpg" alt="Thresholded edges after blur then derivative" /><figcaption><b>Two-step edges</b><span>Threshold = 0.15</span></figcaption></figure>
-        <figure><img src="assets/dog_edges.jpg" alt="Thresholded edges using derivative of Gaussian" /><figcaption><b>DoG edges</b><span>Identical to the two-step result</span></figcaption></figure>
+        <figure><img src="assets/blurred_edges.png" alt="Thresholded edges after blur then derivative" /><figcaption><b>Two-step edges</b><span>Threshold = 0.15</span></figcaption></figure>
+        <figure><img src="assets/dog_edges.png" alt="Thresholded edges using derivative of Gaussian" /><figcaption><b>DoG edges</b><span>Identical to the two-step result</span></figcaption></figure>
       </div>
     </section>
 
@@ -111,12 +116,13 @@ Dy = np.array([[1], [0], [-1]])</code></pre>
         <figure><img src="assets/taj_sharpened_alpha_3.jpg" alt="Taj Mahal sharpened with alpha 3" /><figcaption><b>α = 3</b><span>Strong halos and contrast</span></figcaption></figure>
         <figure><img src="assets/taj_blurred_then_resharpened.jpg" alt="Taj Mahal blurred and then resharpened" /><figcaption><b>Blurred, then sharpened</b><span>Edges return, but lost detail does not</span></figcaption></figure>
       </div>
-      <h3>Second example</h3>
+      <h3>Second example: a tree tunnel</h3>
+      <p class="intro">The branches and leaves give sharpening a lot to work with. They become easier to pick out at α = 1.5, but the result also looks a bit more contrasty; the filter is emphasizing existing edges, not inventing new leaves.</p>
       <div class="gallery four">
-        <figure><img src="assets/kevin_original.jpg" alt="Original personal photograph" /><figcaption><b>Original</b></figcaption></figure>
-        <figure><img src="assets/kevin_blurred.jpg" alt="Blurred personal photograph" /><figcaption><b>Gaussian blur</b></figcaption></figure>
-        <figure><img src="assets/kevin_high_frequency.jpg" alt="High frequency details of personal photograph" /><figcaption><b>High frequencies</b></figcaption></figure>
-        <figure><img src="assets/kevin_sharpened_alpha_1.5.jpg" alt="Personal photograph sharpened with alpha 1.5" /><figcaption><b>Sharpened</b><span>α = 1.5</span></figcaption></figure>
+        <figure><img src="assets/forest_original.jpg" alt="Original tree tunnel" /><figcaption><b>Original</b></figcaption></figure>
+        <figure><img src="assets/forest_blurred.jpg" alt="Blurred tree tunnel" /><figcaption><b>Gaussian blur</b></figcaption></figure>
+        <figure><img src="assets/forest_high_frequency.jpg" alt="High-frequency detail in the tree tunnel" /><figcaption><b>High frequencies</b></figcaption></figure>
+        <figure><img src="assets/forest_sharpened_alpha_1.5.jpg" alt="Sharpened tree tunnel" /><figcaption><b>Sharpened</b><span>α = 1.5</span></figcaption></figure>
       </div>
     </section>
 
@@ -124,47 +130,60 @@ Dy = np.array([[1], [0], [-1]])</code></pre>
       <div class="section-heading"><span>2.2</span><h2>Hybrid images</h2></div>
       <div class="prose">
         <p>Hybrid images were the most fun part of the project, but also much more finicky than I expected. Up close, sharp edges and small details grab my attention. When I shrink the image or step away, those details disappear and I mostly see the broad low-frequency structure.</p>
-        <p>The code itself is short: high-pass one image, low-pass the other, and add them. Getting a convincing result is the hard part. My first moon-and-eye attempt had a strong circular boundary that never disappeared, so it always looked pasted together. That failure made it pretty obvious that image choice and alignment matter as much as the filter. If the eyes, head shape, or other important features do not line up, no choice of sigma really saves it.</p>
-        <p>For Derek and Nutmeg, I aligned their eyes and used σ = 2 for Derek's high-pass filter and σ = 5 for Nutmeg's low-pass filter. Derek's facial edges dominate nearby, while Nutmeg's smoother face becomes easier to recognize after shrinking the image or stepping back.</p>
+        <p>The code itself is short: high-pass one image, low-pass the other, and add them. Getting a convincing result is the hard part. I tried pairs with matching shapes and checked each result at a much smaller size. If the silhouettes fight each other, changing the cutoff cannot really fix it.</p>
+        <p>For Derek and Nutmeg, I aligned their eyes and used σ = 2 for Derek's high-pass filter and σ = 5 for Nutmeg's low-pass filter. Derek's facial edges dominate nearby; Nutmeg becomes easier to recognize after shrinking the image or stepping back.</p>
       </div>
-      <div class="gallery two">
+      <div class="gallery three">
         <figure><img src="assets/derek_nutmeg_high_original.jpg" alt="Original photograph of Derek" /><figcaption><b>High-frequency input</b><span>Derek</span></figcaption></figure>
         <figure><img src="assets/derek_nutmeg_low_original.jpg" alt="Original photograph of Nutmeg" /><figcaption><b>Low-frequency input</b><span>Nutmeg</span></figcaption></figure>
-        <figure><img src="assets/derek_nutmeg_high_aligned.jpg" alt="Aligned photograph of Derek" /><figcaption><b>Aligned Derek</b></figcaption></figure>
-        <figure><img src="assets/derek_nutmeg_low_aligned.jpg" alt="Aligned photograph of Nutmeg" /><figcaption><b>Aligned Nutmeg</b></figcaption></figure>
+        <figure><img src="assets/derek_nutmeg_hybrid.jpg" alt="Derek and Nutmeg hybrid" /><figcaption><b>Final hybrid</b></figcaption></figure>
       </div>
-      <h3>Frequency analysis</h3>
-      <div class="gallery five spectra">
-        <figure><img src="assets/derek_nutmeg_high_original_fft.jpg" alt="Fourier spectrum of aligned Derek image" /><figcaption><b>Derek spectrum</b></figcaption></figure>
-        <figure><img src="assets/derek_nutmeg_low_original_fft.jpg" alt="Fourier spectrum of aligned Nutmeg image" /><figcaption><b>Nutmeg spectrum</b></figcaption></figure>
-        <figure><img src="assets/derek_nutmeg_high_frequency_fft.jpg" alt="Fourier spectrum of high-pass Derek image" /><figcaption><b>High-pass spectrum</b></figcaption></figure>
-        <figure><img src="assets/derek_nutmeg_low_frequency_fft.jpg" alt="Fourier spectrum of low-pass Nutmeg image" /><figcaption><b>Low-pass spectrum</b></figcaption></figure>
-        <figure><img src="assets/derek_nutmeg_hybrid_fft.jpg" alt="Fourier spectrum of final hybrid image" /><figcaption><b>Hybrid spectrum</b></figcaption></figure>
-      </div>
-      <div class="prose">
-        <p>The Fourier plots show the same filtering process in frequency space. Nutmeg's low-pass spectrum is concentrated near the bright center, where low frequencies live. Derek's high-pass spectrum removes much of that center and keeps energy farther outward. The final spectrum contains both, which is why the hybrid can support two interpretations at different distances.</p>
+      <h3>Owl × Moon</h3>
+      <p class="intro">I wanted the owl's face to become the Moon's round disc. I cropped both around that circle, then used σ = 2 for the owl's high-pass and σ = 10 for the Moon's low-pass. A broader owl high-pass left too much feather texture in the small version; a stronger Moon blur made the lunar features disappear. The owl's eyes still faintly show when it is small.</p>
+      <div class="gallery four">
+        <figure><img src="assets/owl_moon_high_original.jpg" alt="Original great gray owl" /><figcaption><b>Owl source</b></figcaption></figure>
+        <figure><img src="assets/owl_moon_low_original.jpg" alt="Original Moon" /><figcaption><b>Moon source</b></figcaption></figure>
+        <figure><img src="assets/owl_moon_high_aligned.jpg" alt="Cropped owl" /><figcaption><b>Aligned owl</b></figcaption></figure>
+        <figure><img src="assets/owl_moon_low_aligned.jpg" alt="Cropped Moon" /><figcaption><b>Aligned Moon</b></figcaption></figure>
       </div>
       <div class="gallery three feature-row">
-        <figure><img src="assets/derek_nutmeg_high_frequency.jpg" alt="High-frequency component of Derek" /><figcaption><b>High-pass Derek</b><span>Displayed around middle gray</span></figcaption></figure>
-        <figure><img src="assets/derek_nutmeg_low_frequency.jpg" alt="Low-frequency component of Nutmeg" /><figcaption><b>Low-pass Nutmeg</b></figcaption></figure>
-        <figure><img src="assets/derek_nutmeg_hybrid.jpg" alt="Hybrid image combining Derek and Nutmeg" /><figcaption><b>Final hybrid</b><span>Derek nearby, Nutmeg at a distance</span></figcaption></figure>
+        <figure><img src="assets/owl_moon_high_frequency.jpg" alt="High-pass owl" /><figcaption><b>High-pass owl</b><span>Displayed around middle gray</span></figcaption></figure>
+        <figure><img src="assets/owl_moon_low_frequency.jpg" alt="Low-pass Moon" /><figcaption><b>Low-pass Moon</b></figcaption></figure>
+        <figure><img src="assets/owl_moon_hybrid.jpg" alt="Owl and Moon hybrid" /><figcaption><b>Final hybrid</b></figcaption></figure>
       </div>
-      <h3>Two more hybrid images</h3>
+      <div class="gallery two compare-size">
+        <figure><img src="assets/owl_moon_hybrid.jpg" alt="Owl Moon hybrid at normal size" /><figcaption><b>Nearby view</b><span>Feathers and eyes stand out</span></figcaption></figure>
+        <figure><img class="small-hybrid" src="assets/owl_moon_small.jpg" alt="Owl Moon hybrid reduced to 96 pixels" /><figcaption><b>Reduced to 96 × 96</b><span>The lunar disc is easier to see</span></figcaption></figure>
+      </div>
+      <h3>Frequency analysis of Owl × Moon</h3>
+      <div class="gallery five spectra">
+        <figure><img src="assets/owl_moon_high_original_fft.jpg" alt="Fourier spectrum of aligned owl" /><figcaption><b>Owl</b></figcaption></figure>
+        <figure><img src="assets/owl_moon_low_original_fft.jpg" alt="Fourier spectrum of aligned Moon" /><figcaption><b>Moon</b></figcaption></figure>
+        <figure><img src="assets/owl_moon_high_frequency_fft.jpg" alt="Spectrum of high-pass owl" /><figcaption><b>High-pass owl</b></figcaption></figure>
+        <figure><img src="assets/owl_moon_low_frequency_fft.jpg" alt="Spectrum of low-pass Moon" /><figcaption><b>Low-pass Moon</b></figcaption></figure>
+        <figure><img src="assets/owl_moon_hybrid_fft.jpg" alt="Spectrum of owl Moon hybrid" /><figcaption><b>Hybrid</b></figcaption></figure>
+      </div>
+      <div class="prose">
+        <p>The Moon's low-pass spectrum is concentrated near the bright center, where low frequencies live. The owl's high-pass spectrum loses much of that center and keeps energy farther outward. The final spectrum contains both.</p>
+      </div>
+      <h3>Rose × Galaxy</h3>
       <div class="example-block">
         <div class="gallery three">
-          <figure><img src="assets/cat_boxer_high_original.jpg" alt="Orange cat used as the high-frequency hybrid input" /><figcaption><b>High-frequency input</b><span>Orange cat</span></figcaption></figure>
-          <figure><img src="assets/cat_boxer_low_original.jpg" alt="Boxer used as the low-frequency hybrid input" /><figcaption><b>Low-frequency input</b><span>Boxer</span></figcaption></figure>
-          <figure><img src="assets/cat_boxer_hybrid.jpg" alt="Hybrid image combining an orange cat and a boxer" /><figcaption><b>Cat–boxer hybrid</b><span>σ high = 3, σ low = 7</span></figcaption></figure>
+          <figure><img src="assets/rose_galaxy_high_original.jpg" alt="Pink rose macro photo" /><figcaption><b>Rose source</b><span>High-frequency input</span></figcaption></figure>
+          <figure><img src="assets/rose_galaxy_low_original.jpg" alt="Spiral galaxy photo" /><figcaption><b>Galaxy source</b><span>Low-frequency input</span></figcaption></figure>
+          <figure><img src="assets/rose_galaxy_hybrid.jpg" alt="Rose and galaxy hybrid" /><figcaption><b>Rose × Galaxy</b><span>σ high = 2, σ low = 14</span></figcaption></figure>
         </div>
-        <p class="note">For this pair, matching the eyes mattered more than matching the outside of the heads. The cat's whiskers, fur, and eye outlines supply the sharp details nearby, while the boxer's broader face takes over at a distance.</p>
+        <p class="note">The petal edges become the close-up detail, while the galaxy's spiral becomes more apparent in the reduced view below. The subjects do not switch as cleanly as Derek and Nutmeg, but the shared spiral shape made a more interesting experiment.</p>
+        <div class="gallery one"><figure><img class="small-hybrid" src="assets/rose_galaxy_small.jpg" alt="Rose Galaxy hybrid reduced to 96 pixels" /><figcaption><b>96 × 96 view</b></figcaption></figure></div>
       </div>
+      <h3>A pair that did not work as well</h3>
       <div class="example-block">
         <div class="gallery three">
-          <figure><img src="assets/kevin_skull_high_original.jpg" alt="Frontal skull used as the high-frequency hybrid input" /><figcaption><b>High-frequency input</b><span>Skull</span></figcaption></figure>
-          <figure><img src="assets/kevin_skull_low_original.jpg" alt="Portrait of Kevin used as the low-frequency hybrid input" /><figcaption><b>Low-frequency input</b><span>Portrait</span></figcaption></figure>
-          <figure><img src="assets/kevin_skull_hybrid.jpg" alt="Hybrid image changing between a skull and Kevin's portrait" /><figcaption><b>Portrait–skull hybrid</b><span>σ high = 1.5, σ low = 5</span></figcaption></figure>
+          <figure><img src="assets/cat_boxer_high_original.jpg" alt="Cat photo" /><figcaption><b>Cat source</b></figcaption></figure>
+          <figure><img src="assets/cat_boxer_low_original.jpg" alt="Boxer photo" /><figcaption><b>Boxer source</b></figcaption></figure>
+          <figure><img src="assets/cat_boxer_hybrid.jpg" alt="Cat boxer hybrid" /><figcaption><b>Cat × Boxer</b></figcaption></figure>
         </div>
-        <p class="note">This was the clearest custom result. I aligned the eye sockets with my eyes and matched the head sizes. I also reduced the skull's high-frequency weight so it would actually disappear when the image became small. Nearby it reads as a skull; farther away it changes back into my portrait.</p>
+        <p class="note">I aligned the eyes, but the muzzle shapes and fur patterns still disagree. The cat remains too visible in the reduced image. This was a useful failure: matching just two points is not enough when the rest of the faces have different geometry.</p>
       </div>
     </section>
 
@@ -212,32 +231,61 @@ Dy = np.array([[1], [0], [-1]])</code></pre>
         <figure><img src="assets/figure_3_42_i.jpg" alt="Figure 3.42 panel i" /><figcaption>(i)</figcaption></figure><figure><img src="assets/figure_3_42_j.jpg" alt="Figure 3.42 panel j" /><figcaption>(j)</figcaption></figure><figure><img src="assets/figure_3_42_k.jpg" alt="Figure 3.42 panel k" /><figcaption>(k)</figcaption></figure><figure><img src="assets/figure_3_42_l.jpg" alt="Figure 3.42 panel l" /><figcaption>(l)</figcaption></figure>
       </div>
       <h3>Custom blends</h3>
-      <div class="gallery four">
-        <figure><img src="assets/campus_blend_image1.jpg" alt="Berkeley Campanile and Memorial Glade" /><figcaption><b>UC Berkeley</b><span>Campanile and Memorial Glade</span></figcaption></figure><figure><img src="assets/campus_blend_image2.jpg" alt="Central walkway on the UC Irvine campus" /><figcaption><b>UC Irvine</b><span>View from Watson Bridge</span></figcaption></figure><figure><img src="assets/campus_blend_mask.jpg" alt="Horizontal mask for the Berkeley and Irvine campus blend" /><figcaption><b>Horizontal mask</b></figcaption></figure><figure><img src="assets/campus_blend.jpg" alt="Multiresolution blend placing Berkeley above the UC Irvine walkway" /><figcaption><b>Berkeley × Irvine</b><span>The Campanile above UCI's walkway</span></figcaption></figure>
+      <h4>Autumn into winter — straight seam</h4>
+      <p class="intro">Both photos look down a forest path, so their vanishing points are close enough to make a seasonal transition. The hard cut exposes the lighting change at the center. The stack blend softens that change, though the trunks on the two sides do not line up perfectly.</p>
+      <div class="gallery five">
+        <figure><img src="assets/seasons_image1.jpg" alt="Autumn forest path" /><figcaption><b>Autumn</b></figcaption></figure>
+        <figure><img src="assets/seasons_image2.jpg" alt="Winter forest path" /><figcaption><b>Winter</b></figcaption></figure>
+        <figure><img src="assets/seasons_mask.jpg" alt="Vertical blending mask" /><figcaption><b>Mask</b></figcaption></figure>
+        <figure><img src="assets/seasons_hard_cut.jpg" alt="Hard cut between autumn and winter" /><figcaption><b>Hard cut</b></figcaption></figure>
+        <figure><img src="assets/seasons.jpg" alt="Multiresolution blend between autumn and winter" /><figcaption><b>Stack blend</b></figcaption></figure>
       </div>
-      <p class="note">For the campus image, I used a horizontal mask so Berkeley supplies the skyline and UCI supplies the walkway. The geometry does not line up perfectly, but the gradual low-frequency transition makes the two campuses feel more like one scene.</p>
-      <div class="gallery four">
-        <figure><img src="assets/bottle_blend_image1.jpg" alt="First bottle photograph for blending" /><figcaption><b>Bottle view 1</b></figcaption></figure><figure><img src="assets/bottle_blend_image2.jpg" alt="Second bottle photograph for blending" /><figcaption><b>Bottle view 2</b></figcaption></figure><figure><img src="assets/bottle_blend_mask.jpg" alt="Circular irregular mask for bottle blend" /><figcaption><b>Irregular mask</b><span>A circle rather than a straight seam</span></figcaption></figure><figure><img src="assets/bottle_blend.jpg" alt="Multiresolution blend of two bottle views" /><figcaption><b>Bottle blend</b></figcaption></figure>
+      <h4>Cosmic rose — irregular mask</h4>
+      <p class="intro">I made this mask from the rose's silhouette instead of using a circle or straight line. White selects the rose; black selects the galaxy. The hard-cut version leaves an obvious petal edge, while the stack blend lets the red petals fade into the stars at several scales.</p>
+      <div class="gallery five">
+        <figure><img src="assets/cosmic_rose_image1.jpg" alt="Red rose on black background" /><figcaption><b>Rose</b></figcaption></figure>
+        <figure><img src="assets/cosmic_rose_image2.jpg" alt="Spiral galaxy" /><figcaption><b>Galaxy</b></figcaption></figure>
+        <figure><img src="assets/cosmic_rose_mask.jpg" alt="Rose-shaped irregular mask" /><figcaption><b>Irregular mask</b></figcaption></figure>
+        <figure><img src="assets/cosmic_rose_hard_cut.jpg" alt="Hard-cut rose and galaxy" /><figcaption><b>Hard cut</b></figcaption></figure>
+        <figure><img src="assets/cosmic_rose.jpg" alt="Multiresolution rose and galaxy blend" /><figcaption><b>Stack blend</b></figcaption></figure>
       </div>
-      <p class="note">The bottle example uses a circular mask instead of a straight boundary. The bottle stays centered across both photographs, so the irregular blend keeps it stable while the surrounding viewpoint changes.</p>
+      <p class="intro">These are the two inputs after applying the unblurred mask. They make it easier to see what each source contributes before the band-by-band combination.</p>
+      <div class="gallery two">
+        <figure><img src="assets/cosmic_rose_masked_image1.jpg" alt="Masked rose input" /><figcaption><b>Masked rose</b></figcaption></figure>
+        <figure><img src="assets/cosmic_rose_masked_image2.jpg" alt="Masked galaxy input" /><figcaption><b>Masked galaxy</b></figcaption></figure>
+      </div>
+      <h4>Inside the cosmic rose blend</h4>
+      <p class="intro">As in the Oraple figure, the top row is the masked rose, the middle row is the masked galaxy, and the bottom row is their sum. Left to right moves from fine bands toward broader ones. The coarser mask is why the large color regions can cross the petal boundary more gradually than the tiny star details.</p>
+      <div class="figure-grid">
+        <figure><img src="assets/cosmic_rose_process_a.jpg" alt="Masked rose fine band 1" /><figcaption>(a)</figcaption></figure><figure><img src="assets/cosmic_rose_process_b.jpg" alt="Masked rose band 2" /><figcaption>(b)</figcaption></figure><figure><img src="assets/cosmic_rose_process_c.jpg" alt="Masked rose band 3" /><figcaption>(c)</figcaption></figure><figure><img src="assets/cosmic_rose_process_d.jpg" alt="Masked rose coarse band" /><figcaption>(d)</figcaption></figure>
+        <figure><img src="assets/cosmic_rose_process_e.jpg" alt="Masked galaxy fine band 1" /><figcaption>(e)</figcaption></figure><figure><img src="assets/cosmic_rose_process_f.jpg" alt="Masked galaxy band 2" /><figcaption>(f)</figcaption></figure><figure><img src="assets/cosmic_rose_process_g.jpg" alt="Masked galaxy band 3" /><figcaption>(g)</figcaption></figure><figure><img src="assets/cosmic_rose_process_h.jpg" alt="Masked galaxy coarse band" /><figcaption>(h)</figcaption></figure>
+        <figure><img src="assets/cosmic_rose_process_i.jpg" alt="Combined fine band 1" /><figcaption>(i)</figcaption></figure><figure><img src="assets/cosmic_rose_process_j.jpg" alt="Combined band 2" /><figcaption>(j)</figcaption></figure><figure><img src="assets/cosmic_rose_process_k.jpg" alt="Combined band 3" /><figcaption>(k)</figcaption></figure><figure><img src="assets/cosmic_rose_process_l.jpg" alt="Combined coarse band" /><figcaption>(l)</figcaption></figure>
+      </div>
     </section>
 
     <section id="takeaway">
       <div class="section-heading"><span>★</span><h2>Most important thing I learned</h2></div>
-      <div class="prose"><p>The biggest thing I learned is that sharpening, hybrid images, and seamless blending are not really three unrelated tricks. They are all different ways of deciding what to do with each frequency band. Sharpening turns up the high frequencies, hybrids give different bands to different subjects, and multiresolution blending uses a different seam width for each band. None of the individual formulas was especially long. The part that took longer—and ended up being more interesting—was learning to predict what changing a frequency band would actually look like.</p></div>
+      <div class="prose"><p>The biggest lesson for me was that frequency choices only make sense after looking at the images themselves. The owl and Moon had matching round shapes, but I still had to shrink the result to notice that the eyes lingered. The forest paths had similar perspective, but their tree trunks still could not connect across the seam. Sharpening, hybrids, and blending all use the same blur-and-subtract idea; choosing images and judging the artifacts took more thought than writing those formulas.</p></div>
     </section>
 
     <section id="sources">
       <div class="section-heading"><span>↗</span><h2>Image credits</h2></div>
       <div class="prose credits">
-        <p>The custom portrait–skull and cat–boxer hybrids and Berkeley–Irvine blend use reusable images from Wikimedia Commons:</p>
+        <p>I cropped, filtered, and combined these Wikimedia Commons source images. Credits are kept here for the photographers and licenses.</p>
+        <details><summary>View image sources</summary>
         <ul>
-          <li><a href="https://commons.wikimedia.org/wiki/File:Human_skull_-_anterior_view.png">Human skull—anterior view</a> by Anatomography (CC BY-SA 2.1 Japan)</li>
-          <li><a href="https://commons.wikimedia.org/wiki/File:Cat03.jpg">Cat03.jpg</a> by Fir0002 (GFDL 1.2)</li>
-          <li><a href="https://commons.wikimedia.org/wiki/File:A_front_view_of_the_face_of_the_boxer_dog_breed.jpg">Front view of a boxer</a> by Martin Vorel (public domain)</li>
-          <li><a href="https://commons.wikimedia.org/wiki/File:Berkeley_glade_afternoon.jpg">Berkeley glade afternoon</a> by Gku (CC BY-SA 3.0)</li>
-          <li><a href="https://commons.wikimedia.org/wiki/File:UC_Irvine_view_from_Watson_Bridge_2.jpg">UC Irvine view from Watson Bridge 2</a> by Allyunion (CC BY-SA 4.0)</li>
+          <li><a href="https://commons.wikimedia.org/wiki/File:Great_Grey_Owl_face.jpg">Great Grey Owl face</a> — Lisa Hupp/USFWS, public domain</li>
+          <li><a href="https://commons.wikimedia.org/wiki/File:Full_Moon_(15984763045).jpg">Full Moon</a> — NASA Goddard, public domain</li>
+          <li><a href="https://commons.wikimedia.org/wiki/File:Pink_Rose_Macro_-_HDR_(8690324463).jpg">Pink Rose Macro</a> — Nicolas Raymond, CC BY 2.0</li>
+          <li><a href="https://commons.wikimedia.org/wiki/File:Spiral_Galaxy_NGC_3147.png">Spiral Galaxy NGC 3147</a> — NASA/ESA collaborators, public domain</li>
+          <li><a href="https://commons.wikimedia.org/wiki/File:Red_rose_with_black_background_II.jpg">Red rose with black background II</a> — Laitche, CC BY-SA 4.0</li>
+          <li><a href="https://commons.wikimedia.org/wiki/File:Autumn_Colour,_Delamere_Forest_-_geograph.org.uk_-_73478.jpg">Autumn Colour, Delamere Forest</a> — David Crocker, CC BY-SA 2.0</li>
+          <li><a href="https://commons.wikimedia.org/wiki/File:Picturesque_path_in_the_winter_forest_(54159942433).jpg">Picturesque path in the winter forest</a> — AS Photography, CC BY 4.0</li>
+          <li><a href="https://commons.wikimedia.org/wiki/File:Tree_Tunnel_(51536815526).jpg">Tree Tunnel</a> — John Brighenti, CC BY 2.0</li>
+          <li><a href="https://commons.wikimedia.org/wiki/File:Cat03.jpg">Cat03.jpg</a> — Fir0002, GFDL 1.2</li>
+          <li><a href="https://commons.wikimedia.org/wiki/File:A_front_view_of_the_face_of_the_boxer_dog_breed.jpg">Front view of a boxer</a> — Martin Vorel, public domain</li>
         </ul>
+        </details>
       </div>
     </section>
   </main>

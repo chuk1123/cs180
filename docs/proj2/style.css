@@ -64,6 +64,7 @@ h3 {
   font-size: 1.12rem;
   letter-spacing: -.01em;
 }
+h4 { margin: 32px 0 0 80px; font-size: 1rem; }
 
 .prose, .intro, .note {
   max-width: 800px;
@@ -97,9 +98,11 @@ pre {
   margin: 30px 0 0 80px;
 }
 .code-grid h3 { margin: 0 0 10px; }
+.code-grid > div { min-width: 0; }
 .code-grid pre { height: calc(100% - 34px); margin: 0; }
 
 img { display: block; width: 100%; height: auto; }
+img[src$="_mask.jpg"] { border: 1px solid var(--line); }
 figure { margin: 0; }
 figcaption { display: flex; flex-direction: column; margin-top: 9px; color: var(--muted); font-size: .86rem; line-height: 1.4; }
 figcaption b { color: var(--ink); }
@@ -107,6 +110,12 @@ figcaption b { color: var(--ink); }
 .gallery.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .gallery.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .gallery.five { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.gallery.one { grid-template-columns: minmax(0, 1fr); }
+.small-hybrid { width: 96px; height: 96px; image-rendering: auto; }
+.compare-size .small-hybrid { margin: 25% auto; }
+.compare-size figure:last-child { display: flex; flex-direction: column; justify-content: space-between; align-items: center; }
+.credits details { margin-top: 18px; }
+.credits summary { color: var(--accent); cursor: pointer; }
 .spectra img { background: #050505; }
 .feature-row img { aspect-ratio: 4 / 5; object-fit: contain; background: #eef0f1; }
 .example-block + .example-block { margin-top: 48px; }
@@ -125,7 +134,7 @@ figcaption b { color: var(--ink); }
   body { width: min(100% - 32px, 1160px); }
   main { padding-top: 48px; }
   .section-heading { grid-template-columns: 48px 1fr; }
-  .prose, .intro, .note, h3, .gallery, .code-grid, .stack-grid, .figure-grid { margin-left: 0; }
-  .gallery, .gallery.two, .gallery.three, .gallery.four, .gallery.five, .code-grid { grid-template-columns: 1fr; }
+  .prose, .intro, .note, h3, h4, .gallery, .code-grid, .stack-grid, .figure-grid { margin-left: 0; }
+  .gallery, .gallery.one, .gallery.two, .gallery.three, .gallery.four, .gallery.five, .code-grid { grid-template-columns: 1fr; }
   .stack-grid, .figure-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
