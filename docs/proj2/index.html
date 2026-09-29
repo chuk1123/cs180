@@ -193,13 +193,14 @@ output = <span class="tok-fn">np.zeros</span>((output_h, output_w))</code></pre>
         <p>Hybrid images were the most fun part of the project, but also much more finicky than I expected. Up close, sharp edges and small details grab my attention. When I shrink the image or step away, those details disappear and I mostly see the broad low-frequency structure.</p>
         <p>The code itself is short: high-pass one image, low-pass the other, and add them. Getting a convincing result is the hard part. I tried pairs with matching shapes and checked each result at a much smaller size. If the silhouettes fight each other, changing the cutoff cannot really fix it.</p>
       </div>
-      <h3>Derek × Nutmeg</h3>
-      <p class="intro">I aligned their eyes and used σ = 2 for Derek's high-pass filter and σ = 5 for Nutmeg's low-pass filter. Derek's facial edges dominate nearby. Nutmeg becomes easier to recognize after shrinking the image or stepping back.</p>
+      <h3>Nutmeg × Derek</h3>
+      <p class="intro">I aligned their eyes and put Nutmeg in the high-frequency layer over a low-pass Derek. I used σ = 3 for Nutmeg and σ = 8 for Derek, then cropped away the empty corners from alignment. Up close, Nutmeg's eyes, nose, and whiskers show through. At a smaller size, Derek is easier to recognize.</p>
       <div class="gallery three">
-        <figure><img src="assets/derek_nutmeg_high_original.jpg" alt="Original photograph of Derek" /><figcaption><b>High-frequency input</b><span>Derek</span></figcaption></figure>
-        <figure><img src="assets/derek_nutmeg_low_original.jpg" alt="Original photograph of Nutmeg" /><figcaption><b>Low-frequency input</b><span>Nutmeg</span></figcaption></figure>
-        <figure><img src="assets/derek_nutmeg_hybrid.jpg" alt="Derek and Nutmeg hybrid" /><figcaption><b>Final hybrid</b></figcaption></figure>
+        <figure><img src="assets/derek_nutmeg_high_original.jpg" alt="Original photograph of Nutmeg the cat" /><figcaption><b>High-frequency input</b><span>Nutmeg</span></figcaption></figure>
+        <figure><img src="assets/derek_nutmeg_low_original.jpg" alt="Original photograph of Derek" /><figcaption><b>Low-frequency input</b><span>Derek</span></figcaption></figure>
+        <figure><img src="assets/derek_nutmeg_hybrid.jpg" alt="Nutmeg over Derek hybrid image" /><figcaption><b>Final hybrid</b></figcaption></figure>
       </div>
+      <div class="gallery one"><figure><img class="small-hybrid" src="assets/derek_nutmeg_small.jpg" alt="Nutmeg and Derek hybrid reduced to 96 pixels" /><figcaption><b>96 × 96 view</b><span>Derek's face reads more clearly</span></figcaption></figure></div>
       <h3>Owl × Moon</h3>
       <p class="intro">I wanted the owl's face to fit inside the Moon's round disc. I cropped both around that circle, then used σ = 2 for the owl's high-pass and σ = 10 for the Moon's low-pass. I weighted the owl layer at 0.6 so its feathers would not overpower the Moon at a small size. The eyes still linger a little.</p>
       <div class="gallery four">
