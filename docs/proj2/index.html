@@ -33,11 +33,31 @@
         <p>I then rewrote it with two loops. The outer loops still move across the image, but NumPy multiplies and sums the entire patch at once. Padding was the part that took me the most time to reason through because pixels near the edge do not have a complete neighborhood. I used zeros outside the image: <code>same</code> returns the original size, while <code>full</code> keeps every partial overlap and produces a larger result.</p>
         <p>On a 50 × 50 crop with a 9 × 9 box filter, one run took 0.0678 seconds with four loops, 0.0065 seconds with two loops, and 0.0004 seconds with <code>scipy.signal.convolve2d</code>. Both of my versions matched SciPy with <code>np.allclose</code>. NumPy speeds up the patch calculation, while SciPy is faster still because its inner work is compiled.</p>
       </div>
-      <div class="code-grid">
-        <div><h3>Four-loop version</h3><pre><code><span class="tok-var">flipped_filter</span> = <span class="tok-fn">np.flip</span>(
-    <span class="tok-fn">np.flip</span>(filter, axis=<span class="tok-num">0</span>), axis=<span class="tok-num">1</span>
+      <h3>Padding and output size</h3>
+      <p class="intro">This setup is shared by both versions. For <code>same</code>, the total padding on each axis is one less than the filter size. An even-sized filter puts the extra pixel on the top or left. For <code>full</code>, I pad by one less than the filter size on <em>each</em> side.</p>
+      <div class="prose">
+        <pre><code><span class="tok-var">flipped_filter</span> = <span class="tok-fn">np.flip</span>(<span class="tok-fn">np.flip</span>(filter, axis=<span class="tok-num">0</span>), axis=<span class="tok-num">1</span>)
+fh, fw = flipped_filter.shape
+
+<span class="tok-keyword">if</span> mode == 'same':
+    pad_top = fh // <span class="tok-num">2</span>
+    pad_bottom = (fh - <span class="tok-num">1</span>) // <span class="tok-num">2</span>
+    pad_left = fw // <span class="tok-num">2</span>
+    pad_right = (fw - <span class="tok-num">1</span>) // <span class="tok-num">2</span>
+<span class="tok-keyword">elif</span> mode == 'full':
+    pad_top = pad_bottom = fh - <span class="tok-num">1</span>
+    pad_left = pad_right = fw - <span class="tok-num">1</span>
+
+padded = <span class="tok-fn">np.pad</span>(
+    image, ((pad_top, pad_bottom), (pad_left, pad_right)),
+    mode='constant'
 )
-<span class="tok-keyword">for</span> i <span class="tok-keyword">in</span> <span class="tok-fn">range</span>(output_h):
+output_h = padded.shape[<span class="tok-num">0</span>] - (fh - <span class="tok-num">1</span>)
+output_w = padded.shape[<span class="tok-num">1</span>] - (fw - <span class="tok-num">1</span>)
+output = <span class="tok-fn">np.zeros</span>((output_h, output_w))</code></pre>
+      </div>
+      <div class="code-grid">
+        <div><h3>Four-loop version</h3><pre><code><span class="tok-keyword">for</span> i <span class="tok-keyword">in</span> <span class="tok-fn">range</span>(output_h):
     <span class="tok-keyword">for</span> j <span class="tok-keyword">in</span> <span class="tok-fn">range</span>(output_w):
         <span class="tok-keyword">for</span> fi <span class="tok-keyword">in</span> <span class="tok-fn">range</span>(fh):
             <span class="tok-keyword">for</span> fj <span class="tok-keyword">in</span> <span class="tok-fn">range</span>(fw):
