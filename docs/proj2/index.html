@@ -67,19 +67,19 @@ Dy = np.array([[1], [0], [-1]])</code></pre>
       <div class="section-heading"><span>1.2</span><h2>Finite difference operator</h2></div>
       <div class="prose">
         <p>I convolved the cameraman with Dx and Dy to measure how quickly brightness changes in each direction. Neither derivative alone contains every edge, so I combined them into the gradient magnitude <span class="formula">√(Dx² + Dy²)</span>. Large values mean the image changes sharply at that pixel.</p>
-        <p>Choosing the threshold was honestly more of a judgment call than a mathematical answer. The magnitude image contains grass and texture that are technically brightness changes, but I did not really want them in the final edge map. I tried several values and settled on 0.23: anything above it becomes 1 and everything else becomes 0. Lower values kept faint real edges, but they also brought back a lot of grass. At 0.23, the cameraman, camera, tripod, and buildings are still recognizable without as much background noise.</p>
+        <p>I first picked 0.23 because it removed a lot of grass, but it also erased parts of the tripod and the distant buildings. I compared 0.10, 0.15, and 0.23 again and chose 0.15. The grass is noisier than at 0.23, but I would rather keep the actual subject edges. Values above 0.15 become 1 and the rest become 0.</p>
       </div>
       <div class="gallery five">
         <figure><img src="assets/cameraman.jpg" alt="Original cameraman image" /><figcaption><b>Original</b></figcaption></figure>
         <figure><img src="assets/cameraman_dx.jpg" alt="Cameraman partial derivative in x" /><figcaption><b>Partial derivative Dx</b></figcaption></figure>
         <figure><img src="assets/cameraman_dy.jpg" alt="Cameraman partial derivative in y" /><figcaption><b>Partial derivative Dy</b></figcaption></figure>
         <figure><img src="assets/cameraman_gradient.jpg" alt="Cameraman gradient magnitude" /><figcaption><b>Gradient magnitude</b></figcaption></figure>
-        <figure><img src="assets/cameraman_edges.png" alt="Thresholded cameraman edges" /><figcaption><b>Binarized edges</b><span>Threshold = 0.23</span></figcaption></figure>
+        <figure><img src="assets/cameraman_edges.png" alt="Thresholded cameraman edges" /><figcaption><b>Binarized edges</b><span>Threshold = 0.15</span></figcaption></figure>
       </div>
       <div class="gallery three">
-        <figure><img src="assets/edges_0.12.png" alt="Cameraman edges at threshold 0.12" /><figcaption><b>0.12</b><span>Too much grass and background texture</span></figcaption></figure>
-        <figure><img src="assets/edges_0.23.png" alt="Cameraman edges at threshold 0.23" /><figcaption><b>0.23</b><span>My choice</span></figcaption></figure>
-        <figure><img src="assets/edges_0.35.png" alt="Cameraman edges at threshold 0.35" /><figcaption><b>0.35</b><span>Loses parts of the subject</span></figcaption></figure>
+        <figure><img src="assets/edges_0.1.png" alt="Cameraman edges at threshold 0.10" /><figcaption><b>0.10</b><span>More edges, but lots of grass</span></figcaption></figure>
+        <figure><img src="assets/edges_0.15.png" alt="Cameraman edges at threshold 0.15" /><figcaption><b>0.15</b><span>My choice</span></figcaption></figure>
+        <figure><img src="assets/edges_0.23.png" alt="Cameraman edges at threshold 0.23" /><figcaption><b>0.23</b><span>Cleaner, but misses real edges</span></figcaption></figure>
       </div>
     </section>
 
@@ -117,8 +117,8 @@ Dy = np.array([[1], [0], [-1]])</code></pre>
         <figure><img src="assets/taj_blurred_then_resharpened.jpg" alt="Taj Mahal blurred and then resharpened" /><figcaption><b>Blurred, then sharpened</b><span>Edges return, but lost detail does not</span></figcaption></figure>
       </div>
       <h3>Second example: a tree tunnel</h3>
-      <p class="intro">The branches and leaves give sharpening a lot to work with. They become easier to pick out at α = 1.5, but the result also looks a bit more contrasty; the filter is emphasizing existing edges, not inventing new leaves.</p>
-      <div class="gallery four">
+      <p class="intro">I went back to the full-resolution tree photo instead of the small preview. The branches and leaves give sharpening a lot to work with. They become easier to pick out at α = 1.5, but the result also looks more contrasty. The filter emphasizes existing edges. It does not invent new leaves.</p>
+      <div class="gallery two">
         <figure><img src="assets/forest_original.jpg" alt="Original tree tunnel" /><figcaption><b>Original</b></figcaption></figure>
         <figure><img src="assets/forest_blurred.jpg" alt="Blurred tree tunnel" /><figcaption><b>Gaussian blur</b></figcaption></figure>
         <figure><img src="assets/forest_high_frequency.jpg" alt="High-frequency detail in the tree tunnel" /><figcaption><b>High frequencies</b></figcaption></figure>
@@ -131,7 +131,7 @@ Dy = np.array([[1], [0], [-1]])</code></pre>
       <div class="prose">
         <p>Hybrid images were the most fun part of the project, but also much more finicky than I expected. Up close, sharp edges and small details grab my attention. When I shrink the image or step away, those details disappear and I mostly see the broad low-frequency structure.</p>
         <p>The code itself is short: high-pass one image, low-pass the other, and add them. Getting a convincing result is the hard part. I tried pairs with matching shapes and checked each result at a much smaller size. If the silhouettes fight each other, changing the cutoff cannot really fix it.</p>
-        <p>For Derek and Nutmeg, I aligned their eyes and used σ = 2 for Derek's high-pass filter and σ = 5 for Nutmeg's low-pass filter. Derek's facial edges dominate nearby; Nutmeg becomes easier to recognize after shrinking the image or stepping back.</p>
+        <p>The assignment specifically asks for Derek and Nutmeg, so I kept that pair. I aligned their eyes and used σ = 2 for Derek's high-pass filter and σ = 5 for Nutmeg's low-pass filter. Derek's facial edges dominate nearby. Nutmeg becomes easier to recognize after shrinking the image or stepping back.</p>
       </div>
       <div class="gallery three">
         <figure><img src="assets/derek_nutmeg_high_original.jpg" alt="Original photograph of Derek" /><figcaption><b>High-frequency input</b><span>Derek</span></figcaption></figure>
@@ -139,7 +139,7 @@ Dy = np.array([[1], [0], [-1]])</code></pre>
         <figure><img src="assets/derek_nutmeg_hybrid.jpg" alt="Derek and Nutmeg hybrid" /><figcaption><b>Final hybrid</b></figcaption></figure>
       </div>
       <h3>Owl × Moon</h3>
-      <p class="intro">I wanted the owl's face to become the Moon's round disc. I cropped both around that circle, then used σ = 2 for the owl's high-pass and σ = 10 for the Moon's low-pass. A broader owl high-pass left too much feather texture in the small version; a stronger Moon blur made the lunar features disappear. The owl's eyes still faintly show when it is small.</p>
+      <p class="intro">I wanted the owl's face to become the Moon's round disc. I cropped both around that circle, then used σ = 2 for the owl's high-pass and σ = 10 for the Moon's low-pass. I reduced the owl's contribution to 0.6 because the original weight of 1 left too many feathers in the small view. The eyes still linger a little, but the Moon reads more clearly now.</p>
       <div class="gallery four">
         <figure><img src="assets/owl_moon_high_original.jpg" alt="Original great gray owl" /><figcaption><b>Owl source</b></figcaption></figure>
         <figure><img src="assets/owl_moon_low_original.jpg" alt="Original Moon" /><figcaption><b>Moon source</b></figcaption></figure>
@@ -166,24 +166,25 @@ Dy = np.array([[1], [0], [-1]])</code></pre>
       <div class="prose">
         <p>The Moon's low-pass spectrum is concentrated near the bright center, where low frequencies live. The owl's high-pass spectrum loses much of that center and keeps energy farther outward. The final spectrum contains both.</p>
       </div>
-      <h3>Rose × Galaxy</h3>
+      <h3>Ferris wheel × Sunflower</h3>
       <div class="example-block">
         <div class="gallery three">
-          <figure><img src="assets/rose_galaxy_high_original.jpg" alt="Pink rose macro photo" /><figcaption><b>Rose source</b><span>High-frequency input</span></figcaption></figure>
-          <figure><img src="assets/rose_galaxy_low_original.jpg" alt="Spiral galaxy photo" /><figcaption><b>Galaxy source</b><span>Low-frequency input</span></figcaption></figure>
-          <figure><img src="assets/rose_galaxy_hybrid.jpg" alt="Rose and galaxy hybrid" /><figcaption><b>Rose × Galaxy</b><span>σ high = 2, σ low = 14</span></figcaption></figure>
+          <figure><img src="assets/wheel_sunflower_high_original.jpg" alt="Ferris wheel at night" /><figcaption><b>Ferris wheel</b><span>High-frequency input</span></figcaption></figure>
+          <figure><img src="assets/wheel_sunflower_low_original.jpg" alt="Sunflower close-up" /><figcaption><b>Sunflower</b><span>Low-frequency input</span></figcaption></figure>
+          <figure><img src="assets/wheel_sunflower_hybrid.jpg" alt="Ferris wheel and sunflower hybrid" /><figcaption><b>Final hybrid</b><span>σ high = 2, σ low = 10</span></figcaption></figure>
         </div>
-        <p class="note">The petal edges become the close-up detail, while the galaxy's spiral becomes more apparent in the reduced view below. The subjects do not switch as cleanly as Derek and Nutmeg, but the shared spiral shape made a more interesting experiment.</p>
-        <div class="gallery one"><figure><img class="small-hybrid" src="assets/rose_galaxy_small.jpg" alt="Rose Galaxy hybrid reduced to 96 pixels" /><figcaption><b>96 × 96 view</b></figcaption></figure></div>
+        <p class="note">The wheel's spokes are strong up close, but the round sunflower and its yellow petals take over in the 96 × 96 view. I used only 0.65 of the wheel's high-frequency layer so it would not drown out the flower. This switch is easier to see than the earlier rose and galaxy pair.</p>
+        <div class="gallery one"><figure><img class="small-hybrid" src="assets/wheel_sunflower_small.jpg" alt="Wheel sunflower hybrid reduced to 96 pixels" /><figcaption><b>96 × 96 view</b></figcaption></figure></div>
       </div>
-      <h3>A pair that did not work as well</h3>
+      <h3>A less successful pair</h3>
       <div class="example-block">
         <div class="gallery three">
           <figure><img src="assets/cat_boxer_high_original.jpg" alt="Cat photo" /><figcaption><b>Cat source</b></figcaption></figure>
           <figure><img src="assets/cat_boxer_low_original.jpg" alt="Boxer photo" /><figcaption><b>Boxer source</b></figcaption></figure>
           <figure><img src="assets/cat_boxer_hybrid.jpg" alt="Cat boxer hybrid" /><figcaption><b>Cat × Boxer</b></figcaption></figure>
         </div>
-        <p class="note">I aligned the eyes, but the muzzle shapes and fur patterns still disagree. The cat remains too visible in the reduced image. This was a useful failure: matching just two points is not enough when the rest of the faces have different geometry.</p>
+        <p class="note">I redid this alignment using both eyes and the nose. The faces now overlap properly, but the result still looks ghosted up close because the cat's small muzzle does not fit the boxer's large one. At 96 × 96, the boxer is clear. This is a failure of the shape match rather than a misplaced crop.</p>
+        <div class="gallery one"><figure><img class="small-hybrid" src="assets/cat_boxer_small.jpg" alt="Cat boxer hybrid reduced to 96 pixels" /><figcaption><b>96 × 96 view</b></figcaption></figure></div>
       </div>
     </section>
 
@@ -231,17 +232,19 @@ Dy = np.array([[1], [0], [-1]])</code></pre>
         <figure><img src="assets/figure_3_42_i.jpg" alt="Figure 3.42 panel i" /><figcaption>(i)</figcaption></figure><figure><img src="assets/figure_3_42_j.jpg" alt="Figure 3.42 panel j" /><figcaption>(j)</figcaption></figure><figure><img src="assets/figure_3_42_k.jpg" alt="Figure 3.42 panel k" /><figcaption>(k)</figcaption></figure><figure><img src="assets/figure_3_42_l.jpg" alt="Figure 3.42 panel l" /><figcaption>(l)</figcaption></figure>
       </div>
       <h3>Custom blends</h3>
-      <h4>Autumn into winter — straight seam</h4>
-      <p class="intro">Both photos look down a forest path, so their vanishing points are close enough to make a seasonal transition. The hard cut exposes the lighting change at the center. The stack blend softens that change, though the trunks on the two sides do not line up perfectly.</p>
-      <div class="gallery five">
-        <figure><img src="assets/seasons_image1.jpg" alt="Autumn forest path" /><figcaption><b>Autumn</b></figcaption></figure>
-        <figure><img src="assets/seasons_image2.jpg" alt="Winter forest path" /><figcaption><b>Winter</b></figcaption></figure>
-        <figure><img src="assets/seasons_mask.jpg" alt="Vertical blending mask" /><figcaption><b>Mask</b></figcaption></figure>
-        <figure><img src="assets/seasons_hard_cut.jpg" alt="Hard cut between autumn and winter" /><figcaption><b>Hard cut</b></figcaption></figure>
-        <figure><img src="assets/seasons.jpg" alt="Multiresolution blend between autumn and winter" /><figcaption><b>Stack blend</b></figcaption></figure>
+      <h4>Summer to winter at Crystal Lake</h4>
+      <p class="intro">These were taken at the same Colorado lake. I moved the winter photo up by 24 pixels to bring the far shoreline closer to the summer one. I also softened the vertical mask by 15 pixels before making its Gaussian stack. The hard cut stops the water reflection abruptly. The stack result has a gentler transition, although the sky and lake still make the change of season obvious.</p>
+      <div class="gallery three">
+        <figure><img src="assets/seasons_image1.jpg" alt="Crystal Lake in summer" /><figcaption><b>Summer</b></figcaption></figure>
+        <figure><img src="assets/seasons_image2.jpg" alt="Crystal Lake in winter" /><figcaption><b>Winter</b></figcaption></figure>
+        <figure><img src="assets/seasons_mask.jpg" alt="Softened vertical blending mask" /><figcaption><b>Mask</b></figcaption></figure>
       </div>
-      <h4>Cosmic rose — irregular mask</h4>
-      <p class="intro">I made this mask from the rose's silhouette instead of using a circle or straight line. White selects the rose; black selects the galaxy. The hard-cut version leaves an obvious petal edge, while the stack blend lets the red petals fade into the stars at several scales.</p>
+      <div class="gallery two">
+        <figure><img src="assets/seasons_hard_cut.jpg" alt="Hard cut between summer and winter" /><figcaption><b>Hard cut</b></figcaption></figure>
+        <figure><img src="assets/seasons.jpg" alt="Multiresolution blend between summer and winter" /><figcaption><b>Stack blend</b></figcaption></figure>
+      </div>
+      <h4>Cosmic rose with an irregular mask</h4>
+      <p class="intro">I made this mask from the rose's silhouette instead of using a circle or straight line. White selects the rose. Black selects the galaxy. The hard-cut version leaves an obvious petal edge, while the stack blend lets the red petals fade into the stars at several scales.</p>
       <div class="gallery five">
         <figure><img src="assets/cosmic_rose_image1.jpg" alt="Red rose on black background" /><figcaption><b>Rose</b></figcaption></figure>
         <figure><img src="assets/cosmic_rose_image2.jpg" alt="Spiral galaxy" /><figcaption><b>Galaxy</b></figcaption></figure>
@@ -265,7 +268,7 @@ Dy = np.array([[1], [0], [-1]])</code></pre>
 
     <section id="takeaway">
       <div class="section-heading"><span>★</span><h2>Most important thing I learned</h2></div>
-      <div class="prose"><p>The biggest lesson for me was that frequency choices only make sense after looking at the images themselves. The owl and Moon had matching round shapes, but I still had to shrink the result to notice that the eyes lingered. The forest paths had similar perspective, but their tree trunks still could not connect across the seam. Sharpening, hybrids, and blending all use the same blur-and-subtract idea; choosing images and judging the artifacts took more thought than writing those formulas.</p></div>
+      <div class="prose"><p>The biggest lesson for me was that the formulas do not rescue a poor image pair. Aligning the cat and boxer fixed the crop, but their muzzles still made a ghosted face. The two photos of Crystal Lake worked better than two unrelated forest paths because the shoreline already had a similar shape. I also learned to check hybrids at a small size before deciding on the high-frequency weight. Those visual checks took more thought than writing the blur and subtraction code.</p></div>
     </section>
 
     <section id="sources">
@@ -274,16 +277,16 @@ Dy = np.array([[1], [0], [-1]])</code></pre>
         <p>I cropped, filtered, and combined these Wikimedia Commons source images. Credits are kept here for the photographers and licenses.</p>
         <details><summary>View image sources</summary>
         <ul>
-          <li><a href="https://commons.wikimedia.org/wiki/File:Great_Grey_Owl_face.jpg">Great Grey Owl face</a> — Lisa Hupp/USFWS, public domain</li>
-          <li><a href="https://commons.wikimedia.org/wiki/File:Full_Moon_(15984763045).jpg">Full Moon</a> — NASA Goddard, public domain</li>
-          <li><a href="https://commons.wikimedia.org/wiki/File:Pink_Rose_Macro_-_HDR_(8690324463).jpg">Pink Rose Macro</a> — Nicolas Raymond, CC BY 2.0</li>
-          <li><a href="https://commons.wikimedia.org/wiki/File:Spiral_Galaxy_NGC_3147.png">Spiral Galaxy NGC 3147</a> — NASA/ESA collaborators, public domain</li>
-          <li><a href="https://commons.wikimedia.org/wiki/File:Red_rose_with_black_background_II.jpg">Red rose with black background II</a> — Laitche, CC BY-SA 4.0</li>
-          <li><a href="https://commons.wikimedia.org/wiki/File:Autumn_Colour,_Delamere_Forest_-_geograph.org.uk_-_73478.jpg">Autumn Colour, Delamere Forest</a> — David Crocker, CC BY-SA 2.0</li>
-          <li><a href="https://commons.wikimedia.org/wiki/File:Picturesque_path_in_the_winter_forest_(54159942433).jpg">Picturesque path in the winter forest</a> — AS Photography, CC BY 4.0</li>
-          <li><a href="https://commons.wikimedia.org/wiki/File:Tree_Tunnel_(51536815526).jpg">Tree Tunnel</a> — John Brighenti, CC BY 2.0</li>
-          <li><a href="https://commons.wikimedia.org/wiki/File:Cat03.jpg">Cat03.jpg</a> — Fir0002, GFDL 1.2</li>
-          <li><a href="https://commons.wikimedia.org/wiki/File:A_front_view_of_the_face_of_the_boxer_dog_breed.jpg">Front view of a boxer</a> — Martin Vorel, public domain</li>
+          <li><a href="https://commons.wikimedia.org/wiki/File:Great_Grey_Owl_face.jpg">Great Grey Owl face</a>: Lisa Hupp/USFWS, public domain</li>
+          <li><a href="https://commons.wikimedia.org/wiki/File:Full_Moon_(15984763045).jpg">Full Moon</a>: NASA Goddard, public domain</li>
+          <li><a href="https://commons.wikimedia.org/wiki/File:Ferris_Wheel_at_night_(2690872267).jpg">Ferris Wheel at night</a>: Mack Male, CC BY-SA 2.0</li>
+          <li><a href="https://commons.wikimedia.org/wiki/File:Sunflower_head.jpg">Sunflower head</a>: Brandon Weeks, CC BY 3.0</li>
+          <li><a href="https://commons.wikimedia.org/wiki/File:Spiral_Galaxy_NGC_3147.png">Spiral Galaxy NGC 3147</a>: NASA/ESA collaborators, public domain</li>
+          <li><a href="https://commons.wikimedia.org/wiki/File:Red_rose_with_black_background_II.jpg">Red rose with black background II</a>: Laitche, CC BY-SA 4.0</li>
+          <li><a href="https://commons.wikimedia.org/wiki/File:Crystal_Lake_Reflection_(7726191492).jpg">Crystal Lake Reflection</a> and <a href="https://commons.wikimedia.org/wiki/File:Crystal_Lake_in_the_Winter_(8341261220).jpg">Crystal Lake in the Winter</a>: Alan Stark, CC BY-SA 2.0</li>
+          <li><a href="https://commons.wikimedia.org/wiki/File:Tree_Tunnel_(51536815526).jpg">Tree Tunnel</a>: John Brighenti, CC BY 2.0</li>
+          <li><a href="https://commons.wikimedia.org/wiki/File:Cat03.jpg">Cat03.jpg</a>: Fir0002, GFDL 1.2</li>
+          <li><a href="https://commons.wikimedia.org/wiki/File:A_front_view_of_the_face_of_the_boxer_dog_breed.jpg">Front view of a boxer</a>: Martin Vorel, public domain</li>
         </ul>
         </details>
       </div>
