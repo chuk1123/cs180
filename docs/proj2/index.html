@@ -69,37 +69,76 @@
     <section id="part-1-2">
       <div class="section-heading"><span>1.2</span><h2>Finite difference operator</h2></div>
       <div class="prose">
-        <p>I convolved the cameraman with Dx and Dy to measure how quickly brightness changes in each direction. Neither derivative alone contains every edge, so I combined them into the gradient magnitude <span class="formula">√(Dx² + Dy²)</span>. Large values mean the image changes sharply at that pixel.</p>
-        <p>I compared thresholds of 0.10, 0.15, and 0.23. At 0.10, the grass adds a lot of noise. At 0.23, parts of the tripod and distant buildings disappear. I chose 0.15 because it keeps more of those real edges, even though some grass remains. Values above the threshold become 1 and the rest become 0.</p>
+        <p>The cameraman is the test image for edges. I cropped the white frame that came with the source image so it would not turn into a false rectangular edge. Then I convolved the image with the same Dx and Dy operators from 1.1. A large response means brightness jumps in that direction.</p>
       </div>
-      <div class="gallery four">
-        <figure><img src="assets/cameraman.jpg" alt="Original cameraman image" /><figcaption><b>Original</b></figcaption></figure>
-        <figure><img src="assets/cameraman_dx.jpg" alt="Cameraman partial derivative in x" /><figcaption><b>Partial derivative Dx</b></figcaption></figure>
-        <figure><img src="assets/cameraman_dy.jpg" alt="Cameraman partial derivative in y" /><figcaption><b>Partial derivative Dy</b></figcaption></figure>
+      <div class="gallery narrow">
+        <figure><img src="assets/cameraman.jpg" alt="Original cameraman image" /><figcaption><b>Cameraman</b></figcaption></figure>
+      </div>
+
+      <h3>Partial derivatives</h3>
+      <p class="intro">Dx lights up vertical structure (coat, tripod legs). Dy lights up horizontal structure (hat brim, camera body). Mid-gray is near zero. Brighter and darker pixels are positive and negative slopes after I stretched each result to [0, 1] for display.</p>
+      <div class="gallery two">
+        <figure><img src="assets/cameraman_dx.jpg" alt="Cameraman partial derivative in x" /><figcaption><b>Dx</b><span>Vertical edges</span></figcaption></figure>
+        <figure><img src="assets/cameraman_dy.jpg" alt="Cameraman partial derivative in y" /><figcaption><b>Dy</b><span>Horizontal edges</span></figcaption></figure>
+      </div>
+
+      <h3>Gradient magnitude</h3>
+      <p class="intro">Neither map has every edge, so I combined them with <span class="formula">√(Dx² + Dy²)</span>. Bright pixels change quickly in some direction. This is still a grayscale strength map, not a yes/no edge image yet. Grass texture is already visible as speckle.</p>
+      <div class="gallery narrow">
         <figure><img src="assets/cameraman_gradient.jpg" alt="Cameraman gradient magnitude" /><figcaption><b>Gradient magnitude</b></figcaption></figure>
       </div>
-      <div class="gallery three">
-        <figure><img src="assets/edges_0.1.png" alt="Cameraman edges at threshold 0.10" /><figcaption><b>0.10</b><span>More edges, but lots of grass</span></figcaption></figure>
-        <figure><img src="assets/edges_0.15.png" alt="Cameraman binarized edges at threshold 0.15" /><figcaption><b>0.15</b><span>Final edge image</span></figcaption></figure>
-        <figure><img src="assets/edges_0.23.png" alt="Cameraman edges at threshold 0.23" /><figcaption><b>0.23</b><span>Cleaner, but misses real edges</span></figcaption></figure>
+
+      <h3>Binarizing: two rejects, then the chosen cut</h3>
+      <p class="intro">I divided the magnitude by its max, then kept pixels above a threshold. That choice is qualitative: keep the tripod and buildings, kill as much grass as I can. 0.10 and 0.23 miss that tradeoff in opposite ways.</p>
+      <div class="trial-grid">
+        <figure>
+          <span class="badge badge-reject">Rejected</span>
+          <img src="assets/edges_0.1.png" alt="Rejected cameraman edges at threshold 0.10" />
+          <figcaption><b>Threshold 0.10</b><span>Too much grass speckle. The outline is complete, but the field reads as noise.</span></figcaption>
+        </figure>
+        <figure>
+          <span class="badge badge-reject">Rejected</span>
+          <img src="assets/edges_0.23.png" alt="Rejected cameraman edges at threshold 0.23" />
+          <figcaption><b>Threshold 0.23</b><span>Grass is mostly gone, but the tripod, coat folds, and far buildings break up.</span></figcaption>
+        </figure>
       </div>
+      <figure class="final-result">
+        <span class="badge badge-chosen">Chosen result</span>
+        <img src="assets/edges_0.15.png" alt="Chosen cameraman edge image at threshold 0.15" />
+        <figcaption><b>Threshold 0.15</b><span>This is the edge image I am presenting. Some grass remains, but the cameraman, tripod, and skyline stay connected. I would rather keep a little texture than erase real structure.</span></figcaption>
+      </figure>
     </section>
 
     <section id="part-1-3">
       <div class="section-heading"><span>1.3</span><h2>Derivative of Gaussian</h2></div>
       <div class="prose">
-        <p>I smoothed the cameraman with a 9 × 9 Gaussian with σ = 2, then repeated the Dx and Dy calculation. Blurring suppresses small brightness changes before the derivative filters can turn them into noisy edges.</p>
-        <p>The new edges are thicker because the blur spreads each transition across more pixels. They are also cleaner. Much of the grass and small texture fades away while the main outline of the cameraman stays visible.</p>
-        <p>Doing “blur, then differentiate” sounds like two separate convolutions, but convolution is associative. I convolved the Gaussian with Dx and Dy first to make two derivative-of-Gaussian filters, then applied each combined filter once. The maximum difference between the two pipelines was 1.16 × 10<sup>−15</sup>, and their thresholded edge maps had zero differing pixels, so they are the same apart from floating-point rounding.</p>
+        <p>The 1.2 edge map is noisy because Dx and Dy respond to every small brightness change in the grass. A Gaussian blur first removes that high-frequency texture. I built a 9 × 9 kernel with <code>cv2.getGaussianKernel</code> (σ = 2) and its outer product, then tried two equivalent pipelines.</p>
       </div>
-      <div class="gallery four">
-        <figure><img src="assets/cameraman_blurred.jpg" alt="Gaussian blurred cameraman" /><figcaption><b>Gaussian blur</b><span>9 × 9, σ = 2</span></figcaption></figure>
-        <figure><img src="assets/dog_x_filter.jpg" alt="Derivative of Gaussian filter in x" /><figcaption><b>DoG x filter</b></figcaption></figure>
-        <figure><img src="assets/dog_y_filter.jpg" alt="Derivative of Gaussian filter in y" /><figcaption><b>DoG y filter</b></figcaption></figure>
-        <figure><img src="assets/blurred_gradient.jpg" alt="Gradient magnitude after Gaussian smoothing" /><figcaption><b>Blur then differentiate</b></figcaption></figure>
-        <figure><img src="assets/dog_gradient.jpg" alt="Gradient magnitude using derivative of Gaussian filters" /><figcaption><b>Single DoG convolution</b></figcaption></figure>
-        <figure><img src="assets/blurred_edges.png" alt="Thresholded edges after blur then derivative" /><figcaption><b>Two-step edges</b><span>Threshold = 0.15</span></figcaption></figure>
-        <figure><img src="assets/dog_edges.png" alt="Thresholded edges using derivative of Gaussian" /><figcaption><b>DoG edges</b><span>Identical to the two-step result</span></figcaption></figure>
+
+      <h3>Method 1: blur the image, then take derivatives</h3>
+      <p class="intro">Convolve with G, then with Dx and Dy, then form the same magnitude and 0.15 threshold as in 1.2. The blur is the only new ingredient.</p>
+      <div class="gallery narrow">
+        <figure><img src="assets/cameraman_blurred.jpg" alt="Gaussian blurred cameraman" /><figcaption><b>After Gaussian blur</b><span>9 × 9, σ = 2. Compare with the original in 1.2.</span></figcaption></figure>
+      </div>
+      <div class="gallery two">
+        <figure><img src="assets/blurred_gradient.jpg" alt="Gradient magnitude after Gaussian smoothing" /><figcaption><b>Gradient magnitude</b><span>Dx and Dy on the blurred image</span></figcaption></figure>
+        <figure><img src="assets/blurred_edges.png" alt="Thresholded edges after blur then derivative" /><figcaption><b>Binarized edges</b><span>Same threshold 0.15</span></figcaption></figure>
+      </div>
+
+      <h3>What changed versus finite differences</h3>
+      <p class="intro">Compare this edge map with the chosen 1.2 result above. Most grass speckle disappears. The remaining edges are thicker because the blur spreads each transition over more pixels before the derivative runs. The cameraman and tripod stay clear, although some faint background edges are lost too. Both maps were normalized by their own maximum before the 0.15 cut, so this is the same relative threshold, not the same raw gradient value.</p>
+
+      <h3>Method 2: fuse the filters, then convolve once</h3>
+      <p class="intro">Convolution is associative, so blur-then-Dx is the same as convolving the image with (G ∗ Dx). I convolved the Gaussian with Dx and with Dy to get two derivative-of-Gaussian filters, then applied each once to the original cameraman. Both methods use the same symmetric padding and crop only at the end. Cropping the intermediate blur would change the border pixels. The kernels below are shown pixelated so their positive and negative lobes are readable.</p>
+      <div class="gallery two kernels">
+        <figure><img src="assets/dog_x_filter.png" alt="Derivative of Gaussian filter in x, shown as a small kernel" /><figcaption><b>DoG x</b><span>G ∗ Dx</span></figcaption></figure>
+        <figure><img src="assets/dog_y_filter.png" alt="Derivative of Gaussian filter in y, shown as a small kernel" /><figcaption><b>DoG y</b><span>G ∗ Dy</span></figcaption></figure>
+      </div>
+      <div class="gallery narrow">
+        <figure><img src="assets/dog_edges.png" alt="Thresholded edges using derivative of Gaussian" /><figcaption><b>DoG edges</b><span>Same result as method 1 at threshold 0.15</span></figcaption></figure>
+      </div>
+      <div class="prose">
+        <p>These match method 1. Max absolute difference on the gradient maps was 1.16 × 10<sup>−15</sup>. The two binarized images differ in zero pixels. Each combined filter replaces blur-plus-derivative for one direction. The picture does not change.</p>
       </div>
     </section>
 
