@@ -17,410 +17,373 @@
   <main>
     <p class="eyebrow">Kevin Chu · Fall 2026</p>
     <h1>Fun with Filters and Frequencies</h1>
-    <p class="lede">I used convolution to find edges, sharpen details, build hybrid images, and blend photos at different scales. The output looks different in each part, but the same filtering idea runs through the whole project.</p>
+    <p class="lede">Every photo is a mix of two kinds of information: slow changes, like lighting and big shapes, and fast changes, like edges and texture. This whole project is about pulling those two apart and putting them back together in new ways. That gets me edge detection, sharpening, images that change when you step back, and seamless photo blends.</p>
 
     <nav class="contents" aria-label="Project sections">
       <a href="#part-1-1">1.1 Convolution</a><a href="#part-1-2">1.2 Edges</a>
-      <a href="#part-1-3">1.3 DoG</a><a href="#part-2-1">2.1 Sharpening</a>
-      <a href="#part-2-2">2.2 Hybrids</a><a href="#part-2-3">2.3 Stacks</a>
+      <a href="#part-1-3">1.3 Smoother edges</a><a href="#part-2-1">2.1 Sharpening</a>
+      <a href="#part-2-2">2.2 Hybrid images</a><a href="#part-2-3">2.3 Stacks</a>
       <a href="#part-2-4">2.4 Blending</a>
     </nav>
 
+    <!-- ===================== 1.1 ===================== -->
     <section id="part-1-1">
-      <div class="section-heading"><span>1.1</span><h2>Convolutions from scratch</h2></div>
+      <div class="section-heading"><span>1.1</span><h2>Convolution from scratch</h2></div>
       <div class="prose">
-        <p>The four-loop version follows the definition of convolution. For every output pixel, I multiply each filter value by the image pixel underneath and add the products. One important step is flipping the filter horizontally and vertically first. Without that flip, the operation is cross-correlation.</p>
-        <p>I then rewrote it with two loops. The outer loops still move across the image, but NumPy multiplies and sums the entire patch at once. Padding was the part that took me the most time to reason through because pixels near the edge do not have a complete neighborhood. I used zeros outside the image: <code>same</code> returns the original size, while <code>full</code> keeps every partial overlap and produces a larger result.</p>
-        <p>On a 50 × 50 crop with a 9 × 9 box filter, a single timing run took 0.0622 seconds with four loops, 0.0068 seconds with two loops, and 0.0003 seconds with <code>scipy.signal.convolve2d</code>. These are example timings, not averages. Both of my versions matched SciPy with <code>np.allclose</code>. NumPy speeds up the patch calculation, while SciPy is faster still because its inner work is compiled.</p>
-      </div>
-      <h3>Padding and output size</h3>
-      <p class="intro">This setup is shared by both versions. For <code>same</code>, the total padding on each axis is one less than the filter size. An even-sized filter puts the extra pixel on the top or left. For <code>full</code>, I pad by one less than the filter size on <em>each</em> side.</p>
-      <div class="prose">
-        <pre><code><span class="tok-var">flipped_filter</span> = <span class="tok-fn">np.flip</span>(<span class="tok-fn">np.flip</span>(filter, axis=<span class="tok-num">0</span>), axis=<span class="tok-num">1</span>)
-fh, fw = flipped_filter.shape
-
-<span class="tok-keyword">if</span> mode == 'same':
-    pad_top = fh // <span class="tok-num">2</span>
-    pad_bottom = (fh - <span class="tok-num">1</span>) // <span class="tok-num">2</span>
-    pad_left = fw // <span class="tok-num">2</span>
-    pad_right = (fw - <span class="tok-num">1</span>) // <span class="tok-num">2</span>
-<span class="tok-keyword">elif</span> mode == 'full':
-    pad_top = pad_bottom = fh - <span class="tok-num">1</span>
-    pad_left = pad_right = fw - <span class="tok-num">1</span>
-
-padded = <span class="tok-fn">np.pad</span>(
-    image, ((pad_top, pad_bottom), (pad_left, pad_right)),
-    mode='constant'
-)
-output_h = padded.shape[<span class="tok-num">0</span>] - (fh - <span class="tok-num">1</span>)
-output_w = padded.shape[<span class="tok-num">1</span>] - (fw - <span class="tok-num">1</span>)
-output = <span class="tok-fn">np.zeros</span>((output_h, output_w))</code></pre>
+        <p>Almost everything in this project is a convolution. You slide a small grid of numbers (the filter) over the image. At each spot, you multiply the filter by the pixels under it and add everything up. That sum becomes the new pixel. One detail is that you flip the filter first. Without the flip, it's a slightly different operation called cross-correlation.</p>
+        <p>I wrote it twice. The first version uses four loops: two to visit every output pixel, and two more to walk over the filter. The second version drops the inner two loops and lets NumPy multiply the whole patch at once.</p>
       </div>
       <div class="code-grid">
-        <div><h3>Four-loop version</h3><pre><code><span class="tok-keyword">for</span> i <span class="tok-keyword">in</span> <span class="tok-fn">range</span>(output_h):
+        <div><h3>Four loops</h3><pre><code><span class="tok-keyword">for</span> i <span class="tok-keyword">in</span> <span class="tok-fn">range</span>(output_h):
     <span class="tok-keyword">for</span> j <span class="tok-keyword">in</span> <span class="tok-fn">range</span>(output_w):
         <span class="tok-keyword">for</span> fi <span class="tok-keyword">in</span> <span class="tok-fn">range</span>(fh):
             <span class="tok-keyword">for</span> fj <span class="tok-keyword">in</span> <span class="tok-fn">range</span>(fw):
                 output[i, j] += (
                     padded[i + fi, j + fj]
-                    * <span class="tok-var">flipped_filter</span>[fi, fj]
+                    * <span class="tok-var">flipped</span>[fi, fj]
                 )</code></pre></div>
-        <div><h3>Two-loop version</h3><pre><code><span class="tok-keyword">for</span> i <span class="tok-keyword">in</span> <span class="tok-fn">range</span>(output_h):
+        <div><h3>Two loops</h3><pre><code><span class="tok-keyword">for</span> i <span class="tok-keyword">in</span> <span class="tok-fn">range</span>(output_h):
     <span class="tok-keyword">for</span> j <span class="tok-keyword">in</span> <span class="tok-fn">range</span>(output_w):
         patch = padded[i:i+fh, j:j+fw]
         output[i, j] = <span class="tok-fn">np.sum</span>(
-            patch * <span class="tok-var">flipped_filter</span>
+            patch * <span class="tok-var">flipped</span>
         )</code></pre></div>
       </div>
+      <h3>What happens at the border?</h3>
       <div class="prose">
-        <p>I tested the implementation on my own grayscale image. The normalized 9 × 9 box filter replaces each pixel with a local average, so the result becomes blurred. The finite-difference filters instead respond to sudden brightness changes: Dx emphasizes vertical edges and Dy emphasizes horizontal edges.</p>
-        <pre><code><span class="tok-var">box_filter</span> = <span class="tok-fn">np.ones</span>((<span class="tok-num">9</span>, <span class="tok-num">9</span>)) / <span class="tok-num">81</span>
-<span class="tok-var">Dx</span> = <span class="tok-fn">np.array</span>([[<span class="tok-num">1</span>, <span class="tok-num">0</span>, <span class="tok-num">-1</span>]])
-<span class="tok-var">Dy</span> = <span class="tok-fn">np.array</span>([[<span class="tok-num">1</span>], [<span class="tok-num">0</span>], [<span class="tok-num">-1</span>]])</code></pre>
+        <p>Pixels near the edge don't have a full neighborhood, so I pad the image with zeros before sliding the filter. There are two common choices. <code>same</code> pads just enough that the output is the same size as the input. <code>full</code> pads more, so the output keeps every position where the filter overlaps the image at all. With a 9 × 9 filter, that makes it 8 pixels bigger in each direction. Zero padding also darkens the border a little, because the average there includes black pixels that aren't really in the photo.</p>
+        <pre><code><span class="tok-var">flipped</span> = <span class="tok-fn">np.flip</span>(<span class="tok-fn">np.flip</span>(filter, axis=<span class="tok-num">0</span>), axis=<span class="tok-num">1</span>)
+<span class="tok-keyword">if</span> mode == 'same':
+    pad_top, pad_bottom = fh // <span class="tok-num">2</span>, (fh - <span class="tok-num">1</span>) // <span class="tok-num">2</span>
+    pad_left, pad_right = fw // <span class="tok-num">2</span>, (fw - <span class="tok-num">1</span>) // <span class="tok-num">2</span>
+<span class="tok-keyword">elif</span> mode == 'full':
+    pad_top = pad_bottom = fh - <span class="tok-num">1</span>
+    pad_left = pad_right = fw - <span class="tok-num">1</span>
+padded = <span class="tok-fn">np.pad</span>(image, ((pad_top, pad_bottom), (pad_left, pad_right)))</code></pre>
       </div>
-      <div class="gallery three">
-        <figure><img src="assets/personal_original.jpg" alt="Unfiltered grayscale personal photo" /><figcaption><b>Original grayscale photo</b><span>Input to the filters beside it and below</span></figcaption></figure>
-        <figure><img src="assets/box_filter_same.jpg" alt="Personal image blurred with same convolution" /><figcaption><b>9 × 9 box filter</b><span>Same mode</span></figcaption></figure>
-        <figure><img src="assets/box_filter_full.jpg" alt="Personal image blurred with full convolution" /><figcaption><b>9 × 9 box filter</b><span>Full mode is 8 pixels taller and wider than the input</span></figcaption></figure>
-      </div>
-      <div class="gallery two">
-        <figure><img src="assets/dx.jpg" alt="Horizontal finite difference response on personal image" /><figcaption><b>Dx response</b><span>Emphasizes vertical edges</span></figcaption></figure>
-        <figure><img src="assets/dy.jpg" alt="Vertical finite difference response on personal image" /><figcaption><b>Dy response</b><span>Emphasizes horizontal edges</span></figcaption></figure>
-      </div>
-      <p class="figure-summary">The original photo is the reference. A 9 × 9 average smooths it in same or full mode, while Dx and Dy separate vertical and horizontal changes.</p>
-    </section>
-
-    <section id="part-1-2">
-      <div class="section-heading"><span>1.2</span><h2>Finite difference operator</h2></div>
+      <h3>How fast is it?</h3>
       <div class="prose">
-        <p>The cameraman is the test image for edges. I cropped the white frame that came with the source image so it would not turn into a false rectangular edge. Then I convolved the image with the same Dx and Dy operators from 1.1. A large response means brightness jumps in that direction.</p>
-      </div>
-      <div class="gallery narrow">
-        <figure><img src="assets/cameraman.jpg" alt="Original cameraman image" /><figcaption><b>Cameraman</b></figcaption></figure>
-      </div>
-
-      <h3>Partial derivatives</h3>
-      <p class="intro">Dx lights up vertical structure (coat, tripod legs). Dy lights up horizontal structure (hat brim, camera body). Mid-gray is near zero. Brighter and darker pixels are positive and negative slopes after I stretched each result to [0, 1] for display.</p>
-      <div class="gallery two">
-        <figure><img src="assets/cameraman_dx.jpg" alt="Cameraman partial derivative in x" /><figcaption><b>Dx</b><span>Vertical edges</span></figcaption></figure>
-        <figure><img src="assets/cameraman_dy.jpg" alt="Cameraman partial derivative in y" /><figcaption><b>Dy</b><span>Horizontal edges</span></figcaption></figure>
-      </div>
-
-      <h3>Gradient magnitude</h3>
-      <p class="intro">Neither map has every edge, so I combined them with <span class="formula">√(Dx² + Dy²)</span>. Bright pixels change quickly in some direction. This is still a grayscale strength map, not a yes/no edge image yet. Grass texture is already visible as speckle.</p>
-      <div class="gallery narrow">
-        <figure><img src="assets/cameraman_gradient.jpg" alt="Cameraman gradient magnitude" /><figcaption><b>Gradient magnitude</b></figcaption></figure>
-      </div>
-
-      <h3>Binarizing: two rejects, then the chosen cut</h3>
-      <p class="intro">I divided the magnitude by its max, then kept pixels above a threshold. The goal is to keep the main cameraman and tripod edges while removing most of the grass texture. 0.10 leaves too much noise, while 0.50 cuts away important structure.</p>
-      <div class="trial-grid">
-        <figure>
-          <span class="badge badge-reject">Rejected</span>
-          <img src="assets/edges_0.1.png" alt="Rejected cameraman edges at threshold 0.10" />
-          <figcaption><b>Threshold 0.10</b><span>Too much grass speckle. The outline is complete, but the field reads as noise.</span></figcaption>
-        </figure>
-        <figure>
-          <span class="badge badge-reject">Rejected</span>
-          <img src="assets/edges_0.5.png" alt="Rejected cameraman edges at threshold 0.50" />
-          <figcaption><b>Threshold 0.50</b><span>Too high. Even the camera and tripod have broken or missing edges.</span></figcaption>
-        </figure>
-      </div>
-      <figure class="final-result">
-        <span class="badge badge-chosen">Chosen result</span>
-        <img src="assets/edges_0.28.png" alt="Chosen cameraman edge image at threshold 0.28" />
-        <figcaption><b>Threshold 0.28</b><span>This is the edge image I am presenting. The person, camera, and tripod still read clearly, and most grass noise is gone. Some faint background edges disappear too.</span></figcaption>
-      </figure>
-    </section>
-
-    <section id="part-1-3">
-      <div class="section-heading"><span>1.3</span><h2>Derivative of Gaussian</h2></div>
-      <div class="prose">
-        <p>The 1.2 edge map is noisy because Dx and Dy respond to every small brightness change in the grass. A Gaussian blur first removes that high-frequency texture. I built a 9 × 9 kernel with <code>cv2.getGaussianKernel</code> (σ = 2) and its outer product, then tried two equivalent pipelines.</p>
-      </div>
-
-      <h3>Method 1: blur the image, then take derivatives</h3>
-      <p class="intro">Convolve with G, then with Dx and Dy, then form the same magnitude and 0.28 threshold as in 1.2. The blur is the only new ingredient.</p>
-      <div class="gallery narrow">
-        <figure><img src="assets/cameraman_blurred.jpg" alt="Gaussian blurred cameraman" /><figcaption><b>After Gaussian blur</b><span>9 × 9, σ = 2. Compare with the original in 1.2.</span></figcaption></figure>
-      </div>
-      <div class="gallery two">
-        <figure><img src="assets/blurred_gradient.jpg" alt="Gradient magnitude after Gaussian smoothing" /><figcaption><b>Gradient magnitude</b><span>Dx and Dy on the blurred image</span></figcaption></figure>
-        <figure><img src="assets/blurred_edges.png" alt="Thresholded edges after blur then derivative" /><figcaption><b>Binarized edges</b><span>Same threshold 0.28</span></figcaption></figure>
-      </div>
-
-      <h3>What changed versus finite differences</h3>
-      <p class="intro">Here is the 1.2 edge map next to the blurred-then-differentiated map. Same 0.28 relative threshold. Grass speckle drops out. The remaining edges get thicker, because the blur spreads each brightness jump over more pixels. The coat and tripod stay. Some weak background edges disappear with the grass.</p>
-      <div class="gallery two">
-        <figure><img src="assets/edges_0.28.png" alt="Finite-difference edges from part 1.2 at threshold 0.28" /><figcaption><b>1.2 finite difference</b><span>No blur. Grass still passes the 0.28 cut.</span></figcaption></figure>
-        <figure><img src="assets/blurred_edges.png" alt="Edges after Gaussian blur then derivatives" /><figcaption><b>1.3 after blur</b><span>Same threshold. Cleaner outline, thicker strokes.</span></figcaption></figure>
-      </div>
-
-      <h3>Method 2: fuse the filters, then convolve once</h3>
-      <p class="intro">Convolution is associative, so blur-then-Dx is the same as convolving the image with (G ∗ Dx). I convolved the Gaussian with Dx and with Dy to get two derivative-of-Gaussian filters, then applied each once to the original cameraman. Both methods use the same symmetric padding and crop only at the end. Cropping the intermediate blur would change the border pixels. These kernels are enlarged by the same amount. G has only positive values and is divided by its maximum for display. Each signed DoG filter is mapped from its own minimum to maximum, placing zero near mid-gray. Brightness is not a common numerical scale across these three panels.</p>
-      <div class="gallery three kernels">
-        <figure><img src="assets/gaussian_filter.png" alt="Nine by nine Gaussian kernel" /><figcaption><b>Gaussian G</b><span>9 × 9, σ = 2. All-positive smoothing weights, dark to light.</span></figcaption></figure>
-        <figure><img src="assets/dog_x_filter.png" alt="Derivative of Gaussian filter in x, shown as a small kernel" /><figcaption><b>DoG x</b><span>G ∗ Dx. Signed values, mid-gray near zero.</span></figcaption></figure>
-        <figure><img src="assets/dog_y_filter.png" alt="Derivative of Gaussian filter in y, shown as a small kernel" /><figcaption><b>DoG y</b><span>G ∗ Dy. Signed values, mid-gray near zero.</span></figcaption></figure>
-      </div>
-      <div class="gallery two">
-        <figure><img src="assets/dog_gradient.jpg" alt="Gradient magnitude using derivative of Gaussian filters" /><figcaption><b>DoG gradient</b><span>One convolution per direction</span></figcaption></figure>
-        <figure><img src="assets/dog_edges.png" alt="Thresholded edges using derivative of Gaussian" /><figcaption><b>DoG edges</b><span>Threshold 0.28, same cut as method 1</span></figcaption></figure>
-      </div>
-      <div class="prose">
-        <p>These match method 1. The two binarized images differ in zero pixels, so one combined filter replaces blur-then-Dx and blur-then-Dy.</p>
-      </div>
-    </section>
-
-    <section id="part-2-1">
-      <div class="section-heading"><span>2.1</span><h2>Image sharpening</h2></div>
-      <div class="prose">
-        <p>For unsharp masking, I blur the image and subtract that blurred copy from the original. The difference contains mostly edges and fine texture because the blur kept the low frequencies. I then add a scaled version of that detail back: <span class="formula">sharp = image + α(image − blur)</span>.</p>
-        <p>I combined those steps into the single unsharp-mask filter <span class="formula">(1 + α)I − αG</span>. Increasing α makes the Taj's windows and outlines more distinct, but α = 3 also creates obvious halos and harsh contrast. α = 1.5 gave the best balance here. Blurring and then sharpening again restores some edge contrast, but it cannot recover fine information that was already averaged away.</p>
-      </div>
-      <div class="gallery three">
-        <figure><img src="assets/taj_original.jpg" alt="Original Taj Mahal before sharpening" /><figcaption><b>Original Taj</b><span>Starting point for blur, detail extraction, and sharpening.</span></figcaption></figure>
-        <figure><img src="assets/taj_blurred.jpg" alt="Blurred Taj Mahal image" /><figcaption><b>Gaussian blur</b><span>9 × 9, σ = 2. Keeps the slow shading.</span></figcaption></figure>
-        <figure><img src="assets/taj_high_frequency.jpg" alt="High frequency details of Taj Mahal" /><figcaption><b>High frequencies</b><span>Original minus blur. Shifted by +0.5 so negatives are visible as dark gray.</span></figcaption></figure>
-      </div>
-      <h3>Changing how much detail I add back</h3>
-      <p class="intro">The same unsharp-mask filter, three values of α. Larger α puts more of that high-frequency layer back.</p>
-      <div class="gallery three">
-        <figure><img src="assets/taj_sharpened_alpha_0.5.jpg" alt="Taj Mahal sharpened with alpha 0.5" /><figcaption><b>α = 0.5</b><span>Mild. Windows are a bit crisper.</span></figcaption></figure>
-        <figure><img src="assets/taj_sharpened_alpha_1.5.jpg" alt="Taj Mahal sharpened with alpha 1.5" /><figcaption><b>α = 1.5</b><span>The setting I would actually use.</span></figcaption></figure>
-        <figure><img src="assets/taj_sharpened_alpha_3.jpg" alt="Taj Mahal sharpened with alpha 3" /><figcaption><b>α = 3</b><span>Halos along the dome and trees.</span></figcaption></figure>
-      </div>
-      <h3>Dome detail at two sharpening strengths</h3>
-      <p class="intro">The same 152 × 135 crop from the original Taj image appears in each panel. The 9 × 9 Gaussian has σ = 2, so only α changes. This makes the dome edge and any sharpening halo easier to compare than in the full image.</p>
-      <div class="gallery three dome-detail">
-        <figure><img src="assets/taj_dome_original.jpg" alt="Unsharpened Taj dome crop" /><figcaption><b>Original detail</b><span>Same crop in all three panels</span></figcaption></figure>
-        <figure><img src="assets/taj_dome_alpha_1.5.jpg" alt="Taj dome crop sharpened with alpha 1.5" /><figcaption><b>α = 1.5</b><span>Moderate unsharp mask</span></figcaption></figure>
-        <figure><img src="assets/taj_dome_alpha_3.jpg" alt="Taj dome crop sharpened with alpha 3" /><figcaption><b>α = 3</b><span>Look for the brighter rim where the dome meets the sky.</span></figcaption></figure>
-      </div>
-      <p class="figure-summary">This fixed crop isolates the dome. With σ = 2 held constant, raising α from 1.5 to 3 amplifies edge contrast and halos.</p>
-      <h3>Blur a sharp photo, then try to sharpen it back</h3>
-      <p class="intro">I started from the original Taj, blurred it with the same Gaussian, then ran unsharp masking (α = 1.5). Contrast on the big edges comes back a little. The fine carving that the blur averaged away does not.</p>
-      <div class="gallery two">
-        <figure><img src="assets/taj_original.jpg" alt="Original Taj Mahal before blur-then-sharpen test" /><figcaption><b>Original</b><span>Sharp source.</span></figcaption></figure>
-        <figure><img src="assets/taj_blurred_then_resharpened.jpg" alt="Taj Mahal blurred and then resharpened" /><figcaption><b>Blurred, then sharpened</b><span>α = 1.5 on the blurred copy. Softer than the original.</span></figcaption></figure>
-      </div>
-      <h3>Second example: a soft photo of the full Moon</h3>
-      <p class="intro">This full-Moon photo is slightly soft, which makes it a good test for unsharp masking. I used the same 9 × 9 Gaussian with σ = 2. The high-frequency layer is almost entirely crater rims and the bright ray streaks around young craters. Adding it back at α = 1.5 makes the maria edges and small craters much crisper without changing the overall shading of the disc.</p>
-      <div class="gallery two">
-        <figure><img src="assets/moon_original.jpg" alt="Original full Moon photo" /><figcaption><b>Original</b></figcaption></figure>
-        <figure><img src="assets/moon_blurred.jpg" alt="Blurred full Moon" /><figcaption><b>Gaussian blur</b><span>9 × 9, σ = 2</span></figcaption></figure>
-        <figure><img src="assets/moon_high_frequency.jpg" alt="High-frequency detail of the Moon" /><figcaption><b>High frequencies</b><span>Shifted by +0.5 for display</span></figcaption></figure>
-        <figure><img src="assets/moon_sharpened_alpha_1.5.jpg" alt="Moon sharpened with alpha 1.5" /><figcaption><b>Sharpened</b><span>α = 1.5</span></figcaption></figure>
-      </div>
-      <p class="intro">The same 340 × 340 crop of the lunar surface in each panel. At α = 1.5 the small craters and ray streaks become distinct. At α = 3 the filter starts amplifying JPEG noise and grain, so the surface looks gritty rather than more detailed.</p>
-      <div class="gallery three">
-        <figure><img src="assets/moon_zoom_original.jpg" alt="Unsharpened crop of lunar craters" /><figcaption><b>Original detail</b></figcaption></figure>
-        <figure><img src="assets/moon_zoom_alpha_1.5.jpg" alt="Lunar crater crop sharpened with alpha 1.5" /><figcaption><b>α = 1.5</b><span>Craters and rays pop</span></figcaption></figure>
-        <figure><img src="assets/moon_zoom_alpha_3.jpg" alt="Lunar crater crop sharpened with alpha 3" /><figcaption><b>α = 3</b><span>Noise gets amplified too</span></figcaption></figure>
-      </div>
-    </section>
-
-    <section id="part-2-2">
-      <div class="section-heading"><span>2.2</span><h2>Hybrid images</h2></div>
-      <div class="prose">
-        <p>Hybrid images were the most fun part of the project, but also much more finicky than I expected. Up close, sharp edges and small details grab my attention. When I shrink the image or step away, those details disappear and I mostly see the broad low-frequency structure.</p>
-        <p>The code itself is short: high-pass one image, low-pass the other, and add them. Getting a convincing result is the hard part. I tried pairs with matching shapes and checked each result at a much smaller size. If the silhouettes fight each other, changing the cutoff cannot really fix it.</p>
+        <p>I timed one run of each version with a 9 × 9 box filter on a 50 × 50 crop. All three give the same answer (checked with <code>np.allclose</code>).</p>
       </div>
       <div class="table-wrap">
-        <table class="parameter-table">
-          <caption>Settings and intended close-to-far reading for the three featured hybrids</caption>
-          <thead><tr><th>Hybrid</th><th>Alignment</th><th>High σ</th><th>Low σ</th><th>High weight</th><th>Close → far</th></tr></thead>
+        <table class="parameter-table small-table">
+          <thead><tr><th>Version</th><th>Time</th></tr></thead>
           <tbody>
-            <tr><td>Nutmeg × Derek</td><td>Eye landmarks, then crop</td><td>3</td><td>8</td><td>1.0</td><td>Cat details → Derek face</td></tr>
-            <tr><td>Owl × Moon</td><td>Matching circular crops</td><td>2</td><td>6</td><td>0.7</td><td>Owl face → lunar disc</td></tr>
-            <tr><td>Wheel × Sunflower</td><td>Centered circular crops</td><td>2</td><td>10</td><td>0.65</td><td>Wheel spokes → sunflower</td></tr>
+            <tr><td>Four loops</td><td>0.0622 s</td></tr>
+            <tr><td>Two loops</td><td>0.0068 s (about 9× faster)</td></tr>
+            <tr><td><code>scipy.signal.convolve2d</code></td><td>0.0003 s (about 200× faster)</td></tr>
           </tbody>
         </table>
       </div>
-      <h3>Nutmeg × Derek</h3>
-      <p class="intro">I aligned their eyes and put Nutmeg in the high-frequency layer over a low-pass Derek. I used σ = 3 for Nutmeg and σ = 8 for Derek, then cropped away the empty corners from alignment. Up close, Nutmeg's eyes, nose, and whiskers show through. At a smaller size, Derek is easier to recognize.</p>
-      <div class="gallery three">
-        <figure><img src="assets/derek_nutmeg_high_original.jpg" alt="Original photograph of Nutmeg the cat" /><figcaption><b>High-frequency input</b><span>Nutmeg</span></figcaption></figure>
-        <figure><img src="assets/derek_nutmeg_low_original.jpg" alt="Original photograph of Derek" /><figcaption><b>Low-frequency input</b><span>Derek</span></figcaption></figure>
-        <figure><img src="assets/derek_nutmeg_hybrid.jpg" alt="Nutmeg over Derek hybrid image" /><figcaption><b>Final hybrid</b></figcaption></figure>
-      </div>
-      <div class="gallery one"><figure><img class="small-hybrid" src="assets/derek_nutmeg_small.jpg" alt="Nutmeg and Derek hybrid reduced to 96 pixels" /><figcaption><b>96 × 96 view</b><span>Derek's face reads more clearly</span></figcaption></figure></div>
-      <h3>Owl × Moon</h3>
-      <p class="intro">I wanted the owl's face to fit inside the Moon's round disc. I cropped both around that circle, then used σ = 2 for the owl's high-pass and σ = 6 for the Moon's low-pass. My first try used σ = 10 for the Moon, but that blurred away the dark maria and left a plain gray blob that did not read as the Moon from far away. σ = 6 keeps the maria. Outside the lunar disc, I replaced the owl with its own blur, so its high-pass is close to zero there and no feathers spill into the black sky. I weighted the owl layer at 0.7 so its feathers do not overpower the Moon at a small size.</p>
+      <p class="intro">Letting NumPy handle the inner loops helps a lot. SciPy is faster still because its loops run in compiled code instead of Python.</p>
+      <h3>Trying it on a photo of me</h3>
+      <p class="intro">I ran three filters on a grayscale photo of myself. The box filter is a 9 × 9 grid of 1/81, so every pixel becomes the average of its neighborhood, which blurs. The difference filters, D<sub>x</sub> = [1, 0, −1] and its vertical version D<sub>y</sub>, subtract neighboring pixels. They stay near gray where nothing changes and light up at edges.</p>
       <div class="gallery four">
-        <figure><img src="assets/owl_moon_high_original.jpg" alt="Original great gray owl" /><figcaption><b>Owl source</b></figcaption></figure>
-        <figure><img src="assets/owl_moon_low_original.jpg" alt="Original Moon" /><figcaption><b>Moon source</b></figcaption></figure>
-        <figure><img src="assets/owl_moon_high_aligned.jpg" alt="Cropped owl, blurred outside the Moon disc" /><figcaption><b>Aligned owl</b><span>Blurred outside the lunar disc</span></figcaption></figure>
-        <figure><img src="assets/owl_moon_low_aligned.jpg" alt="Cropped Moon" /><figcaption><b>Aligned Moon</b></figcaption></figure>
-      </div>
-      <div class="gallery three feature-row">
-        <figure><img src="assets/owl_moon_high_frequency.jpg" alt="High-pass owl" /><figcaption><b>High-pass owl</b><span>Displayed around middle gray</span></figcaption></figure>
-        <figure><img src="assets/owl_moon_low_frequency.jpg" alt="Low-pass Moon" /><figcaption><b>Low-pass Moon</b></figcaption></figure>
-        <figure><img src="assets/owl_moon_hybrid.jpg" alt="Owl and Moon hybrid" /><figcaption><b>Final hybrid</b></figcaption></figure>
-      </div>
-      <div class="gallery one"><figure><img class="small-hybrid" src="assets/owl_moon_small.jpg" alt="Owl Moon hybrid reduced to 96 pixels" /><figcaption><b>Reduced to 96 × 96</b><span>The owl fades and the maria take over</span></figcaption></figure></div>
-      <h3>Log-magnitude Fourier spectra of Owl × Moon</h3>
-      <p class="intro">Each panel shows log(1 + |F|), divided by its own maximum for display. Brightness across separate panels is therefore not a shared energy scale. A bright center indicates slow, large-scale structure. Energy farther out indicates small details. Cutoffs were σ = 2 on the owl (high-pass) and σ = 6 on the Moon (low-pass). I picked those by shrinking the hybrid until the disc read as a moon without the owl face taking over.</p>
-      <div class="gallery five spectra">
-        <figure><img src="assets/owl_moon_high_original_fft.jpg" alt="Log-magnitude Fourier spectrum of aligned owl" /><figcaption><b>Owl</b><span>Log-magnitude spectrum of aligned input</span></figcaption></figure>
-        <figure><img src="assets/owl_moon_low_original_fft.jpg" alt="Log-magnitude Fourier spectrum of aligned Moon" /><figcaption><b>Moon</b><span>Log-magnitude spectrum of aligned input</span></figcaption></figure>
-        <figure><img src="assets/owl_moon_high_frequency_fft.jpg" alt="Log-magnitude Fourier spectrum of high-pass owl" /><figcaption><b>High-pass owl</b><span>Log-magnitude spectrum after filtering</span></figcaption></figure>
-        <figure><img src="assets/owl_moon_low_frequency_fft.jpg" alt="Log-magnitude Fourier spectrum of low-pass Moon" /><figcaption><b>Low-pass Moon</b><span>Log-magnitude spectrum after filtering</span></figcaption></figure>
-        <figure><img src="assets/owl_moon_hybrid_fft.jpg" alt="Log-magnitude Fourier spectrum of owl Moon hybrid" /><figcaption><b>Hybrid</b><span>Log-magnitude spectrum of the sum</span></figcaption></figure>
-      </div>
-      <div class="prose">
-        <p>The Moon's low-pass spectrum is concentrated near the bright center, where low frequencies live. The owl's high-pass spectrum loses much of that center and keeps energy farther outward. The final spectrum contains both.</p>
-      </div>
-      <h3>Ferris wheel × Sunflower</h3>
-      <div class="example-block">
-        <div class="gallery three">
-          <figure><img src="assets/wheel_sunflower_high_original.jpg" alt="Ferris wheel at night" /><figcaption><b>Ferris wheel</b><span>High-frequency input</span></figcaption></figure>
-          <figure><img src="assets/wheel_sunflower_low_original.jpg" alt="Sunflower close-up" /><figcaption><b>Sunflower</b><span>Low-frequency input</span></figcaption></figure>
-          <figure><img src="assets/wheel_sunflower_hybrid.jpg" alt="Ferris wheel and sunflower hybrid" /><figcaption><b>Final hybrid</b><span>σ high = 2, σ low = 10</span></figcaption></figure>
-        </div>
-        <p class="note">The wheel's spokes are strong up close, but the round sunflower and its yellow petals take over in the 96 × 96 view. I used 0.65 of the wheel's high-frequency layer so it would not drown out the flower.</p>
-        <div class="gallery one"><figure><img class="small-hybrid" src="assets/wheel_sunflower_small.jpg" alt="Wheel sunflower hybrid reduced to 96 pixels" /><figcaption><b>96 × 96 view</b></figcaption></figure></div>
-      </div>
-      <h3>A failed expression experiment</h3>
-      <p class="intro">I also tried to make a face change expression with viewing distance, with a frown in the high-frequency input and a smile in the low-frequency input. This one did not switch clearly. The two faces have nearly the same broad structure, while the differences around the eyes and mouth are too subtle to give the small view a distinct smile. I kept the failure here because it shows why simply aligning two related photos is not enough.</p>
-      <div class="gallery one">
-        <figure><img src="assets/expression_comparison.jpg" alt="Failed expression hybrid with frowning and smiling inputs, hybrid, and 96 and 48 pixel views" /><figcaption><b>Frown to smile attempt</b><span>The two inputs, hybrid, and reduced views are shown together. The expression remains ambiguous instead of switching cleanly with distance.</span></figcaption></figure>
+        <figure><img src="assets/personal_original.jpg" alt="Grayscale photo of Kevin" /><figcaption><b>Original</b></figcaption></figure>
+        <figure><img src="assets/box_filter_same.jpg" alt="Photo blurred with a 9 by 9 box filter" /><figcaption><b>9 × 9 box filter</b><span>Blurred</span></figcaption></figure>
+        <figure><img src="assets/dx.jpg" alt="Photo filtered with Dx" /><figcaption><b>D<sub>x</sub></b><span>Lights up vertical edges</span></figcaption></figure>
+        <figure><img src="assets/dy.jpg" alt="Photo filtered with Dy" /><figcaption><b>D<sub>y</sub></b><span>Lights up horizontal edges</span></figcaption></figure>
       </div>
     </section>
 
+    <!-- ===================== 1.2 ===================== -->
+    <section id="part-1-2">
+      <div class="section-heading"><span>1.2</span><h2>Finding edges</h2></div>
+      <div class="prose">
+        <p>Now the goal is an actual edge map of the cameraman: white where there's an edge, black everywhere else. It takes three steps.</p>
+      </div>
+      <h3>Step 1: take the derivative in each direction</h3>
+      <p class="intro">Same D<sub>x</sub> and D<sub>y</sub> as above. Gray means no change, and bright or dark means the brightness jumps.</p>
+      <div class="gallery three">
+        <figure><img src="assets/cameraman.jpg" alt="Original cameraman photo" /><figcaption><b>Original</b></figcaption></figure>
+        <figure><img src="assets/cameraman_dx.jpg" alt="Cameraman x derivative" /><figcaption><b>D<sub>x</sub></b><span>Tripod legs and coat edges</span></figcaption></figure>
+        <figure><img src="assets/cameraman_dy.jpg" alt="Cameraman y derivative" /><figcaption><b>D<sub>y</sub></b><span>Top of the camera and the background buildings</span></figcaption></figure>
+      </div>
+      <h3>Step 2: combine them into one "edge strength" image</h3>
+      <p class="intro">Each derivative only catches one direction, so I combine them with <span class="formula">√(D<sub>x</sub>² + D<sub>y</sub>²)</span>. That's the gradient magnitude, and it's bright wherever the image changes quickly in any direction.</p>
+      <div class="gallery narrow">
+        <figure><img src="assets/cameraman_gradient.jpg" alt="Cameraman gradient magnitude" /><figcaption><b>Gradient magnitude</b></figcaption></figure>
+      </div>
+      <h3>Step 3: pick a threshold</h3>
+      <p class="intro">Anything brighter than the threshold becomes an edge. Too low and the grass texture turns into noise. Too high and the real edges break apart. I tried a few values and liked 0.28 (as a fraction of the brightest pixel) best. The cameraman, camera, and tripod stay connected, and most of the grass goes away. It isn't perfect: some grass still gets through, which 1.3 fixes.</p>
+      <div class="gallery three">
+        <figure><img src="assets/edges_0.1.png" alt="Edges at threshold 0.10" /><figcaption><b>0.10</b><span>Too low. The grass is all noise.</span></figcaption></figure>
+        <figure class="pick"><img src="assets/edges_0.28.png" alt="Edges at threshold 0.28" /><figcaption><b>0.28 (my pick)</b><span>Clean outline, a little grass left</span></figcaption></figure>
+        <figure><img src="assets/edges_0.5.png" alt="Edges at threshold 0.50" /><figcaption><b>0.50</b><span>Too high. The tripod falls apart.</span></figcaption></figure>
+      </div>
+    </section>
+
+    <!-- ===================== 1.3 ===================== -->
+    <section id="part-1-3">
+      <div class="section-heading"><span>1.3</span><h2>Smoother edges with a Gaussian</h2></div>
+      <div class="prose">
+        <p>The leftover noise comes from tiny pixel-to-pixel changes in the grass. The derivative can't tell those apart from real edges. The fix is to blur the image a little first, so the tiny changes disappear but the big edges survive. For the blur I used a 9 × 9 Gaussian with σ = 2, made from <code>cv2.getGaussianKernel</code> and an outer product.</p>
+      </div>
+      <h3>Blur first, then find edges</h3>
+      <p class="intro">Same steps as 1.2, same 0.28 threshold. The only difference is the blur at the start.</p>
+      <div class="gallery three">
+        <figure><img src="assets/cameraman_blurred.jpg" alt="Blurred cameraman" /><figcaption><b>Blurred</b></figcaption></figure>
+        <figure><img src="assets/blurred_gradient.jpg" alt="Gradient magnitude of blurred cameraman" /><figcaption><b>Gradient magnitude</b></figcaption></figure>
+        <figure><img src="assets/blurred_edges.png" alt="Edges of blurred cameraman" /><figcaption><b>Edges</b></figcaption></figure>
+      </div>
+      <h3>Before and after</h3>
+      <div class="gallery two compare">
+        <figure><img src="assets/edges_0.28.png" alt="Edges without blur" /><figcaption><b>No blur (1.2)</b><span>Specks all over the grass</span></figcaption></figure>
+        <figure><img src="assets/blurred_edges.png" alt="Edges with blur" /><figcaption><b>Blur first (1.3)</b><span>The grass is gone and the lines are smoother</span></figcaption></figure>
+      </div>
+      <p class="intro">The blur cleans things up a lot. The trade-off is that the lines get thicker, because the blur spreads each edge over a few more pixels.</p>
+      <h3>A shortcut: one filter instead of two</h3>
+      <p class="intro">Convolution is associative, which means blurring and then taking the derivative is the same as convolving the Gaussian with D<sub>x</sub> first and then running that one combined filter over the image. These combined filters are called derivative of Gaussian (DoG) filters. In the pictures below, gray is zero, light is positive, and dark is negative.</p>
+      <div class="gallery three kernels">
+        <figure><img src="assets/gaussian_filter.png" alt="Gaussian filter" /><figcaption><b>Gaussian</b></figcaption></figure>
+        <figure><img src="assets/dog_x_filter.png" alt="Derivative of Gaussian in x" /><figcaption><b>DoG x</b><span>Gaussian ∗ D<sub>x</sub></span></figcaption></figure>
+        <figure><img src="assets/dog_y_filter.png" alt="Derivative of Gaussian in y" /><figcaption><b>DoG y</b><span>Gaussian ∗ D<sub>y</sub></span></figcaption></figure>
+      </div>
+      <div class="gallery two compare">
+        <figure><img src="assets/dog_gradient.jpg" alt="Gradient magnitude with DoG filters" /><figcaption><b>DoG gradient magnitude</b></figcaption></figure>
+        <figure><img src="assets/dog_edges.png" alt="Edges with DoG filters" /><figcaption><b>DoG edges</b><span>Identical to "blur first", pixel for pixel</span></figcaption></figure>
+      </div>
+      <p class="intro">Same result with one convolution per direction instead of two. That's the whole point of the shortcut.</p>
+    </section>
+
+    <!-- ===================== 2.1 ===================== -->
+    <section id="part-2-1">
+      <div class="section-heading"><span>2.1</span><h2>Sharpening</h2></div>
+      <div class="prose">
+        <p>Here's the result first. The right side has crisper windows and carvings.</p>
+      </div>
+      <div class="gallery two compare">
+        <figure><img src="assets/taj_original.jpg" alt="Original Taj Mahal" /><figcaption><b>Before</b></figcaption></figure>
+        <figure><img src="assets/taj_sharpened_alpha_1.5.jpg" alt="Sharpened Taj Mahal" /><figcaption><b>After</b><span>Sharpened with α = 1.5</span></figcaption></figure>
+      </div>
+      <h3>How it works</h3>
+      <p class="intro">A blur keeps the slow changes and throws away the fine detail. So if I subtract the blurred image from the original, only the detail is left. Adding extra detail back on top is what makes the image look sharper. The formula is <span class="formula">sharp = image + α · (image − blur)</span>, where α controls how much detail I add.</p>
+      <div class="gallery three steps">
+        <figure><img src="assets/taj_blurred.jpg" alt="Blurred Taj Mahal" /><figcaption><b>① Blur it</b><span>Gaussian, σ = 2</span></figcaption></figure>
+        <figure><img src="assets/taj_high_frequency.jpg" alt="Detail layer of the Taj Mahal" /><figcaption><b>② Original minus blur</b><span>Only edges and texture are left (gray means zero)</span></figcaption></figure>
+        <figure><img src="assets/taj_sharpened_alpha_1.5.jpg" alt="Sharpened Taj Mahal" /><figcaption><b>③ Add α × detail back</b><span>α = 1.5</span></figcaption></figure>
+      </div>
+      <p class="intro">The code doesn't actually run three steps. Because convolution is linear, the whole thing collapses into one filter, <span class="formula">(1 + α) · impulse − α · Gaussian</span>, and I convolve with that once.</p>
+      <h3>How much is too much?</h3>
+      <p class="intro">More α means more detail added back. Past a point it stops looking sharper and starts looking fake: bright halos show up around the dome and the trees.</p>
+      <div class="gallery three">
+        <figure><img src="assets/taj_sharpened_alpha_0.5.jpg" alt="Taj sharpened with alpha 0.5" /><figcaption><b>α = 0.5</b><span>Subtle</span></figcaption></figure>
+        <figure class="pick"><img src="assets/taj_sharpened_alpha_1.5.jpg" alt="Taj sharpened with alpha 1.5" /><figcaption><b>α = 1.5 (my pick)</b><span>Crisp, still natural</span></figcaption></figure>
+        <figure><img src="assets/taj_sharpened_alpha_3.jpg" alt="Taj sharpened with alpha 3" /><figcaption><b>α = 3</b><span>Halos around the dome</span></figcaption></figure>
+      </div>
+      <h3>Can sharpening undo a blur?</h3>
+      <p class="intro">To test this, I took the sharp original, blurred it on purpose, and then sharpened the blurry version. The edges get some of their contrast back, but the fine carving doesn't return. Once a blur averages detail away, that information is gone, and sharpening can only boost what's left.</p>
+      <div class="gallery three">
+        <figure><img src="assets/taj_original.jpg" alt="Sharp original Taj" /><figcaption><b>Sharp original</b></figcaption></figure>
+        <figure><img src="assets/taj_blurred.jpg" alt="Blurred Taj" /><figcaption><b>Blurred on purpose</b></figcaption></figure>
+        <figure><img src="assets/taj_blurred_then_resharpened.jpg" alt="Blurred then sharpened Taj" /><figcaption><b>Then sharpened</b><span>Better than the blurry one, but still softer than the original</span></figcaption></figure>
+      </div>
+      <h3>My own example: the Moon</h3>
+      <p class="intro">This full-Moon photo was a little soft, which makes it a good candidate. Sharpening at α = 1.5 brings out the craters and the bright streaks around them. The difference is easier to see up close, so the bottom row is a crop from the middle of the Moon.</p>
+      <div class="gallery two compare">
+        <figure><img src="assets/moon_original.jpg" alt="Original Moon" /><figcaption><b>Before</b></figcaption></figure>
+        <figure><img src="assets/moon_sharpened_alpha_1.5.jpg" alt="Sharpened Moon" /><figcaption><b>After</b><span>α = 1.5</span></figcaption></figure>
+        <figure><img src="assets/moon_zoom_original.jpg" alt="Close-up of lunar craters, original" /><figcaption><b>Before (close-up)</b></figcaption></figure>
+        <figure><img src="assets/moon_zoom_alpha_1.5.jpg" alt="Close-up of lunar craters, sharpened" /><figcaption><b>After (close-up)</b></figcaption></figure>
+      </div>
+    </section>
+
+    <!-- ===================== 2.2 ===================== -->
+    <section id="part-2-2">
+      <div class="section-heading"><span>2.2</span><h2>Hybrid images</h2></div>
+      <div class="prose">
+        <p>A hybrid image looks like one thing up close and like something else from far away. It works because of how we see. Up close, fine details like edges, fur, and whiskers catch your eye. From a distance, those details are too small to notice, so you only see the blurry overall shape.</p>
+        <p>To make one, I keep only the <em>fine detail</em> of image A (the original minus its blur, like the detail layer in 2.1) and only the <em>blurry version</em> of image B, then add them together. Before that, I line up the two images using their eyes. Otherwise the two shapes fight each other and it just looks like a messy double exposure.</p>
+        <p><strong>To try it yourself:</strong> look at the big image, then at the smaller copies next to it (or lean back from your screen).</p>
+      </div>
+
+      <h3>Tiger up close, house cat from afar</h3>
+      <p class="intro">This is my favorite. The fine layer comes from a tiger: its stripes, whiskers, and eyes. The blurry layer comes from an orange tabby cat. Up close it's a tiger. Shrink it down and the tiger's stripes vanish, and you're left with a ginger house cat with pointy ears and a pink nose. It works because both cats are orange and face the camera, so the shapes almost agree.</p>
+      <div class="distance">
+        <figure><img src="assets/tiger_cat_hybrid.jpg" alt="Tiger and cat hybrid, full size" /><figcaption><b>Up close</b></figcaption></figure>
+        <figure><img src="assets/tiger_cat_hybrid.jpg" alt="Tiger and cat hybrid, medium size" /><figcaption><b>Farther</b></figcaption></figure>
+        <figure><img src="assets/tiger_cat_hybrid.jpg" alt="Tiger and cat hybrid, small size" /><figcaption><b>Far away</b></figcaption></figure>
+      </div>
+
+      <h4>How it was made, step by step</h4>
+      <p class="intro"><b>1. Line them up.</b> I picked both eyes in each photo and rotated, scaled, and shifted the cat so its eyes land exactly on the tiger's.</p>
+      <div class="gallery four">
+        <figure><img src="assets/tiger_cat_high_original.jpg" alt="Original tiger photo" /><figcaption><b>Tiger</b><span>Original</span></figcaption></figure>
+        <figure><img src="assets/tiger_cat_low_original.jpg" alt="Original cat photo" /><figcaption><b>Cat</b><span>Original</span></figcaption></figure>
+        <figure><img src="assets/tiger_cat_high_aligned.jpg" alt="Aligned tiger" /><figcaption><b>Tiger</b><span>Cropped</span></figcaption></figure>
+        <figure><img src="assets/tiger_cat_low_aligned.jpg" alt="Cat aligned to the tiger" /><figcaption><b>Cat</b><span>Eyes matched to the tiger</span></figcaption></figure>
+      </div>
+      <p class="intro"><b>2. Filter them.</b> I keep the tiger's fine detail (original minus a Gaussian blur with σ = 4) and a blurred cat (Gaussian with σ = 10). The σ values set the cutoff. I raised the tiger's cutoff until its stripes, not just its whiskers, came through up close, and raised the cat's blur until the cat's own face stopped showing up close. I also boosted the tiger layer by 1.2× so it wins up close. Then I add the two together.</p>
+      <div class="gallery three">
+        <figure><img src="assets/tiger_cat_high_frequency.jpg" alt="Tiger fine detail layer" /><figcaption><b>Tiger detail</b><span>Gray means zero</span></figcaption></figure>
+        <figure><img src="assets/tiger_cat_low_frequency.jpg" alt="Blurred cat" /><figcaption><b>Blurred cat</b></figcaption></figure>
+        <figure><img src="assets/tiger_cat_hybrid.jpg" alt="Tiger and cat hybrid" /><figcaption><b>Sum = hybrid</b></figcaption></figure>
+      </div>
+      <p class="intro"><b>3. Check it in the frequency domain.</b> These are the log-magnitude Fourier transforms. The center of each square is the slow, large-scale stuff and the outside is fine detail. Filtering the cat keeps only a small bright blob in the middle. Filtering the tiger does the opposite and hollows out the middle. The hybrid has both.</p>
+      <div class="gallery five spectra">
+        <figure><img src="assets/tiger_cat_high_original_fft.jpg" alt="Fourier transform of tiger" /><figcaption><b>Tiger</b></figcaption></figure>
+        <figure><img src="assets/tiger_cat_low_original_fft.jpg" alt="Fourier transform of cat" /><figcaption><b>Cat</b></figcaption></figure>
+        <figure><img src="assets/tiger_cat_high_frequency_fft.jpg" alt="Fourier transform of tiger detail" /><figcaption><b>Tiger detail</b><span>Center removed</span></figcaption></figure>
+        <figure><img src="assets/tiger_cat_low_frequency_fft.jpg" alt="Fourier transform of blurred cat" /><figcaption><b>Blurred cat</b><span>Only the center</span></figcaption></figure>
+        <figure><img src="assets/tiger_cat_hybrid_fft.jpg" alt="Fourier transform of hybrid" /><figcaption><b>Hybrid</b><span>Both</span></figcaption></figure>
+      </div>
+
+      <h3>Nutmeg the cat and Derek</h3>
+      <p class="intro">This is the pair from the assignment. The fine layer is Nutmeg and the blurry layer is Derek, lined up by their eyes (σ = 3 for Nutmeg, σ = 8 for Derek). Up close you see cat whiskers and fur on Derek's face. From farther away it's just Derek smiling.</p>
+      <div class="pair-row">
+        <div class="inputs">
+          <figure><img src="assets/derek_nutmeg_high_original.jpg" alt="Nutmeg the cat" /><figcaption><b>Nutmeg</b><span>Detail layer</span></figcaption></figure>
+          <figure><img src="assets/derek_nutmeg_low_original.jpg" alt="Derek" /><figcaption><b>Derek</b><span>Blurry layer</span></figcaption></figure>
+        </div>
+        <div class="distance">
+          <figure><img src="assets/derek_nutmeg_hybrid.jpg" alt="Nutmeg and Derek hybrid, full size" /><figcaption><b>Up close</b></figcaption></figure>
+          <figure><img src="assets/derek_nutmeg_hybrid.jpg" alt="Nutmeg and Derek hybrid, medium" /><figcaption><b>Farther</b></figcaption></figure>
+          <figure><img src="assets/derek_nutmeg_hybrid.jpg" alt="Nutmeg and Derek hybrid, small" /><figcaption><b>Far away</b></figcaption></figure>
+        </div>
+      </div>
+
+      <h3>An owl on the Moon</h3>
+      <p class="intro">An owl's face is almost a perfect circle, just like the full Moon. The fine layer is a great gray owl (σ = 2, weighted 0.7) and the blurry layer is the Moon (σ = 6). Up close you see two eyes, a beak, and feathers on the lunar surface. From far away it's just the Moon. On my first try I blurred the Moon too much (σ = 10). That erased its dark patches (the maria), so from far away it looked like a gray ball instead of the Moon. I also blurred the owl outside the Moon's circle so feathers wouldn't stick out into space.</p>
+      <div class="pair-row">
+        <div class="inputs">
+          <figure><img src="assets/owl_moon_high_original.jpg" alt="Great gray owl" /><figcaption><b>Owl</b><span>Detail layer</span></figcaption></figure>
+          <figure><img src="assets/owl_moon_low_original.jpg" alt="Full Moon" /><figcaption><b>Moon</b><span>Blurry layer</span></figcaption></figure>
+        </div>
+        <div class="distance">
+          <figure><img src="assets/owl_moon_hybrid.jpg" alt="Owl and Moon hybrid, full size" /><figcaption><b>Up close</b></figcaption></figure>
+          <figure><img src="assets/owl_moon_hybrid.jpg" alt="Owl and Moon hybrid, medium" /><figcaption><b>Farther</b></figcaption></figure>
+          <figure><img src="assets/owl_moon_hybrid.jpg" alt="Owl and Moon hybrid, small" /><figcaption><b>Far away</b></figcaption></figure>
+        </div>
+      </div>
+
+      <h3>One that didn't work: frown to smile</h3>
+      <p class="intro">I also tried a face that frowns up close and smiles from far away, using two photos of the same person. It never really switched. The two faces are almost identical except for small changes around the mouth and eyes. Those changes are exactly the fine detail that disappears from far away, so the blurry layer doesn't carry the smile strongly enough. Hybrids need two images whose <em>big shapes</em> are different.</p>
+      <div class="gallery one">
+        <figure><img src="assets/expression_comparison.jpg" alt="Failed frown to smile hybrid with inputs and small views" /><figcaption><b>Frown (detail) + smile (blurry)</b><span>From far away the expression is still ambiguous</span></figcaption></figure>
+      </div>
+    </section>
+
+    <!-- ===================== 2.3 ===================== -->
     <section id="part-2-3">
       <div class="section-heading"><span>2.3</span><h2>Gaussian and Laplacian stacks</h2></div>
       <div class="prose">
-        <p>Gaussian and Laplacian stacks sort an image by feature size. One blur separates only “low” and “high” frequencies, but blending needs more than two bands. I built a Gaussian stack by repeatedly blurring while doubling σ at each level. Unlike a pyramid, a stack never downsamples, so every level remains the original dimensions.</p>
-        <p>I formed each Laplacian level by subtracting adjacent Gaussian levels. The early levels contain small edges and texture, while later levels contain broader shapes and color changes. I keep the final Gaussian image as the lowest-frequency residual. These bands do not lose information: summing all six Laplacian levels reconstructs the original image.</p>
+        <p>A hybrid splits an image into two layers: blurry and detail. For blending (2.4), I need more than two. I want to split an image into several layers, from the finest texture down to the broadest color, so each layer can be handled separately.</p>
+        <p><strong>Gaussian stack:</strong> blur the image, then blur that result more, and keep going. Each level is blurrier than the one before. I double σ at each level (2, 4, 8, ...). It's called a stack and not a pyramid because I never shrink the image, so every level stays full size.</p>
+        <p><strong>Laplacian stack:</strong> subtract each Gaussian level from the one before it. That leaves only the detail that was lost in that one blurring step. The first level is the finest texture and each level after is coarser. The last level is just the blurriest image. If you add all the levels back up, you get exactly the original image.</p>
       </div>
-      <h3>Apple Gaussian stack</h3>
-      <p class="intro">These six full-size levels show increasing blur. Each new level uses twice the previous σ, so small details disappear first and the broad apple shape remains.</p>
+      <h3>Apple</h3>
+      <p class="intro">Top row: Gaussian stack, blurrier going right. Bottom row: Laplacian stack, from fine detail (left) to broad color (right). I boosted the contrast of the Laplacian levels so you can see them.</p>
       <div class="stack-grid">
-        <figure><img src="assets/apple_gaussian_0.jpg" alt="Apple Gaussian level 0" /><figcaption>G0</figcaption></figure><figure><img src="assets/apple_gaussian_1.jpg" alt="Apple Gaussian level 1" /><figcaption>G1</figcaption></figure><figure><img src="assets/apple_gaussian_2.jpg" alt="Apple Gaussian level 2" /><figcaption>G2</figcaption></figure><figure><img src="assets/apple_gaussian_3.jpg" alt="Apple Gaussian level 3" /><figcaption>G3</figcaption></figure><figure><img src="assets/apple_gaussian_4.jpg" alt="Apple Gaussian level 4" /><figcaption>G4</figcaption></figure><figure><img src="assets/apple_gaussian_5.jpg" alt="Apple Gaussian level 5" /><figcaption>G5</figcaption></figure>
+        <figure><img src="assets/apple_gaussian_0.jpg" alt="Apple Gaussian 0" /><figcaption>G0 (original)</figcaption></figure><figure><img src="assets/apple_gaussian_1.jpg" alt="Apple Gaussian 1" /><figcaption>G1</figcaption></figure><figure><img src="assets/apple_gaussian_2.jpg" alt="Apple Gaussian 2" /><figcaption>G2</figcaption></figure><figure><img src="assets/apple_gaussian_3.jpg" alt="Apple Gaussian 3" /><figcaption>G3</figcaption></figure><figure><img src="assets/apple_gaussian_4.jpg" alt="Apple Gaussian 4" /><figcaption>G4</figcaption></figure><figure><img src="assets/apple_gaussian_5.jpg" alt="Apple Gaussian 5" /><figcaption>G5</figcaption></figure>
+        <figure><img src="assets/apple_laplacian_0.jpg" alt="Apple Laplacian 0" /><figcaption>L0 = G0 − G1</figcaption></figure><figure><img src="assets/apple_laplacian_1.jpg" alt="Apple Laplacian 1" /><figcaption>L1</figcaption></figure><figure><img src="assets/apple_laplacian_2.jpg" alt="Apple Laplacian 2" /><figcaption>L2</figcaption></figure><figure><img src="assets/apple_laplacian_3.jpg" alt="Apple Laplacian 3" /><figcaption>L3</figcaption></figure><figure><img src="assets/apple_laplacian_4.jpg" alt="Apple Laplacian 4" /><figcaption>L4</figcaption></figure><figure><img src="assets/apple_laplacian_5.jpg" alt="Apple Laplacian 5" /><figcaption>L5 = G5</figcaption></figure>
       </div>
-      <h3>Apple Laplacian stack</h3>
-      <p class="intro">Subtract adjacent Gaussian levels to isolate fine-to-coarse bands. The last panel is the remaining low-frequency image rather than another difference.</p>
+      <h3>Orange</h3>
       <div class="stack-grid">
-        <figure><img src="assets/apple_laplacian_0.jpg" alt="Apple Laplacian level 0" /><figcaption>L0</figcaption></figure><figure><img src="assets/apple_laplacian_1.jpg" alt="Apple Laplacian level 1" /><figcaption>L1</figcaption></figure><figure><img src="assets/apple_laplacian_2.jpg" alt="Apple Laplacian level 2" /><figcaption>L2</figcaption></figure><figure><img src="assets/apple_laplacian_3.jpg" alt="Apple Laplacian level 3" /><figcaption>L3</figcaption></figure><figure><img src="assets/apple_laplacian_4.jpg" alt="Apple Laplacian level 4" /><figcaption>L4</figcaption></figure><figure><img src="assets/apple_laplacian_5.jpg" alt="Apple Laplacian residual" /><figcaption>L5 residual</figcaption></figure>
+        <figure><img src="assets/orange_gaussian_0.jpg" alt="Orange Gaussian 0" /><figcaption>G0 (original)</figcaption></figure><figure><img src="assets/orange_gaussian_1.jpg" alt="Orange Gaussian 1" /><figcaption>G1</figcaption></figure><figure><img src="assets/orange_gaussian_2.jpg" alt="Orange Gaussian 2" /><figcaption>G2</figcaption></figure><figure><img src="assets/orange_gaussian_3.jpg" alt="Orange Gaussian 3" /><figcaption>G3</figcaption></figure><figure><img src="assets/orange_gaussian_4.jpg" alt="Orange Gaussian 4" /><figcaption>G4</figcaption></figure><figure><img src="assets/orange_gaussian_5.jpg" alt="Orange Gaussian 5" /><figcaption>G5</figcaption></figure>
+        <figure><img src="assets/orange_laplacian_0.jpg" alt="Orange Laplacian 0" /><figcaption>L0 = G0 − G1</figcaption></figure><figure><img src="assets/orange_laplacian_1.jpg" alt="Orange Laplacian 1" /><figcaption>L1</figcaption></figure><figure><img src="assets/orange_laplacian_2.jpg" alt="Orange Laplacian 2" /><figcaption>L2</figcaption></figure><figure><img src="assets/orange_laplacian_3.jpg" alt="Orange Laplacian 3" /><figcaption>L3</figcaption></figure><figure><img src="assets/orange_laplacian_4.jpg" alt="Orange Laplacian 4" /><figcaption>L4</figcaption></figure><figure><img src="assets/orange_laplacian_5.jpg" alt="Orange Laplacian 5" /><figcaption>L5 = G5</figcaption></figure>
       </div>
-      <h3>Orange Gaussian stack</h3>
-      <p class="intro">The same six blur levels on the orange let me compare its changing structure with the apple without resizing either image.</p>
-      <div class="stack-grid">
-        <figure><img src="assets/orange_gaussian_0.jpg" alt="Orange Gaussian level 0" /><figcaption>G0</figcaption></figure><figure><img src="assets/orange_gaussian_1.jpg" alt="Orange Gaussian level 1" /><figcaption>G1</figcaption></figure><figure><img src="assets/orange_gaussian_2.jpg" alt="Orange Gaussian level 2" /><figcaption>G2</figcaption></figure><figure><img src="assets/orange_gaussian_3.jpg" alt="Orange Gaussian level 3" /><figcaption>G3</figcaption></figure><figure><img src="assets/orange_gaussian_4.jpg" alt="Orange Gaussian level 4" /><figcaption>G4</figcaption></figure><figure><img src="assets/orange_gaussian_5.jpg" alt="Orange Gaussian level 5" /><figcaption>G5</figcaption></figure>
-      </div>
-      <h3>Orange Laplacian stack</h3>
-      <p class="intro">The orange differences are also ordered from texture to broad color. Adding all six levels recovers the original orange.</p>
-      <div class="stack-grid">
-        <figure><img src="assets/orange_laplacian_0.jpg" alt="Orange Laplacian level 0" /><figcaption>L0</figcaption></figure><figure><img src="assets/orange_laplacian_1.jpg" alt="Orange Laplacian level 1" /><figcaption>L1</figcaption></figure><figure><img src="assets/orange_laplacian_2.jpg" alt="Orange Laplacian level 2" /><figcaption>L2</figcaption></figure><figure><img src="assets/orange_laplacian_3.jpg" alt="Orange Laplacian level 3" /><figcaption>L3</figcaption></figure><figure><img src="assets/orange_laplacian_4.jpg" alt="Orange Laplacian level 4" /><figcaption>L4</figcaption></figure><figure><img src="assets/orange_laplacian_5.jpg" alt="Orange Laplacian residual" /><figcaption>L5 residual</figcaption></figure>
+
+      <h3>Recreating Figure 3.42 from Szeliski</h3>
+      <p class="intro">This figure shows what happens to each layer when the apple and orange get blended. The left column is the apple's Laplacian level times a blurred mask (the apple keeps the left half). The middle column is the orange's level times the opposite mask. The right column adds them. The bottom row adds up all the levels.</p>
+      <p class="intro">What to notice: in the fine row, the switch from apple to orange happens along a thin line. In the coarse row, it fades over a wide band. Each layer gets a seam width that fits its own scale, and that's why the final oraple has no visible seam.</p>
+      <div class="band-chart three">
+        <p class="corner"></p>
+        <p class="col-h">Apple side</p>
+        <p class="col-h">Orange side</p>
+        <p class="col-h">Combined</p>
+        <p class="row-h">Fine detail<br><span>Laplacian level 0</span></p>
+        <figure><img src="assets/figure_3_42_a.jpg" alt="Masked apple, level 0" /><figcaption>(a)</figcaption></figure>
+        <figure><img src="assets/figure_3_42_b.jpg" alt="Masked orange, level 0" /><figcaption>(b)</figcaption></figure>
+        <figure><img src="assets/figure_3_42_c.jpg" alt="Combined, level 0" /><figcaption>(c)</figcaption></figure>
+        <p class="row-h">Medium<br><span>Laplacian level 2</span></p>
+        <figure><img src="assets/figure_3_42_d.jpg" alt="Masked apple, level 2" /><figcaption>(d)</figcaption></figure>
+        <figure><img src="assets/figure_3_42_e.jpg" alt="Masked orange, level 2" /><figcaption>(e)</figcaption></figure>
+        <figure><img src="assets/figure_3_42_f.jpg" alt="Combined, level 2" /><figcaption>(f)</figcaption></figure>
+        <p class="row-h">Coarse<br><span>Laplacian level 4</span></p>
+        <figure><img src="assets/figure_3_42_g.jpg" alt="Masked apple, level 4" /><figcaption>(g)</figcaption></figure>
+        <figure><img src="assets/figure_3_42_h.jpg" alt="Masked orange, level 4" /><figcaption>(h)</figcaption></figure>
+        <figure><img src="assets/figure_3_42_i.jpg" alt="Combined, level 4" /><figcaption>(i)</figcaption></figure>
+        <p class="row-h">All levels<br><span>added together</span></p>
+        <figure><img src="assets/figure_3_42_j.jpg" alt="Masked apple, all levels" /><figcaption>(j)</figcaption></figure>
+        <figure><img src="assets/figure_3_42_k.jpg" alt="Masked orange, all levels" /><figcaption>(k)</figcaption></figure>
+        <figure><img src="assets/figure_3_42_l.jpg" alt="Final oraple" /><figcaption>(l) the oraple</figcaption></figure>
       </div>
     </section>
 
+    <!-- ===================== 2.4 ===================== -->
     <section id="part-2-4">
       <div class="section-heading"><span>2.4</span><h2>Multiresolution blending</h2></div>
       <div class="prose">
-        <p>A normal cut gives me an obvious seam, but simply making the seam very blurry is not a great fix either. If the transition is narrow, large color regions still look disconnected. If it is wide, small details from both images overlap and start to look ghosted. I ran into both problems while testing the blends.</p>
-        <p>Multiresolution blending gives each frequency band its own transition width. I built Laplacian stacks for both images and a Gaussian stack for the mask. At every level I used <span class="formula">L blend = G mask · L A + (1 − G mask) · L B</span>, then summed the blended levels. High-frequency details change sides relatively quickly, while low-frequency lighting and color change over a wider area. This is what lets the apple and orange meet without one fixed blurry strip across every feature.</p>
+        <p>Say you want to join two photos along a line. A hard cut leaves an obvious seam. A soft, blurry seam is better, but no single seam width works for everything. A narrow seam still shows a jump in color. A wide seam makes fine details from both photos overlap and look ghosted.</p>
+        <p>The fix is the figure above. I split both images into Laplacian stacks and blur the mask with a Gaussian stack. Then I blend each level with its own mask, <span class="formula">blend<sub>k</sub> = mask<sub>k</sub> · A<sub>k</sub> + (1 − mask<sub>k</sub>) · B<sub>k</sub></span>, and add the levels back up. Fine details switch over quickly and colors fade slowly. All the blends below use 6 levels.</p>
       </div>
+
+      <h3>The oraple</h3>
       <div class="gallery four">
-        <figure><img src="assets/oraple_image1.jpg" alt="Apple used for multiresolution blending" /><figcaption><b>Apple</b></figcaption></figure>
-        <figure><img src="assets/oraple_image2.jpg" alt="Orange used for multiresolution blending" /><figcaption><b>Orange</b></figcaption></figure>
-        <figure><img src="assets/oraple_mask.jpg" alt="Vertical half mask used for Oraple" /><figcaption><b>Vertical mask</b></figcaption></figure>
-        <figure><img src="assets/oraple.jpg" alt="Final multiresolution blend of apple and orange" /><figcaption><b>Oraple</b></figcaption></figure>
+        <figure><img src="assets/oraple_image1.jpg" alt="Apple" /><figcaption><b>Apple</b></figcaption></figure>
+        <figure><img src="assets/oraple_image2.jpg" alt="Orange" /><figcaption><b>Orange</b></figcaption></figure>
+        <figure><img src="assets/oraple_mask.jpg" alt="Half and half mask" /><figcaption><b>Mask</b><span>White = apple</span></figcaption></figure>
+        <figure><img src="assets/oraple.jpg" alt="Oraple" /><figcaption><b>Oraple</b></figcaption></figure>
       </div>
-      <h3>Figure 3.42 recreation</h3>
-      <p class="intro">Each row is one role in the blend. Columns go from fine texture (L0) to the leftover low-frequency image (L5). I skipped L1 and L3 so the 12 panels match Szeliski’s (a)–(l) layout: four levels × three rows.</p>
-      <div class="band-chart">
-        <p class="corner">Fine → coarse</p>
-        <p class="col-h">(a,e,i) L0</p>
-        <p class="col-h">(b,f,j) L2</p>
-        <p class="col-h">(c,g,k) L4</p>
-        <p class="col-h">(d,h,l) L5</p>
-        <p class="row-h">Masked Apple</p>
-        <figure><img src="assets/figure_3_42_a.jpg" alt="Masked Apple fine band L0" /><figcaption>(a)</figcaption></figure>
-        <figure><img src="assets/figure_3_42_b.jpg" alt="Masked Apple band L2" /><figcaption>(b)</figcaption></figure>
-        <figure><img src="assets/figure_3_42_c.jpg" alt="Masked Apple band L4" /><figcaption>(c)</figcaption></figure>
-        <figure><img src="assets/figure_3_42_d.jpg" alt="Masked Apple coarse residual L5" /><figcaption>(d)</figcaption></figure>
-        <p class="row-h">Masked Orange</p>
-        <figure><img src="assets/figure_3_42_e.jpg" alt="Masked Orange fine band L0" /><figcaption>(e)</figcaption></figure>
-        <figure><img src="assets/figure_3_42_f.jpg" alt="Masked Orange band L2" /><figcaption>(f)</figcaption></figure>
-        <figure><img src="assets/figure_3_42_g.jpg" alt="Masked Orange band L4" /><figcaption>(g)</figcaption></figure>
-        <figure><img src="assets/figure_3_42_h.jpg" alt="Masked Orange coarse residual L5" /><figcaption>(h)</figcaption></figure>
-        <p class="row-h">Sum</p>
-        <figure><img src="assets/figure_3_42_i.jpg" alt="Sum of masked Apple and Orange fine bands L0" /><figcaption>(i)</figcaption></figure>
-        <figure><img src="assets/figure_3_42_j.jpg" alt="Sum of masked Apple and Orange bands L2" /><figcaption>(j)</figcaption></figure>
-        <figure><img src="assets/figure_3_42_k.jpg" alt="Sum of masked Apple and Orange bands L4" /><figcaption>(k)</figcaption></figure>
-        <figure><img src="assets/figure_3_42_l.jpg" alt="Sum of masked Apple and Orange coarse residuals L5" /><figcaption>(l)</figcaption></figure>
-      </div>
-      <p class="band-note">High-frequency columns switch from apple to orange over a short distance. The L5 column changes color over a much wider strip. That is the whole point of blending per band.</p>
-      <h3>Custom blends</h3>
-      <p class="intro">I made two blends beyond the oraple. Crystal Lake uses a vertical seam on a pair of seasonal lake photos. Galaxy Eye uses an iris-shaped mask instead of a line.</p>
-      <h4>Summer to winter at Crystal Lake</h4>
-      <p class="intro">These were taken at the same Colorado lake. I moved the winter photo up by 24 pixels to bring the far shoreline closer to the summer one. I also softened the vertical mask with a Gaussian of σ = 60 pixels before making its stack. The hard cut stops the water reflection abruptly. The stack result has a gentler transition, although the sky and lake still make the change of season obvious.</p>
+
+      <h3>Summer to winter at Crystal Lake</h3>
+      <p class="intro">Two photos of the same Colorado lake, taken from nearly the same spot, one in summer and one in winter. I shifted the winter photo up 24 pixels so the shorelines line up. Then I used a horizontal mask that puts the snowy winter mountains and stormy sky on top, and the calm summer lake with its reflections on the bottom, with the seam right at the shoreline. In the hard cut you can see a straight line across the right mountain where the two photos meet. The blend smooths it out, so the summer shore grass runs into the winter slopes.</p>
       <div class="gallery three">
         <figure><img src="assets/seasons_image1.jpg" alt="Crystal Lake in summer" /><figcaption><b>Summer</b></figcaption></figure>
         <figure><img src="assets/seasons_image2.jpg" alt="Crystal Lake in winter" /><figcaption><b>Winter</b></figcaption></figure>
-        <figure><img src="assets/seasons_mask.jpg" alt="Softened vertical blending mask" /><figcaption><b>Mask</b></figcaption></figure>
+        <figure><img src="assets/seasons_mask.jpg" alt="Vertical mask" /><figcaption><b>Mask</b><span>White = summer lake, black = winter sky</span></figcaption></figure>
       </div>
-      <div class="gallery two">
+      <div class="gallery two compare">
         <figure><img src="assets/seasons_hard_cut.jpg" alt="Hard cut between summer and winter" /><figcaption><b>Hard cut</b></figcaption></figure>
-        <figure><img src="assets/seasons.jpg" alt="Multiresolution blend between summer and winter" /><figcaption><b>Stack blend</b></figcaption></figure>
+        <figure><img src="assets/seasons.jpg" alt="Blended summer and winter lake" /><figcaption><b>Multiresolution blend</b></figcaption></figure>
       </div>
-      <h4>Galaxy Eye: an irregular iris mask</h4>
-      <p class="intro">The arms of the spiral galaxy NGC 3147 look a lot like the radial fibers of an iris, so I blended the galaxy into the iris of a close-up eye. I scaled the galaxy by 0.6 so its core sits on the pupil and its arms fill the iris. The mask is not a line or a plain circle. It is the iris disc, cut off by the curve of the upper eyelid, with the pupil and the window catchlight removed, so the eye keeps its real pupil, reflection, and lashes.</p>
-      <p class="intro">One thing went wrong on the first try: the galaxy's bright core sits right under the pupil, and the coarse mask levels are wide enough that it leaked in and turned the pupil a washed-out brown. Before building the stacks, I copied the eye's real pupil and catchlight into the galaxy input, so both images agree there and nothing can bleed in.</p>
+
+      <h3>A galaxy in an eye</h3>
+      <p class="intro">This is my favorite blend. The spiral arms of galaxy NGC 3147 look a lot like the fibers in an iris, so I blended the galaxy into the iris of a close-up eye. The mask isn't a straight line. It's the shape of the iris, cut off where the eyelid covers it, with holes for the pupil and the reflection of the window. That way the eye keeps its real pupil, reflection, and lashes.</p>
+      <p class="intro">To place the galaxy, I scaled it down so its center sits right on the pupil and its arms fill the iris. My first attempt had a problem: the galaxy's glowing core sits under the pupil, and at the blurry levels the mask is wide enough that the glow leaked in and turned the pupil a washed-out brown. So before blending, I pasted the eye's real pupil into the galaxy image. With both images agreeing there, nothing can leak.</p>
       <div class="gallery three">
-        <figure><img src="assets/galaxy_eye_image1.jpg" alt="Spiral galaxy scaled and centered on the pupil, with the eye's pupil copied in" /><figcaption><b>Galaxy input</b><span>Scaled 0.6, core on the pupil</span></figcaption></figure>
-        <figure><img src="assets/galaxy_eye_image2.jpg" alt="Close-up of a blue eye" /><figcaption><b>Eye input</b></figcaption></figure>
-        <figure><img src="assets/galaxy_eye_mask.jpg" alt="Iris-shaped irregular mask with pupil and catchlight removed" /><figcaption><b>Irregular mask</b><span>White selects the galaxy</span></figcaption></figure>
+        <figure><img src="assets/galaxy_eye_image1.jpg" alt="Galaxy scaled and centered on the pupil" /><figcaption><b>Galaxy</b><span>Scaled and placed on the pupil</span></figcaption></figure>
+        <figure><img src="assets/galaxy_eye_image2.jpg" alt="Close-up of a blue eye" /><figcaption><b>Eye</b></figcaption></figure>
+        <figure><img src="assets/galaxy_eye_mask.jpg" alt="Iris-shaped mask" /><figcaption><b>Mask</b><span>White = galaxy</span></figcaption></figure>
       </div>
-      <div class="gallery two">
-        <figure><img src="assets/galaxy_eye_hard_cut.jpg" alt="Hard cut of the galaxy into the iris" /><figcaption><b>Hard cut</b><span>Mask applied with no blending</span></figcaption></figure>
-        <figure><img src="assets/galaxy_eye.jpg" alt="Multiresolution blend of a spiral galaxy into an iris" /><figcaption><b>Stack blend</b><span>6 levels, σ = 2 doubling per level</span></figcaption></figure>
+      <div class="gallery two compare">
+        <figure><img src="assets/galaxy_eye_hard_cut.jpg" alt="Hard cut of the galaxy into the eye" /><figcaption><b>Hard cut</b><span>Looks pasted on. Note the flat edge under the eyelid.</span></figcaption></figure>
+        <figure><img src="assets/galaxy_eye.jpg" alt="Galaxy blended into an eye" /><figcaption><b>Multiresolution blend</b><span>The eye's shading and the dark ring around the iris carry over</span></figcaption></figure>
       </div>
-      <p class="intro">At full size the two look similar, so here is the same 260 × 260 crop of the eyelid and the left edge of the iris.</p>
-      <div class="gallery two">
-        <figure><img src="assets/galaxy_eye_zoom_hard_cut.jpg" alt="Zoomed hard cut showing a sharp eyelid line and a chopped iris edge" /><figcaption><b>Hard cut, zoomed</b><span>Sharp line under the eyelid, and the galaxy stops abruptly at the white of the eye</span></figcaption></figure>
-        <figure><img src="assets/galaxy_eye_zoom_blend.jpg" alt="Zoomed stack blend with a soft iris edge and dark limbal ring" /><figcaption><b>Stack blend, zoomed</b><span>The lid shadow and the dark ring around the real iris carry over</span></figcaption></figure>
-      </div>
-      <p class="figure-summary">In the hard cut, the galaxy is pasted on top of the eye. In the stack blend, the eye's broad shading (the eyelid shadow and the dark ring at the iris edge) comes from the coarse levels, while the galaxy supplies the fine texture. That is why it reads as an iris instead of a sticker.</p>
-      <p class="intro">These are the two inputs after applying the unblurred mask. They show what each photo contributes before the band-by-band combination, like Burt and Adelson's Figure 10.</p>
-      <div class="gallery two">
-        <figure><img src="assets/galaxy_eye_masked_image1.jpg" alt="Masked galaxy input" /><figcaption><b>Masked galaxy</b></figcaption></figure>
-        <figure><img src="assets/galaxy_eye_masked_image2.jpg" alt="Masked eye input" /><figcaption><b>Masked eye</b></figcaption></figure>
-      </div>
-      <h4>Inside the Galaxy Eye blend</h4>
-      <p class="intro">Same fine-to-coarse layout as Figure 3.42. In the galaxy row, fine bands stay inside the iris while L5 spreads well past it. In the sum row, L0 carries the star-like detail and the lashes, and L5 carries the brown core glow and the blue sclera.</p>
-      <div class="band-chart">
-        <p class="corner">Fine → coarse</p>
-        <p class="col-h">L0</p>
-        <p class="col-h">L2</p>
-        <p class="col-h">L4</p>
-        <p class="col-h">L5</p>
-        <p class="row-h">Masked Galaxy</p>
-        <figure><img src="assets/galaxy_eye_process_a.jpg" alt="Masked Galaxy fine band L0" /><figcaption>(a)</figcaption></figure>
-        <figure><img src="assets/galaxy_eye_process_b.jpg" alt="Masked Galaxy band L2" /><figcaption>(b)</figcaption></figure>
-        <figure><img src="assets/galaxy_eye_process_c.jpg" alt="Masked Galaxy band L4" /><figcaption>(c)</figcaption></figure>
-        <figure><img src="assets/galaxy_eye_process_d.jpg" alt="Masked Galaxy coarse residual L5" /><figcaption>(d)</figcaption></figure>
-        <p class="row-h">Masked Eye</p>
-        <figure><img src="assets/galaxy_eye_process_e.jpg" alt="Masked Eye fine band L0" /><figcaption>(e)</figcaption></figure>
-        <figure><img src="assets/galaxy_eye_process_f.jpg" alt="Masked Eye band L2" /><figcaption>(f)</figcaption></figure>
-        <figure><img src="assets/galaxy_eye_process_g.jpg" alt="Masked Eye band L4" /><figcaption>(g)</figcaption></figure>
-        <figure><img src="assets/galaxy_eye_process_h.jpg" alt="Masked Eye coarse residual L5" /><figcaption>(h)</figcaption></figure>
-        <p class="row-h">Sum</p>
-        <figure><img src="assets/galaxy_eye_process_i.jpg" alt="Sum of masked Galaxy and Eye fine band L0" /><figcaption>(i)</figcaption></figure>
-        <figure><img src="assets/galaxy_eye_process_j.jpg" alt="Sum of masked Galaxy and Eye band L2" /><figcaption>(j)</figcaption></figure>
-        <figure><img src="assets/galaxy_eye_process_k.jpg" alt="Sum of masked Galaxy and Eye band L4" /><figcaption>(k)</figcaption></figure>
-        <figure><img src="assets/galaxy_eye_process_l.jpg" alt="Sum of masked Galaxy and Eye coarse residual L5" /><figcaption>(l)</figcaption></figure>
+      <h4>Inside the galaxy eye blend</h4>
+      <p class="intro">Same layout as Figure 3.42. The galaxy's fine texture stays inside the iris (top row), while the coarse levels carry the eye's overall shading and the brown glow of the galaxy core (third row). The bottom row shows each side after adding up all the levels.</p>
+      <div class="band-chart three">
+        <p class="corner"></p>
+        <p class="col-h">Galaxy side</p>
+        <p class="col-h">Eye side</p>
+        <p class="col-h">Combined</p>
+        <p class="row-h">Fine detail<br><span>Laplacian level 0</span></p>
+        <figure><img src="assets/galaxy_eye_process_a.jpg" alt="Masked galaxy, level 0" /></figure>
+        <figure><img src="assets/galaxy_eye_process_b.jpg" alt="Masked eye, level 0" /></figure>
+        <figure><img src="assets/galaxy_eye_process_c.jpg" alt="Combined, level 0" /></figure>
+        <p class="row-h">Medium<br><span>Laplacian level 2</span></p>
+        <figure><img src="assets/galaxy_eye_process_d.jpg" alt="Masked galaxy, level 2" /></figure>
+        <figure><img src="assets/galaxy_eye_process_e.jpg" alt="Masked eye, level 2" /></figure>
+        <figure><img src="assets/galaxy_eye_process_f.jpg" alt="Combined, level 2" /></figure>
+        <p class="row-h">Coarse<br><span>Laplacian level 4</span></p>
+        <figure><img src="assets/galaxy_eye_process_g.jpg" alt="Masked galaxy, level 4" /></figure>
+        <figure><img src="assets/galaxy_eye_process_h.jpg" alt="Masked eye, level 4" /></figure>
+        <figure><img src="assets/galaxy_eye_process_i.jpg" alt="Combined, level 4" /></figure>
+        <p class="row-h">All levels<br><span>added together</span></p>
+        <figure><img src="assets/galaxy_eye_process_j.jpg" alt="Masked galaxy, all levels" /></figure>
+        <figure><img src="assets/galaxy_eye_process_k.jpg" alt="Masked eye, all levels" /></figure>
+        <figure><img src="assets/galaxy_eye_process_l.jpg" alt="Final galaxy eye" /></figure>
       </div>
     </section>
 
     <section id="takeaway">
-      <div class="section-heading"><span>★</span><h2>Most important thing I learned</h2></div>
-      <div class="prose"><p>The most useful lesson was that filtering and image choice have to work together. The owl and Moon share a round shape, so their edges line up well enough for the hybrid to read at two distances. The Crystal Lake photos share a shoreline, which gives the summer-to-winter blend a place to meet. I could change filter widths and weights, but I still had to check the images at the size where someone would actually see them.</p></div>
+      <div class="section-heading"><span>★</span><h2>What I learned</h2></div>
+      <div class="prose">
+        <p>Before this project, I thought of blur as something that ruins a photo. Now I think of it as a tool that sorts an image by scale. Blur keeps the big stuff, and "original minus blur" gives you the small stuff. Sharpening, hybrids, and blending are all that one split, used in different ways.</p>
+        <p>The other lesson was that picking the right images mattered as much as the code. Most of my failed hybrids and blends had correct code with a bad pair of photos: shapes that didn't line up, or two images that were too similar. The tiger and the cat work because they already share a shape and a color. The filtering only has to decide which one you notice.</p>
+      </div>
     </section>
-
   </main>
-  <footer class="photo-credits">Adapted photos: <a href="https://commons.wikimedia.org/wiki/File:Ferris_Wheel_at_night_(2690872267).jpg">Ferris wheel by Mack Male</a> and <a href="https://commons.wikimedia.org/wiki/File:Crystal_Lake_Reflection_(7726191492).jpg">summer</a>/<a href="https://commons.wikimedia.org/wiki/File:Crystal_Lake_in_the_Winter_(8341261220).jpg">winter Crystal Lake by Alan Stark</a> (<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC BY-SA 2.0</a>), <a href="https://commons.wikimedia.org/wiki/File:Sunflower_head.jpg">sunflower by Brandon Weeks</a> (<a href="https://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>), and <a href="https://commons.wikimedia.org/wiki/File:Iris_-_right_eye_of_a_girl.jpg">eye by Laitr Keiows</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a>).</footer>
+  <footer class="photo-credits">Photos from Wikimedia Commons: <a href="https://commons.wikimedia.org/wiki/File:Portrait_Panthera_tigris_altaica_Leipzig_Zoo_2013.jpg">tiger by Appaloosa</a> (<a href="https://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>), <a href="https://commons.wikimedia.org/wiki/File:Cat03.jpg">cat by Fir0002</a> (GFDL 1.2), <a href="https://commons.wikimedia.org/wiki/File:Great_Grey_Owl_face.jpg">owl by Lisa Hupp/USFWS</a> and <a href="https://commons.wikimedia.org/wiki/File:Full_Moon_(15984763045).jpg">Moon by NASA Goddard</a> (public domain), <a href="https://commons.wikimedia.org/wiki/File:Crystal_Lake_Reflection_(7726191492).jpg">summer</a> and <a href="https://commons.wikimedia.org/wiki/File:Crystal_Lake_in_the_Winter_(8341261220).jpg">winter Crystal Lake by Alan Stark</a> (<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC BY-SA 2.0</a>), <a href="https://commons.wikimedia.org/wiki/File:Spiral_Galaxy_NGC_3147.png">NGC 3147 by NASA/ESA</a> (public domain), and <a href="https://commons.wikimedia.org/wiki/File:Iris_-_right_eye_of_a_girl.jpg">eye by Laitr Keiows</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a>).</footer>
 </body>
 </html>
