@@ -368,7 +368,7 @@
 
       <h3>Recreating Figure 3.42 from Szeliski</h3>
       <p class="intro">This figure follows the apple and orange through the blend. Each row shows one scale: the left column keeps the apple's contribution with a blurred mask, the middle keeps the orange's contribution with the opposite mask, and the right adds them together. In the bottom row, I add up every scale to get the final image.</p>
-      <p class="intro">The seam is narrow in the fine-detail row but spreads into a wide fade in the coarser row, so texture changes quickly while color has room to transition. That is what makes the final oraple look smoother than a hard cut.</p>
+      <p class="intro">The bottom-right panel adds up all the levels into the finished oraple. The next question is where, at each scale, one fruit gives way to the other.</p>
       <div class="band-chart three">
         <p class="corner"></p>
         <p class="col-h">Apple side</p>
@@ -397,8 +397,8 @@
     <section id="part-2-4">
       <div class="section-heading"><span>2.4</span><h2>Multiresolution blending</h2></div>
       <div class="prose">
-        <p>A hard cut makes the join between two photos obvious, but simply blurring the join doesn't solve everything either: a narrow fade leaves a color jump, while a wide one overlaps fine details and looks ghosted.</p>
-        <p>I use the stacks from the previous section to give each scale its own transition. At each level I blend the two Laplacian layers with a differently blurred mask, <span class="formula">blend<sub>k</sub> = mask<sub>k</sub> · A<sub>k</sub> + (1 − mask<sub>k</sub>) · B<sub>k</sub></span>, then add the six levels together. Fine details switch sides quickly while the larger color changes fade more gradually.</p>
+        <p>That's where the mask comes in. A hard cut leaves an obvious seam, but blurring the whole join by one fixed amount either leaves a color jump or makes the details look ghosted. I blur the mask differently at each level, so fine texture switches sides quickly while the larger color changes fade more gradually.</p>
+        <p>At each level, I use that mask to mix the apple and orange's Laplacian layers, <span class="formula">blend<sub>k</sub> = mask<sub>k</sub> · A<sub>k</sub> + (1 − mask<sub>k</sub>) · B<sub>k</sub></span>. Adding the six blended layers gives the oraple shown above. Here are its inputs and mask together, followed by the same method on my own image pairs.</p>
       </div>
 
       <h3>The oraple</h3>
