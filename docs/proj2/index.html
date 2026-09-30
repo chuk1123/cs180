@@ -17,7 +17,7 @@
   <main>
     <p class="eyebrow">Kevin Chu · Fall 2026</p>
     <h1>Fun with Filters and Frequencies</h1>
-    <p class="lede">Every photo is a mix of two kinds of information: slow changes, like lighting and big shapes, and fast changes, like edges and texture. This whole project is about pulling those two apart and putting them back together in new ways. That gets me edge detection, sharpening, images that change when you step back, and seamless photo blends. I play a lot of tennis, so a few tennis ideas snuck in too: a Moon that turns into a tennis ball, and a Federer–Nadal face.</p>
+    <p class="lede">Every photo is a mix of two kinds of information: slow changes, like lighting and big shapes, and fast changes, like edges and texture. This whole project is about pulling those two apart and putting them back together in new ways. That gets me edge detection, sharpening, images that change when you step back, and seamless photo blends. I play a lot of tennis, so a few tennis ideas snuck in too: a Moon that turns into a tennis ball, and Djokovic giving the Rock's famous side-eye.</p>
 
     <nav class="contents" aria-label="Project sections">
       <a href="#part-1-1">1.1 Convolution</a><a href="#part-1-2">1.2 Edges</a>
@@ -327,18 +327,6 @@ padded = <span class="tok-fn">np.pad</span>(image, ((pad_top, pad_bottom), (pad_
         <figure><img src="assets/oraple.jpg" alt="Oraple" /><figcaption><b>Oraple</b></figcaption></figure>
       </div>
 
-      <h3>Fedal: half Federer, half Nadal</h3>
-      <p class="intro">Federer and Nadal played each other 40 times, and fans call the rivalry "Fedal". So I made the literal version: Federer on the left, Nadal on the right. I lined the two faces up by their eyes, then blended with a plain vertical mask down the middle of the nose. The photos are almost ten years apart and lit very differently: Federer is in shade under his headband and Nadal is brightly lit and smiling. In the hard cut, that shows up as a sharp jump in skin tone along the nose. The blend spreads the lighting change across the whole face while keeping the headband, hair, and smile sharp, so it looks like one person.</p>
-      <div class="gallery three">
-        <figure><img src="assets/fedal_image1.jpg" alt="Roger Federer, 2007" /><figcaption><b>Federer</b><span>2007</span></figcaption></figure>
-        <figure><img src="assets/fedal_image2.jpg" alt="Rafael Nadal, 2016, aligned to Federer" /><figcaption><b>Nadal</b><span>2016, eyes matched to Federer</span></figcaption></figure>
-        <figure><img src="assets/fedal_mask.jpg" alt="Vertical mask" /><figcaption><b>Mask</b><span>White = Federer</span></figcaption></figure>
-      </div>
-      <div class="gallery two compare">
-        <figure><img src="assets/fedal_hard_cut.jpg" alt="Hard cut between Federer and Nadal" /><figcaption><b>Hard cut</b></figcaption></figure>
-        <figure><img src="assets/fedal.jpg" alt="Multiresolution blend of Federer and Nadal" /><figcaption><b>Multiresolution blend</b></figcaption></figure>
-      </div>
-
       <h3>Summer to winter at Crystal Lake</h3>
       <p class="intro">Two photos of the same Colorado lake, taken from nearly the same spot, one in summer and one in winter. I shifted the winter photo up 24 pixels so the shorelines line up. Then I used a horizontal mask that puts the snowy winter mountains and stormy sky on top, and the calm summer lake with its reflections on the bottom, with the seam right at the shoreline. In the hard cut you can see a straight line across the right mountain where the two photos meet. The blend smooths it out, so the summer shore grass runs into the winter slopes.</p>
       <div class="gallery three">
@@ -349,6 +337,23 @@ padded = <span class="tok-fn">np.pad</span>(image, ((pad_top, pad_bottom), (pad_
       <div class="gallery two compare">
         <figure><img src="assets/seasons_hard_cut.jpg" alt="Hard cut between summer and winter" /><figcaption><b>Hard cut</b></figcaption></figure>
         <figure><img src="assets/seasons.jpg" alt="Blended summer and winter lake" /><figcaption><b>Multiresolution blend</b></figcaption></figure>
+      </div>
+
+      <h3>Djokovic gives the side-eye</h3>
+      <p class="intro">This is a photo of Djokovic checking his racket at the 2014 ATP Finals, blended with the famous meme of the Rock raising one eyebrow. The mask isn't a line. It's drawn around the Rock's face: an ellipse over his brows, eyes, nose, and mouth, trimmed so it stays inside the outline of Djokovic's face.</p>
+      <p class="intro">Lining them up was the tricky part. Djokovic is looking down at his racket and the Rock is looking up and to the side, so matching only the eyes wasn't enough. I used three points (both eyes and the mouth) and an affine warp, which can tilt and squash the Rock's face to fit the angle of Djokovic's head.</p>
+      <div class="gallery three">
+        <figure><img src="assets/rock_djokovic_image2.jpg" alt="Djokovic checking his racket" /><figcaption><b>Djokovic</b></figcaption></figure>
+        <figure><img src="assets/rock_djokovic_rock.jpg" alt="The Rock raising an eyebrow" /><figcaption><b>The Rock</b><span>Warped onto Djokovic's face before blending</span></figcaption></figure>
+        <figure><img src="assets/rock_djokovic_mask.jpg" alt="Face-shaped mask" /><figcaption><b>Mask</b><span>White = the Rock</span></figcaption></figure>
+      </div>
+      <div class="gallery one compare-single">
+        <figure><img src="assets/rock_djokovic.jpg" alt="Djokovic with the Rock's side-eye" /><figcaption><b>Result</b></figcaption></figure>
+      </div>
+      <p class="intro">The face is small in the full photo, so here is a close-up. The hard cut has a visible edge around the face and a jump in skin tone. The Rock's skin is pinker and Djokovic is lit warmer by the arena lights. The blend fades the color difference over a wide area, so the edge disappears while the eyebrow stays sharp.</p>
+      <div class="gallery two compare">
+        <figure><img src="assets/rock_djokovic_face_hard_cut.jpg" alt="Hard cut close-up" /><figcaption><b>Hard cut</b></figcaption></figure>
+        <figure><img src="assets/rock_djokovic_face_blend.jpg" alt="Multiresolution blend close-up" /><figcaption><b>Multiresolution blend</b></figcaption></figure>
       </div>
 
       <h3>A galaxy in an eye</h3>
@@ -397,6 +402,6 @@ padded = <span class="tok-fn">np.pad</span>(image, ((pad_top, pad_bottom), (pad_
       </div>
     </section>
   </main>
-  <footer class="photo-credits">Photos from Wikimedia Commons: <a href="https://commons.wikimedia.org/wiki/File:Portrait_Panthera_tigris_altaica_Leipzig_Zoo_2013.jpg">tiger by Appaloosa</a> (<a href="https://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>), <a href="https://commons.wikimedia.org/wiki/File:Cat03.jpg">cat by Fir0002</a> (GFDL 1.2), <a href="https://commons.wikimedia.org/wiki/File:Full_Moon_(15984763045).jpg">Moon by NASA Goddard</a> (public domain), <a href="https://commons.wikimedia.org/wiki/File:Closeup_of_a_tennis_ball_(2).jpg">tennis ball</a> (CC0), <a href="https://commons.wikimedia.org/wiki/File:Federer_2007_cropped.jpg">Federer by James Barrett</a> (<a href="https://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>), <a href="https://commons.wikimedia.org/wiki/File:Rafa_Nadal_(Spain)_(23820056523)_(cropped).jpg">Nadal by Tourism Victoria</a> (<a href="https://creativecommons.org/licenses/by/2.0/">CC BY 2.0</a>), <a href="https://commons.wikimedia.org/wiki/File:Crystal_Lake_Reflection_(7726191492).jpg">summer</a> and <a href="https://commons.wikimedia.org/wiki/File:Crystal_Lake_in_the_Winter_(8341261220).jpg">winter Crystal Lake by Alan Stark</a> (<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC BY-SA 2.0</a>), <a href="https://commons.wikimedia.org/wiki/File:Spiral_Galaxy_NGC_3147.png">NGC 3147 by NASA/ESA</a> (public domain), and <a href="https://commons.wikimedia.org/wiki/File:Iris_-_right_eye_of_a_girl.jpg">eye by Laitr Keiows</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a>).</footer>
+  <footer class="photo-credits">Photos from Wikimedia Commons: <a href="https://commons.wikimedia.org/wiki/File:Portrait_Panthera_tigris_altaica_Leipzig_Zoo_2013.jpg">tiger by Appaloosa</a> (<a href="https://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>), <a href="https://commons.wikimedia.org/wiki/File:Cat03.jpg">cat by Fir0002</a> (GFDL 1.2), <a href="https://commons.wikimedia.org/wiki/File:Full_Moon_(15984763045).jpg">Moon by NASA Goddard</a> (public domain), <a href="https://commons.wikimedia.org/wiki/File:Closeup_of_a_tennis_ball_(2).jpg">tennis ball</a> (CC0), <a href="https://commons.wikimedia.org/wiki/File:2014-11-12_2014_ATP_World_Tour_Finals_Novak_Djokiov_checking_racket_by_Michael_Frey.jpg">Djokovic by Michael Frey</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a>), <a href="https://commons.wikimedia.org/wiki/File:Crystal_Lake_Reflection_(7726191492).jpg">summer</a> and <a href="https://commons.wikimedia.org/wiki/File:Crystal_Lake_in_the_Winter_(8341261220).jpg">winter Crystal Lake by Alan Stark</a> (<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC BY-SA 2.0</a>), <a href="https://commons.wikimedia.org/wiki/File:Spiral_Galaxy_NGC_3147.png">NGC 3147 by NASA/ESA</a> (public domain), and <a href="https://commons.wikimedia.org/wiki/File:Iris_-_right_eye_of_a_girl.jpg">eye by Laitr Keiows</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a>). The Rock eyebrow image is a meme frame, used here for a class project.</footer>
 </body>
 </html>

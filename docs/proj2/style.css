@@ -260,3 +260,4 @@ figcaption .method { font-family: ui-monospace, SFMono-Regular, Menlo, monospace
   .pair-row { grid-template-columns: 1fr; }
   .band-chart.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
+.gallery.compare-single { grid-template-columns: minmax(0, 560px); }
