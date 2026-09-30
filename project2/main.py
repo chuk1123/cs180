@@ -714,4 +714,5 @@ eye_mask = eye_mask[top:bottom, left:right].astype(float)
 save_blend_results(
     galaxy_eye_image, eye, eye_mask, 'galaxy_eye', save_process=True
 )
+save(galaxy_full, 'galaxy_eye_galaxy.jpg', 'part2_4')
 
