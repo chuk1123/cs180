@@ -640,8 +640,16 @@ left, top = landmarks['crop_origin']
 djokovic = load_small_image(data_dir / 'downloaded' / 'djokovic_racket.jpg', max_size=3264)
 djokovic = djokovic[top:top + 1000, left:left + 1000]
 rock = load_small_image(data_dir / 'downloaded' / 'rock_side_eye.jpg', max_size=463)
+save(rock, 'rock_djokovic_rock.jpg', 'part2_4')
 rock_points = np.array(landmarks['rock'])
 djokovic_points = np.array(landmarks['djokovic'])
+
+# The meme has a white border around the Rock's head. Fill it with his own
+# skin, continued outward from the edge of his face, so the stretched face
+# can cover all of Djokovic's face (his turned-away cheek is otherwise short).
+border = cv2.dilate((rock.min(axis=2) > 0.75).astype(np.uint8), np.ones((7, 7), np.uint8))
+rock = cv2.inpaint(sk.img_as_ubyte(rock), border, 15, cv2.INPAINT_TELEA)
+rock = sk.img_as_float(rock)
 
 # One smooth stretch for the whole face: the affine transform (rotate, scale,
 # shear) that best maps the Rock's landmarks onto Djokovic's. Unlike a
@@ -653,18 +661,11 @@ stretch, _ = cv2.estimateAffine2D(np.float32(rock_points),
 rock_aligned = np.clip(cv2.warpAffine(
     rock, stretch, (1000, 1000), borderMode=cv2.BORDER_REPLICATE), 0, 1)
 
-# Mask: Djokovic's face outline, shrunk a little toward the center, with the
-# top of the forehead cut off so the Rock's bald head doesn't cover the hair.
-center = djokovic_points.mean(axis=0)
-outline = cv2.convexHull(np.int32(center + 0.88 * (djokovic_points - center)))
+# Mask: drawn by hand around Djokovic's face.
+with open(data_dir / 'rock_djokovic_mask.json') as f:
+    face_outline = np.int32(np.round(json.load(f)['polygon']))
 rock_mask = np.zeros((1000, 1000), np.float32)
-cv2.fillConvexPoly(rock_mask, outline, 1)
-rows = np.where(rock_mask.any(axis=1))[0]
-rock_mask[:int(rows.min() + 0.08 * (rows.max() - rows.min()))] = 0
-# Skip anything that came from the white border of the meme image.
-rock_face = cv2.erode((rock.min(axis=2) < 0.8).astype(np.float32),
-                      np.ones((9, 9), np.uint8))
-rock_mask *= cv2.warpAffine(rock_face, stretch, (1000, 1000)) > 0.5
+cv2.fillPoly(rock_mask, [face_outline], 1)
 
 # The Rock is paler and lit differently. Match the mean and spread of each
 # color channel inside the mask to Djokovic's skin before blending.
@@ -682,7 +683,6 @@ hard_cut = rock_mask[:, :, np.newaxis] * rock_aligned
 hard_cut += (1 - rock_mask[:, :, np.newaxis]) * djokovic
 save(hard_cut[100:550, 250:700], 'rock_djokovic_face_hard_cut.jpg', 'part2_4')
 save(rock_djokovic[100:550, 250:700], 'rock_djokovic_face_blend.jpg', 'part2_4')
-save(rock, 'rock_djokovic_rock.jpg', 'part2_4')
 
 # A failed irregular blend: a red rose cut out of its black background and
 # placed on a spiral galaxy.

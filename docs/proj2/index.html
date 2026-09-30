@@ -322,11 +322,24 @@
         </div>
       </div>
 
-      <h3>One that didn't work: frown to smile</h3>
+      <h3>Frown to smile: a failed attempt and a stronger detail layer</h3>
       <p class="intro">I also tried a face that frowns up close and smiles from far away, using two photos of the same person. With this pair and these filter settings, it never clearly switched. The differences around the mouth and eyes were too subtle in the low-frequency layer to convey the smile from a distance. Expression hybrids can work, but this attempt needed a stronger expression contrast or different alignment and cutoff settings.</p>
       <div class="gallery one">
         <figure><img src="assets/expression_comparison.jpg" alt="Failed frown to smile hybrid with inputs and small views" /><figcaption><b>Frown (detail) + smile (blurry)</b><span>From far away the expression is still ambiguous</span></figcaption></figure>
       </div>
+      <p class="intro">I revisited the pair to test whether the frown's detail was simply too weak. For this comparison, I keep the filters fixed at σ = 2 for the frown's high-pass layer and σ = 8 for the smile's low-pass layer. Only the detail weight changes: hybrid = blurry smile + w · frown detail. The input crops come from the 400-pixel panels of the archived comparison above.</p>
+      <div class="gallery three">
+        <figure><img src="assets/expression_gain_1.jpg" alt="Expression hybrid with detail weight one" /><figcaption><b>w = 1</b><span>The frown's eyes and brow are faint</span></figcaption></figure>
+        <figure><img src="assets/expression_gain_2.jpg" alt="Expression hybrid with twice the high-frequency detail" /><figcaption><b>w = 2</b><span>The squint and brow become clearer</span></figcaption></figure>
+        <figure><img src="assets/expression_gain_3.jpg" alt="Expression hybrid with three times the high-frequency detail" /><figcaption><b>w = 3</b><span>Stronger frown detail, but harsher texture</span></figcaption></figure>
+      </div>
+      <p class="intro">The 3× version makes the frown more visible nearby. Compare it at decreasing sizes below: the eyebrow creases and beard texture fade, letting more of the smile through. The switch is still subtle, especially at the medium size. Amplification also introduces halos and clips about 1.6% of channel values, so stronger detail has a cost.</p>
+      <div class="distance">
+        <figure><img src="assets/expression_gain_3.jpg" alt="Strong expression hybrid viewed up close" /><figcaption><b>Up close</b></figcaption></figure>
+        <figure><img src="assets/expression_gain_3.jpg" alt="Strong expression hybrid at medium viewing size" /><figcaption><b>Farther</b></figcaption></figure>
+        <figure><img src="assets/expression_gain_3.jpg" alt="Strong expression hybrid at small viewing size" /><figcaption><b>Far away</b></figcaption></figure>
+      </div>
+      <p class="intro">I also tried larger high-pass σ values. They include broader features of the frown, making it stronger nearby but more persistent at a distance. Increasing the detail weight while keeping σ small is the better compromise for this pair; a more exaggerated smile would still give the low-frequency layer a clearer expression to carry.</p>
     </section>
 
     <!-- ===================== 2.3 ===================== -->
@@ -405,9 +418,9 @@
       </div>
 
       <h3>Djokovic gives the side-eye</h3>
-      <p class="intro">This is a photo of Djokovic checking his racket at the 2014 ATP Finals, blended with the famous meme of the Rock raising one eyebrow. The mask isn't a line. It follows the outline of Djokovic's face.</p>
+      <p class="intro">This is a photo of Djokovic checking his racket at the 2014 ATP Finals, blended with the famous meme of the Rock raising one eyebrow. The mask isn't a line. I drew it by hand around Djokovic's face.</p>
       <p class="intro">Lining them up was the hard part. Djokovic is looking down and facing the camera more, while the Rock is looking up and turned to the side. Rotating and scaling alone always left a strip of Djokovic's face showing. A full face morph (warping every little triangle of the face separately) lined everything up but made the Rock's face look melted. What worked was one smooth stretch for the whole face. I found 478 matching points on both faces with a face-landmark detector, then fit the single affine transform (rotation, scale, and shear) that moves the Rock's points closest to Djokovic's. The shear squashes and slants the face the way turning and tilting a head does, but it can't bend individual features, so the Rock still looks like the Rock. Points that fit badly, like the jaw on the side the Rock is turned away from, get ignored in the fit.</p>
-      <p class="intro">The mask is Djokovic's face outline, shrunk slightly toward the center, with the top of the forehead cut off so the Rock's bald head doesn't paint over Djokovic's hair. The Rock's skin is also paler and lit differently, so before blending I shifted his colors to match the average and spread of Djokovic's skin inside the mask.</p>
+      <p class="intro">Even after the stretch, the Rock's cheek on the side he's turned away from is too narrow to cover Djokovic's face, which left a strip of Djokovic showing at the edge of my mask. The meme has a white border around his head, so I filled that border with his own skin, continued outward from the edge of his face, before stretching. The Rock is also paler and lit differently, so I shifted his colors to match the average and spread of Djokovic's skin inside the mask before blending.</p>
       <div class="gallery three">
         <figure><img src="assets/rock_djokovic_image2.jpg" alt="Djokovic checking his racket" /><figcaption><b>Djokovic</b></figcaption></figure>
         <figure><img src="assets/rock_djokovic_rock.jpg" alt="The Rock raising an eyebrow" /><figcaption><b>The Rock</b><span>Stretched onto Djokovic's face before blending</span></figcaption></figure>
