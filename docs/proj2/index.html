@@ -214,11 +214,13 @@
       </div>
       <p class="intro">That is the easiest way to picture the process, though the code combines it into one filter, <span class="formula">(1 + α) · impulse − α · Gaussian</span>, before convolving with the image.</p>
       <h3>How much is too much?</h3>
-      <p class="intro">As α goes up, the windows and carvings stand out more, but at 3 the bright halos around the dome and trees start looking unnatural.</p>
-      <div class="gallery three">
+      <p class="intro">As α goes up, the windows and carvings stand out more, but at 3 the bright halos around the dome and trees start looking unnatural, and at 5 and 10 the whole image turns into harsh outlines and noise.</p>
+      <div class="gallery five">
         <figure><img src="assets/taj_sharpened_alpha_0.5.jpg" alt="Taj sharpened with alpha 0.5" /><figcaption><b>α = 0.5</b><span>Subtle</span></figcaption></figure>
         <figure class="pick"><img src="assets/taj_sharpened_alpha_1.5.jpg" alt="Taj sharpened with alpha 1.5" /><figcaption><b>α = 1.5 (my pick)</b><span>Crisp, still natural</span></figcaption></figure>
         <figure><img src="assets/taj_sharpened_alpha_3.jpg" alt="Taj sharpened with alpha 3" /><figcaption><b>α = 3</b><span>Halos around the dome</span></figcaption></figure>
+        <figure><img src="assets/taj_sharpened_alpha_5.jpg" alt="Taj sharpened with alpha 5" /><figcaption><b>α = 5</b><span>Exaggerated</span></figcaption></figure>
+        <figure><img src="assets/taj_sharpened_alpha_10.jpg" alt="Taj sharpened with alpha 10" /><figcaption><b>α = 10</b><span>Way too much</span></figcaption></figure>
       </div>
       <h3 id="blur-recovery">Can sharpening undo a blur?</h3>
       <p class="intro">Here I blurred the photo on purpose first and then sharpened the blurry version.</p>
@@ -408,7 +410,7 @@
       </div>
 
       <h3>Summer to winter at Crystal Lake</h3>
-      <p class="intro">The same Colorado lake in summer and winter, blended left to right with a soft vertical mask so the open water slowly turns to ice.</p>
+      <p class="intro">The same Colorado lake in summer and winter, blended with a vertical seam down the middle.</p>
       <div class="gallery three">
         <figure><img src="assets/seasons_image1.jpg" alt="Crystal Lake in summer" /><figcaption><b>Summer</b></figcaption></figure>
         <figure><img src="assets/seasons_image2.jpg" alt="Crystal Lake in winter" /><figcaption><b>Winter</b></figcaption></figure>
