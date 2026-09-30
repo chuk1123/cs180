@@ -702,10 +702,10 @@ eye_mask = cv2.morphologyEx(eye_mask, cv2.MORPH_CLOSE, np.ones((25, 25), np.uint
 eye_mask = eye_mask.astype(bool) & iris & below_lid & ~pupil & ~catchlight
 
 # The galaxy's bright core would bleed into the pupil through the coarse
-# levels, so both inputs share the real pupil and catchlight.
-keep = cv2.GaussianBlur((pupil | catchlight).astype(float), (0, 0), 3)
-keep = keep[:, :, np.newaxis]
-galaxy_eye_image = keep * eye + (1 - keep) * galaxy_eye_image
+# levels, so cover the core with a dark disc the color of the real pupil.
+pupil_color = np.median(eye[pupil & ~catchlight], axis=0)
+keep = cv2.GaussianBlur(pupil.astype(float), (0, 0), 3)[:, :, np.newaxis]
+galaxy_eye_image = keep * pupil_color + (1 - keep) * galaxy_eye_image
 
 top, bottom, left, right = 70, 630, 316, 916
 galaxy_eye_image = galaxy_eye_image[top:bottom, left:right]
