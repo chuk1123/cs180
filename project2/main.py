@@ -540,6 +540,9 @@ derivative_of_gaussian(cameraman, kernel_size=9, sigma=2, threshold=0.28)
 # Part 2.1 results
 taj = skio.imread(data_dir / 'taj.jpg')
 save_sharpening_results(taj, 'taj')
+# Controlled recovery experiment: sharpen only the deliberately blurred forest.
+forest = load_small_image(data_dir / 'downloaded' / 'tree_tunnel.jpg', max_size=960)
+save_sharpening_results(forest, 'forest', alphas=(), save_resharpened=True)
 # The full-moon photo starts out soft, so sharpening visibly brings out craters.
 moon_sharpen = load_small_image(data_dir / 'downloaded' / 'moon.jpg', max_size=960)
 save_sharpening_results(
@@ -627,7 +630,7 @@ save_blend_results(
     summer, winter, season_mask, 'seasons'
 )
 
-# Irregular mask: the Rock's side-eye morphed onto Djokovic checking his racket.
+# Irregular mask: the Rock's side-eye on Djokovic checking his racket.
 # The 478 matching face landmarks were found once with MediaPipe FaceMesh and
 # saved to data/rock_djokovic_landmarks.json. Djokovic's points are in a
 # 1000 x 1000 crop of his photo.
@@ -640,11 +643,15 @@ rock = load_small_image(data_dir / 'downloaded' / 'rock_side_eye.jpg', max_size=
 rock_points = np.array(landmarks['rock'])
 djokovic_points = np.array(landmarks['djokovic'])
 
-# Morph: split the face into triangles between landmarks and warp each Rock
-# triangle onto the matching Djokovic triangle.
-morph = sk.transform.PiecewiseAffineTransform()
-morph.estimate(djokovic_points, rock_points)
-rock_aligned = sk.transform.warp(rock, morph, output_shape=(1000, 1000), mode='edge')
+# One smooth stretch for the whole face: the affine transform (rotate, scale,
+# shear) that best maps the Rock's landmarks onto Djokovic's. Unlike a
+# triangle-by-triangle morph, it can't bend individual features, so the
+# Rock keeps his face. LMEDS ignores points that fit badly, like the jaw on
+# the side the Rock has turned away.
+stretch, _ = cv2.estimateAffine2D(np.float32(rock_points),
+                                  np.float32(djokovic_points), method=cv2.LMEDS)
+rock_aligned = np.clip(cv2.warpAffine(
+    rock, stretch, (1000, 1000), borderMode=cv2.BORDER_REPLICATE), 0, 1)
 
 # Mask: Djokovic's face outline, shrunk a little toward the center, with the
 # top of the forehead cut off so the Rock's bald head doesn't cover the hair.
@@ -657,7 +664,7 @@ rock_mask[:int(rows.min() + 0.08 * (rows.max() - rows.min()))] = 0
 # Skip anything that came from the white border of the meme image.
 rock_face = cv2.erode((rock.min(axis=2) < 0.8).astype(np.float32),
                       np.ones((9, 9), np.uint8))
-rock_mask *= sk.transform.warp(rock_face, morph, output_shape=(1000, 1000)) > 0.5
+rock_mask *= cv2.warpAffine(rock_face, stretch, (1000, 1000)) > 0.5
 
 # The Rock is paler and lit differently. Match the mean and spread of each
 # color channel inside the mask to Djokovic's skin before blending.
@@ -735,4 +742,3 @@ save_blend_results(
     galaxy_eye_image, eye, eye_mask, 'galaxy_eye', save_process=True
 )
 save(galaxy_full, 'galaxy_eye_galaxy.jpg', 'part2_4')
-

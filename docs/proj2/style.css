@@ -41,7 +41,7 @@ h1 { max-width: 850px; margin: 0; font-size: clamp(2.5rem, 7vw, 4.8rem); letter-
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin: -40px 0 64px;
+  margin: 28px 0 64px;
 }
 
 .contents a {

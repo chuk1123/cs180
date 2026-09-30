@@ -17,7 +17,6 @@
   <main>
     <p class="eyebrow">Kevin Chu · Fall 2026</p>
     <h1>Fun with Filters and Frequencies</h1>
-    <p class="lede">Every photo is a mix of two kinds of information: slow changes, like lighting and big shapes, and fast changes, like edges and texture. This whole project is about pulling those two apart and putting them back together in new ways. That gets me edge detection, sharpening, images that change when you step back, and seamless photo blends. I also play a lot of tennis, so Djokovic makes an appearance in the blending section.</p>
 
     <nav class="contents" aria-label="Project sections">
       <a href="#part-1-1">1.1 Convolution</a><a href="#part-1-2">1.2 Edges</a>
@@ -34,32 +33,82 @@
         <p>I wrote it twice. The first version uses four loops: two to visit every output pixel, and two more to walk over the filter. The second version drops the inner two loops and lets NumPy multiply the whole patch at once.</p>
       </div>
       <div class="code-grid">
-        <div><h3>Four loops</h3><pre><code><span class="tok-keyword">for</span> i <span class="tok-keyword">in</span> <span class="tok-fn">range</span>(output_h):
-    <span class="tok-keyword">for</span> j <span class="tok-keyword">in</span> <span class="tok-fn">range</span>(output_w):
-        <span class="tok-keyword">for</span> fi <span class="tok-keyword">in</span> <span class="tok-fn">range</span>(fh):
-            <span class="tok-keyword">for</span> fj <span class="tok-keyword">in</span> <span class="tok-fn">range</span>(fw):
-                output[i, j] += (
-                    padded[i + fi, j + fj]
-                    * <span class="tok-var">flipped</span>[fi, fj]
-                )</code></pre></div>
-        <div><h3>Two loops</h3><pre><code><span class="tok-keyword">for</span> i <span class="tok-keyword">in</span> <span class="tok-fn">range</span>(output_h):
-    <span class="tok-keyword">for</span> j <span class="tok-keyword">in</span> <span class="tok-fn">range</span>(output_w):
-        patch = padded[i:i+fh, j:j+fw]
-        output[i, j] = <span class="tok-fn">np.sum</span>(
-            patch * <span class="tok-var">flipped</span>
-        )</code></pre></div>
+        <div><h3>Four loops</h3><pre><code>def convolve_four_loops(image, filter, mode='same'):
+    flipped_filter = np.flip(np.flip(filter, axis=0), axis=1)
+    image_h, image_w = image.shape
+    fh, fw = flipped_filter.shape
+
+    if mode == 'same':
+        pad_top = fh // 2
+        pad_bottom = (fh - 1) // 2
+        pad_left = fw // 2
+        pad_right = (fw - 1) // 2
+
+    elif mode == 'full':
+        pad_top = pad_bottom = fh - 1
+        pad_left = pad_right = fw - 1
+
+    else:
+        raise ValueError("mode must be 'same' or 'full'")
+
+    padded = np.pad(
+        image,
+        ((pad_top, pad_bottom), (pad_left, pad_right)),
+        mode='constant'
+    )
+
+    output_h = padded.shape[0] - (fh - 1)
+    output_w = padded.shape[1] - (fw - 1)
+    output = np.zeros((output_h, output_w))
+
+    for i in range(output_h):
+        for j in range(output_w):
+            for fi in range(fh):
+                for fj in range(fw):
+                    output[i, j] += (
+                        padded[i + fi, j + fj]
+                        * flipped_filter[fi, fj]
+                    )
+
+    return output</code></pre></div>
+        <div><h3>Two loops</h3><pre><code>def convolve_two_loops(image, filter, mode = 'same'):
+    flipped_filter = np.flip(np.flip(filter, axis=0), axis=1)
+    image_h, image_w = image.shape
+    fh, fw = flipped_filter.shape
+
+    if mode == 'same':
+        pad_top = fh // 2
+        pad_bottom = (fh - 1) // 2
+        pad_left = fw // 2
+        pad_right = (fw - 1) // 2
+
+    elif mode == 'full':
+        pad_top = pad_bottom = fh - 1
+        pad_left = pad_right = fw - 1
+
+    else:
+        raise ValueError("mode must be 'same' or 'full'")
+
+    padded = np.pad(
+        image,
+        ((pad_top, pad_bottom), (pad_left, pad_right)),
+        mode='constant'
+    )
+
+    output_h = padded.shape[0] - (fh - 1)
+    output_w = padded.shape[1] - (fw - 1)
+    output = np.zeros((output_h, output_w))
+
+    for i in range(output_h):
+        for j in range(output_w):
+            patch = padded[i:i+fh, j:j+fw]
+            output[i, j] = np.sum(patch * flipped_filter)
+
+    return output</code></pre></div>
       </div>
       <h3>What happens at the border?</h3>
       <div class="prose">
         <p>Pixels near the edge don't have a full neighborhood, so I pad the image with zeros before sliding the filter. There are two common choices. <code>same</code> pads just enough that the output is the same size as the input. <code>full</code> pads more, so the output keeps every position where the filter overlaps the image at all. With a 9 × 9 filter, that makes it 8 pixels bigger in each direction. Zero padding also darkens the border a little, because the average there includes black pixels that aren't really in the photo.</p>
-        <pre><code><span class="tok-var">flipped</span> = <span class="tok-fn">np.flip</span>(<span class="tok-fn">np.flip</span>(filter, axis=<span class="tok-num">0</span>), axis=<span class="tok-num">1</span>)
-<span class="tok-keyword">if</span> mode == 'same':
-    pad_top, pad_bottom = fh // <span class="tok-num">2</span>, (fh - <span class="tok-num">1</span>) // <span class="tok-num">2</span>
-    pad_left, pad_right = fw // <span class="tok-num">2</span>, (fw - <span class="tok-num">1</span>) // <span class="tok-num">2</span>
-<span class="tok-keyword">elif</span> mode == 'full':
-    pad_top = pad_bottom = fh - <span class="tok-num">1</span>
-    pad_left = pad_right = fw - <span class="tok-num">1</span>
-padded = <span class="tok-fn">np.pad</span>(image, ((pad_top, pad_bottom), (pad_left, pad_right)))</code></pre>
       </div>
       <h3>How fast is it?</h3>
       <div class="prose">
@@ -75,7 +124,7 @@ padded = <span class="tok-fn">np.pad</span>(image, ((pad_top, pad_bottom), (pad_
           </tbody>
         </table>
       </div>
-      <p class="intro">Letting NumPy handle the inner loops helps a lot. SciPy is faster still because its loops run in compiled code instead of Python.</p>
+      <p class="intro">Letting NumPy handle the inner loops helps a lot. SciPy is faster still.</p>
       <h3>Trying it on a photo of me</h3>
       <p class="intro">I ran three filters on a grayscale photo of myself. The box filter is a 9 × 9 grid of 1/81, so every pixel becomes the average of its neighborhood, which blurs. The difference filters, D<sub>x</sub> = [1, 0, −1] and its vertical version D<sub>y</sub>, subtract neighboring pixels. They stay near gray where nothing changes and light up at edges.</p>
       <div class="gallery four">
@@ -143,7 +192,8 @@ padded = <span class="tok-fn">np.pad</span>(image, ((pad_top, pad_bottom), (pad_
         <figure><img src="assets/dog_gradient.jpg" alt="Gradient magnitude with DoG filters" /><figcaption><b>DoG gradient magnitude</b></figcaption></figure>
         <figure><img src="assets/dog_edges.png" alt="Edges with DoG filters" /><figcaption><b>DoG edges</b><span>Identical to "blur first", pixel for pixel</span></figcaption></figure>
       </div>
-      <p class="intro">Same result with one convolution per direction instead of two. That's the whole point of the shortcut.</p>
+      <p class="intro">Same result with one convolution per direction instead of two. This helps save computation.</p>
+      <p class="intro">I checked the unnormalized gradient magnitudes numerically: the largest difference was 1.16 × 10<sup>−15</sup>, and the binary edge maps differed at zero pixels. Both methods use the same symmetric padding and crop back to the original image size, so the comparison also agrees at the boundaries.</p>
     </section>
 
     <!-- ===================== 2.1 ===================== -->
@@ -171,20 +221,36 @@ padded = <span class="tok-fn">np.pad</span>(image, ((pad_top, pad_bottom), (pad_
         <figure class="pick"><img src="assets/taj_sharpened_alpha_1.5.jpg" alt="Taj sharpened with alpha 1.5" /><figcaption><b>α = 1.5 (my pick)</b><span>Crisp, still natural</span></figcaption></figure>
         <figure><img src="assets/taj_sharpened_alpha_3.jpg" alt="Taj sharpened with alpha 3" /><figcaption><b>α = 3</b><span>Halos around the dome</span></figcaption></figure>
       </div>
-      <h3>Can sharpening undo a blur?</h3>
-      <p class="intro">To test this, I took the sharp original, blurred it on purpose, and then sharpened the blurry version. The edges get some of their contrast back, but the fine carving doesn't return. Once a blur averages detail away, that information is gone, and sharpening can only boost what's left.</p>
+      <h3 id="blur-recovery">Can sharpening undo a blur?</h3>
+      <p class="intro">The examples above sharpen the original photo. This is a different test: first I deliberately blur the input, then I apply the unsharp mask to that blurred image. If B = G ∗ I, the result is B + 1.5 · (B − G ∗ B). The original I is kept only for comparison; its detail is never added back into the result. Both Gaussian filters use a 9 × 9 kernel with σ = 2.</p>
       <div class="gallery three">
         <figure><img src="assets/taj_original.jpg" alt="Sharp original Taj" /><figcaption><b>Sharp original</b></figcaption></figure>
         <figure><img src="assets/taj_blurred.jpg" alt="Blurred Taj" /><figcaption><b>Blurred on purpose</b></figcaption></figure>
         <figure><img src="assets/taj_blurred_then_resharpened.jpg" alt="Blurred then sharpened Taj" /><figcaption><b>Then sharpened</b><span>Better than the blurry one, but still softer than the original</span></figcaption></figure>
       </div>
-      <h3>My own example: the Moon</h3>
-      <p class="intro">This full-Moon photo was a little soft, which makes it a good candidate. Sharpening at α = 1.5 brings out the craters and the bright streaks around them. The difference is easier to see up close, so the bottom row is a crop from the middle of the Moon.</p>
+      <p class="intro">The Taj's edges regain contrast, but the small carvings remain softer than in the original. The forest below repeats the same experiment with finer texture. Follow the thin branches and the leaves on the path across the three images: blurring merges nearby details, and sharpening strengthens the remaining edges without separating all those details again.</p>
+      <div class="gallery three">
+        <figure><img src="assets/forest_original.jpg" alt="Original forest path with detailed leaves and tree bark" /><figcaption><b>① Original forest</b><span>Reference detail</span></figcaption></figure>
+        <figure><img src="assets/forest_blurred.jpg" alt="Forest deliberately blurred with a Gaussian" /><figcaption><b>② Blur the original</b><span>9 × 9 Gaussian, σ = 2</span></figcaption></figure>
+        <figure><img src="assets/forest_blurred_then_resharpened.jpg" alt="Previously blurred forest sharpened with an unsharp mask" /><figcaption><b>③ Sharpen the blurred image</b><span>α = 1.5; no original detail added back</span></figcaption></figure>
+      </div>
+      <p class="intro">In both tests, sharper-looking edges are not the same as recovered detail. Unsharp masking boosts the frequencies that remain in the blurred image; it does not invert the blur.</p>
+      <h3 id="moon-sharpening">My own example: the Moon</h3>
+      <p class="intro">For the Moon, I return to sharpening the original photo directly. The blur below supplies the broad light and dark regions. Subtracting it from the original isolates the crater rims and fine surface texture, which I then add back with α = 1.5. Here the blurred image is used to build the detail layer, rather than becoming the input to a recovery experiment.</p>
       <div class="gallery two compare">
         <figure><img src="assets/moon_original.jpg" alt="Original Moon" /><figcaption><b>Before</b></figcaption></figure>
         <figure><img src="assets/moon_sharpened_alpha_1.5.jpg" alt="Sharpened Moon" /><figcaption><b>After</b><span>α = 1.5</span></figcaption></figure>
+      </div>
+      <div class="gallery three steps">
+        <figure><img src="assets/moon_blurred.jpg" alt="Low-frequency Moon from Gaussian smoothing" /><figcaption><b>① Blur the original</b><span>9 × 9 Gaussian, σ = 2</span></figcaption></figure>
+        <figure><img src="assets/moon_high_frequency.jpg" alt="Moon original minus its Gaussian blur" /><figcaption><b>② Original minus blur</b><span>Detail layer; gray represents zero</span></figcaption></figure>
+        <figure><img src="assets/moon_sharpened_alpha_1.5.jpg" alt="Original Moon plus 1.5 times its detail layer" /><figcaption><b>③ Original + 1.5 × detail</b><span>Stronger local contrast</span></figcaption></figure>
+      </div>
+      <p class="intro">These matching crops show how the amount of added detail changes the result. At α = 1.5 the crater rims become more distinct. At α = 3 the same bright and dark edges are amplified further, making the surface look harsher rather than revealing new structures.</p>
+      <div class="gallery three">
         <figure><img src="assets/moon_zoom_original.jpg" alt="Close-up of lunar craters, original" /><figcaption><b>Before (close-up)</b></figcaption></figure>
         <figure><img src="assets/moon_zoom_alpha_1.5.jpg" alt="Close-up of lunar craters, sharpened" /><figcaption><b>After (close-up)</b></figcaption></figure>
+        <figure><img src="assets/moon_zoom_alpha_3.jpg" alt="Same lunar crater crop with stronger sharpening" /><figcaption><b>Stronger sharpening</b><span>α = 3</span></figcaption></figure>
       </div>
     </section>
 
@@ -213,7 +279,7 @@ padded = <span class="tok-fn">np.pad</span>(image, ((pad_top, pad_bottom), (pad_
         <figure><img src="assets/tiger_cat_high_aligned.jpg" alt="Aligned tiger" /><figcaption><b>Tiger</b><span>Cropped</span></figcaption></figure>
         <figure><img src="assets/tiger_cat_low_aligned.jpg" alt="Cat aligned to the tiger" /><figcaption><b>Cat</b><span>Eyes matched to the tiger</span></figcaption></figure>
       </div>
-      <p class="intro"><b>2. Filter them.</b> I keep the tiger's fine detail (original minus a Gaussian blur with σ = 4) and a blurred cat (Gaussian with σ = 10). The σ values set the cutoff. I raised the tiger's cutoff until its stripes, not just its whiskers, came through up close, and raised the cat's blur until the cat's own face stopped showing up close. I also boosted the tiger layer by 1.2× so it wins up close. Then I add the two together.</p>
+      <p class="intro"><b>2. Filter them.</b> I keep the tiger's fine detail (original minus a Gaussian blur with σ = 4) and a blurred cat (Gaussian with σ = 10). A larger σ means a lower frequency cutoff: the blur retains fewer fine details, while subtracting that blur leaves a broader range of detail in the high-pass layer. These settings keep the tiger's stripes as well as its whiskers in the detail layer and suppress the cat's fine facial texture in the blurry layer. I also boost the tiger layer by 1.2× so it is more visible up close. Then I add the two together.</p>
       <div class="gallery three">
         <figure><img src="assets/tiger_cat_high_frequency.jpg" alt="Tiger fine detail layer" /><figcaption><b>Tiger detail</b><span>Gray means zero</span></figcaption></figure>
         <figure><img src="assets/tiger_cat_low_frequency.jpg" alt="Blurred cat" /><figcaption><b>Blurred cat</b></figcaption></figure>
@@ -257,7 +323,7 @@ padded = <span class="tok-fn">np.pad</span>(image, ((pad_top, pad_bottom), (pad_
       </div>
 
       <h3>One that didn't work: frown to smile</h3>
-      <p class="intro">I also tried a face that frowns up close and smiles from far away, using two photos of the same person. It never really switched. The two faces are almost identical except for small changes around the mouth and eyes. Those changes are exactly the fine detail that disappears from far away, so the blurry layer doesn't carry the smile strongly enough. Hybrids need two images whose <em>big shapes</em> are different.</p>
+      <p class="intro">I also tried a face that frowns up close and smiles from far away, using two photos of the same person. With this pair and these filter settings, it never clearly switched. The differences around the mouth and eyes were too subtle in the low-frequency layer to convey the smile from a distance. Expression hybrids can work, but this attempt needed a stronger expression contrast or different alignment and cutoff settings.</p>
       <div class="gallery one">
         <figure><img src="assets/expression_comparison.jpg" alt="Failed frown to smile hybrid with inputs and small views" /><figcaption><b>Frown (detail) + smile (blurry)</b><span>From far away the expression is still ambiguous</span></figcaption></figure>
       </div>
@@ -340,11 +406,11 @@ padded = <span class="tok-fn">np.pad</span>(image, ((pad_top, pad_bottom), (pad_
 
       <h3>Djokovic gives the side-eye</h3>
       <p class="intro">This is a photo of Djokovic checking his racket at the 2014 ATP Finals, blended with the famous meme of the Rock raising one eyebrow. The mask isn't a line. It follows the outline of Djokovic's face.</p>
-      <p class="intro">Lining them up was the hard part. Djokovic is looking down at his racket, and the Rock is looking up and to the side, so no amount of rotating or scaling made the two faces match. There was always a strip of Djokovic's face left over, or the Rock's features landed in the wrong place. So I morphed the Rock's face instead. I found 478 matching points on both faces (eye corners, brows, nose, lips, jawline) with a face-landmark detector, split the face into triangles between those points, and warped each triangle of the Rock's face onto the matching triangle of Djokovic's. The Rock's features end up in the shape and angle of Djokovic's face.</p>
+      <p class="intro">Lining them up was the hard part. Djokovic is looking down and facing the camera more, while the Rock is looking up and turned to the side. Rotating and scaling alone always left a strip of Djokovic's face showing. A full face morph (warping every little triangle of the face separately) lined everything up but made the Rock's face look melted. What worked was one smooth stretch for the whole face. I found 478 matching points on both faces with a face-landmark detector, then fit the single affine transform (rotation, scale, and shear) that moves the Rock's points closest to Djokovic's. The shear squashes and slants the face the way turning and tilting a head does, but it can't bend individual features, so the Rock still looks like the Rock. Points that fit badly, like the jaw on the side the Rock is turned away from, get ignored in the fit.</p>
       <p class="intro">The mask is Djokovic's face outline, shrunk slightly toward the center, with the top of the forehead cut off so the Rock's bald head doesn't paint over Djokovic's hair. The Rock's skin is also paler and lit differently, so before blending I shifted his colors to match the average and spread of Djokovic's skin inside the mask.</p>
       <div class="gallery three">
         <figure><img src="assets/rock_djokovic_image2.jpg" alt="Djokovic checking his racket" /><figcaption><b>Djokovic</b></figcaption></figure>
-        <figure><img src="assets/rock_djokovic_rock.jpg" alt="The Rock raising an eyebrow" /><figcaption><b>The Rock</b><span>Morphed onto Djokovic's face before blending</span></figcaption></figure>
+        <figure><img src="assets/rock_djokovic_rock.jpg" alt="The Rock raising an eyebrow" /><figcaption><b>The Rock</b><span>Stretched onto Djokovic's face before blending</span></figcaption></figure>
         <figure><img src="assets/rock_djokovic_mask.jpg" alt="Face-shaped mask" /><figcaption><b>Mask</b><span>White = the Rock</span></figcaption></figure>
       </div>
       <div class="gallery one compare-single">
@@ -410,6 +476,7 @@ padded = <span class="tok-fn">np.pad</span>(image, ((pad_top, pad_bottom), (pad_
       </div>
     </section>
   </main>
+  <p class="photo-credits">Forest photo: <a href="https://commons.wikimedia.org/wiki/File:Tree_Tunnel_(51536815526).jpg">Tree Tunnel by John Brighenti</a>, <a href="https://creativecommons.org/licenses/by/2.0/">CC BY 2.0</a>. Resized, blurred, and sharpened for the comparison above.</p>
   <footer class="photo-credits">Photos from Wikimedia Commons: <a href="https://commons.wikimedia.org/wiki/File:Portrait_Panthera_tigris_altaica_Leipzig_Zoo_2013.jpg">tiger by Appaloosa</a> (<a href="https://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>), <a href="https://commons.wikimedia.org/wiki/File:Cat03.jpg">cat by Fir0002</a> (GFDL 1.2), <a href="https://commons.wikimedia.org/wiki/File:Great_Grey_Owl_face.jpg">owl by Lisa Hupp/USFWS</a> and <a href="https://commons.wikimedia.org/wiki/File:Full_Moon_(15984763045).jpg">Moon by NASA Goddard</a> (public domain), <a href="https://commons.wikimedia.org/wiki/File:Red_rose_with_black_background_II.jpg">rose by Laitche</a> (<a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>), <a href="https://commons.wikimedia.org/wiki/File:2014-11-12_2014_ATP_World_Tour_Finals_Novak_Djokiov_checking_racket_by_Michael_Frey.jpg">Djokovic by Michael Frey</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a>), <a href="https://commons.wikimedia.org/wiki/File:Crystal_Lake_Reflection_(7726191492).jpg">summer</a> and <a href="https://commons.wikimedia.org/wiki/File:Crystal_Lake_in_the_Winter_(8341261220).jpg">winter Crystal Lake by Alan Stark</a> (<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC BY-SA 2.0</a>), <a href="https://commons.wikimedia.org/wiki/File:Spiral_Galaxy_NGC_3147.png">NGC 3147 by NASA/ESA</a> (public domain), and <a href="https://commons.wikimedia.org/wiki/File:Iris_-_right_eye_of_a_girl.jpg">eye by Laitr Keiows</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a>). The Rock eyebrow image is a meme frame, used here for a class project.</footer>
 </body>
 </html>
