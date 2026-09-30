@@ -335,24 +335,15 @@
         <figure><img src="assets/federer_old_to_young.jpg" alt="Federer age hybrid at small size showing the younger face" /><figcaption><b>Far away: younger</b></figcaption></figure>
       </div>
 
-      <h3>Frown to smile: a failed attempt and a stronger detail layer</h3>
-      <p class="intro">I also tried a face that frowns up close and smiles from far away, using two photos of the same person. With this pair and these filter settings, it never clearly switched. The differences around the mouth and eyes were too subtle in the low-frequency layer to convey the smile from a distance. Expression hybrids can work, but this attempt needed a stronger expression contrast or different alignment and cutoff settings.</p>
+      <h3>Failed case: frown to smile</h3>
       <div class="gallery one">
-        <figure><img src="assets/expression_comparison.jpg" alt="Failed frown to smile hybrid with inputs and small views" /><figcaption><b>Frown (detail) + smile (blurry)</b><span>From far away the expression is still ambiguous</span></figcaption></figure>
+        <figure><img src="assets/expression_comparison.jpg" alt="Failed frown to smile hybrid with inputs and small views" /><figcaption><b>Frown (detail) + smile (blurry)</b></figcaption></figure>
       </div>
-      <p class="intro">I revisited the pair to test whether the frown's detail was simply too weak. For this comparison, I keep the filters fixed at σ = 2 for the frown's high-pass layer and σ = 8 for the smile's low-pass layer. Only the detail weight changes: hybrid = blurry smile + w · frown detail. The input crops come from the 400-pixel panels of the archived comparison above.</p>
       <div class="gallery three">
-        <figure><img src="assets/expression_gain_1.jpg" alt="Expression hybrid with detail weight one" /><figcaption><b>w = 1</b><span>The frown's eyes and brow are faint</span></figcaption></figure>
-        <figure><img src="assets/expression_gain_2.jpg" alt="Expression hybrid with twice the high-frequency detail" /><figcaption><b>w = 2</b><span>The squint and brow become clearer</span></figcaption></figure>
-        <figure><img src="assets/expression_gain_3.jpg" alt="Expression hybrid with three times the high-frequency detail" /><figcaption><b>w = 3</b><span>Stronger frown detail, but harsher texture</span></figcaption></figure>
+        <figure><img src="assets/expression_gain_1.jpg" alt="Expression hybrid with detail weight one" /><figcaption><b>Detail weight 1</b></figcaption></figure>
+        <figure><img src="assets/expression_gain_2.jpg" alt="Expression hybrid with detail weight two" /><figcaption><b>Detail weight 2</b></figcaption></figure>
+        <figure><img src="assets/expression_gain_3.jpg" alt="Expression hybrid with detail weight three" /><figcaption><b>Detail weight 3</b></figcaption></figure>
       </div>
-      <p class="intro">The 3× version makes the frown more visible nearby. Compare it at decreasing sizes below: the eyebrow creases and beard texture fade, letting more of the smile through. The switch is still subtle, especially at the medium size. Amplification also introduces halos and clips about 1.6% of channel values, so stronger detail has a cost.</p>
-      <div class="distance">
-        <figure><img src="assets/expression_gain_3.jpg" alt="Strong expression hybrid viewed up close" /><figcaption><b>Up close</b></figcaption></figure>
-        <figure><img src="assets/expression_gain_3.jpg" alt="Strong expression hybrid at medium viewing size" /><figcaption><b>Farther</b></figcaption></figure>
-        <figure><img src="assets/expression_gain_3.jpg" alt="Strong expression hybrid at small viewing size" /><figcaption><b>Far away</b></figcaption></figure>
-      </div>
-      <p class="intro">I also tried larger high-pass σ values. They include broader features of the frown, making it stronger nearby but more persistent at a distance. Increasing the detail weight while keeping σ small is the better compromise for this pair; a more exaggerated smile would still give the low-frequency layer a clearer expression to carry.</p>
     </section>
 
     <!-- ===================== 2.3 ===================== -->
@@ -484,13 +475,12 @@
         <figure><img src="assets/galaxy_eye_process_k.jpg" alt="Masked eye, all levels" /></figure>
         <figure><img src="assets/galaxy_eye_process_l.jpg" alt="Final galaxy eye" /></figure>
       </div>
-      <h3>One that didn't work: a rose in space</h3>
-      <p class="intro">Before the galaxy eye, I tried putting a red rose on the same galaxy. The mask came from the rose itself: I kept every pixel that was clearly red and cleaned up the edges. It's a proper irregular mask, but the result still looks like a sticker. The rose was photographed on a black background, and at the coarse levels that black leaks out past the petals and leaves a dark fringe around the whole flower. There's also nothing tying the two images together: the rose is lit by a studio light, and nothing in the galaxy explains that. The galaxy eye works because the iris and the spiral arms already look alike. Here the two pictures have nothing in common.</p>
+      <h3>Failed case: rose in space</h3>
       <div class="gallery four">
         <figure><img src="assets/cosmic_rose_image1.jpg" alt="Red rose on black" /><figcaption><b>Rose</b></figcaption></figure>
         <figure><img src="assets/cosmic_rose_image2.jpg" alt="Spiral galaxy" /><figcaption><b>Galaxy</b></figcaption></figure>
         <figure><img src="assets/cosmic_rose_mask.jpg" alt="Rose-shaped mask" /><figcaption><b>Mask</b><span>White = rose</span></figcaption></figure>
-        <figure><img src="assets/cosmic_rose.jpg" alt="Rose blended onto galaxy" /><figcaption><b>Blend</b><span>Dark fringe around the petals</span></figcaption></figure>
+        <figure><img src="assets/cosmic_rose.jpg" alt="Rose blended onto galaxy" /><figcaption><b>Blend</b></figcaption></figure>
       </div>
     </section>
 
