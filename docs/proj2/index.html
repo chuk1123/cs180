@@ -322,6 +322,19 @@
         </div>
       </div>
 
+      <h3>Federer: old to young</h3>
+      <p class="intro">This hybrid shows Federer changing from old to young as you step back. Up close, the older portrait supplies the fine details around his eyes, forehead, and face. From farther away, those details fade and the younger Federer's smile and overall face shape become more visible. I aligned the two portraits by clicking their eye centers, then used the same crop for both.</p>
+      <div class="gallery two compare">
+        <figure><img src="assets/federer_older_input.jpg" alt="Aligned older Federer portrait" /><figcaption><b>Older Federer</b><span>High-frequency input</span></figcaption></figure>
+        <figure><img src="assets/federer_younger_input.jpg" alt="Aligned younger Federer portrait" /><figcaption><b>Younger Federer</b><span>Low-frequency input</span></figcaption></figure>
+      </div>
+      <p class="intro">I subtract a Gaussian blur with σ = 3 from the older portrait and add 1.2 times that detail layer to the younger portrait blurred with σ = 12. These values are in pixels on the aligned 840-pixel-wide images, before cropping. A stronger 1.5× detail layer made the skin look too harsh, so I reduced it to 1.2× to keep the close-up recognizable while allowing the younger face to come through at a distance.</p>
+      <div class="distance">
+        <figure><img src="assets/federer_old_to_young.jpg" alt="Federer old-to-young hybrid at large size" /><figcaption><b>Up close: older</b></figcaption></figure>
+        <figure><img src="assets/federer_old_to_young.jpg" alt="Federer age hybrid at medium size" /><figcaption><b>Farther</b></figcaption></figure>
+        <figure><img src="assets/federer_old_to_young.jpg" alt="Federer age hybrid at small size showing the younger face" /><figcaption><b>Far away: younger</b></figcaption></figure>
+      </div>
+
       <h3>Frown to smile: a failed attempt and a stronger detail layer</h3>
       <p class="intro">I also tried a face that frowns up close and smiles from far away, using two photos of the same person. With this pair and these filter settings, it never clearly switched. The differences around the mouth and eyes were too subtle in the low-frequency layer to convey the smile from a distance. Expression hybrids can work, but this attempt needed a stronger expression contrast or different alignment and cutoff settings.</p>
       <div class="gallery one">
