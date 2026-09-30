@@ -193,7 +193,6 @@
         <figure><img src="assets/dog_edges.png" alt="Edges with DoG filters" /><figcaption><b>DoG edges</b><span>Identical to "blur first", pixel for pixel</span></figcaption></figure>
       </div>
       <p class="intro">The combined filter gives the same result with one convolution per direction instead of two, which saves computation.</p>
-      <p class="intro">I checked the unnormalized gradient magnitudes numerically: the largest difference was 1.16 × 10<sup>−15</sup>, and the binary edge maps differed at zero pixels. Both methods use the same symmetric padding and crop back to the original image size, so the comparison also agrees at the boundaries.</p>
     </section>
 
     <!-- ===================== 2.1 ===================== -->
@@ -222,21 +221,20 @@
         <figure><img src="assets/taj_sharpened_alpha_3.jpg" alt="Taj sharpened with alpha 3" /><figcaption><b>α = 3</b><span>Halos around the dome</span></figcaption></figure>
       </div>
       <h3 id="blur-recovery">Can sharpening undo a blur?</h3>
-      <p class="intro">The examples above sharpen the original photo. This is a different test: first I deliberately blur the input, then I apply the unsharp mask to that blurred image. If B = G ∗ I, the result is B + 1.5 · (B − G ∗ B). The original I is kept only for comparison; its detail is never added back into the result. Both Gaussian filters use a 9 × 9 kernel with σ = 2.</p>
+      <p class="intro">Here I blurred the photo on purpose first and then sharpened the blurry version.</p>
       <div class="gallery three">
         <figure><img src="assets/taj_original.jpg" alt="Sharp original Taj" /><figcaption><b>Sharp original</b></figcaption></figure>
         <figure><img src="assets/taj_blurred.jpg" alt="Blurred Taj" /><figcaption><b>Blurred on purpose</b></figcaption></figure>
         <figure><img src="assets/taj_blurred_then_resharpened.jpg" alt="Blurred then sharpened Taj" /><figcaption><b>Then sharpened</b><span>Better than the blurry one, but still softer than the original</span></figcaption></figure>
       </div>
-      <p class="intro">The Taj's edges regain some contrast, but the small carvings stay softer than in the original. I repeated the test on the forest because its branches and leaves make the loss easier to see: once the blur merges nearby details, sharpening the remaining edges doesn't pull them apart again.</p>
+      <p class="intro">The edges get some contrast back, but the small carvings (and the forest's branches) stay merged, because sharpening can only boost detail that's still in the image. It makes edges look crisper, but it can't undo a blur.</p>
       <div class="gallery three">
         <figure><img src="assets/forest_original.jpg" alt="Original forest path with detailed leaves and tree bark" /><figcaption><b>① Original forest</b><span>Reference detail</span></figcaption></figure>
         <figure><img src="assets/forest_blurred.jpg" alt="Forest deliberately blurred with a Gaussian" /><figcaption><b>② Blur the original</b><span>9 × 9 Gaussian, σ = 2</span></figcaption></figure>
         <figure><img src="assets/forest_blurred_then_resharpened.jpg" alt="Previously blurred forest sharpened with an unsharp mask" /><figcaption><b>③ Sharpen the blurred image</b><span>α = 1.5; no original detail added back</span></figcaption></figure>
       </div>
-      <p class="intro">In both tests, sharper-looking edges are not the same as recovered detail. Unsharp masking boosts the frequencies that remain in the blurred image; it does not invert the blur.</p>
       <h3 id="moon-sharpening">My own example: the Moon</h3>
-      <p class="intro">For the Moon, I sharpen the original photo directly. I subtract a Gaussian-blurred copy to isolate the crater rims and surface texture, then add that detail to the original with α = 1.5; the blurred copy is only used to find the detail layer.</p>
+      <p class="intro">The Moon photo was a little soft, so sharpening brings out the craters.</p>
       <div class="gallery two compare">
         <figure><img src="assets/moon_original.jpg" alt="Original Moon" /><figcaption><b>Before</b></figcaption></figure>
         <figure><img src="assets/moon_sharpened_alpha_1.5.jpg" alt="Sharpened Moon" /><figcaption><b>After</b><span>α = 1.5</span></figcaption></figure>
@@ -246,7 +244,7 @@
         <figure><img src="assets/moon_high_frequency.jpg" alt="Moon original minus its Gaussian blur" /><figcaption><b>② Original minus blur</b><span>Detail layer; gray represents zero</span></figcaption></figure>
         <figure><img src="assets/moon_sharpened_alpha_1.5.jpg" alt="Original Moon plus 1.5 times its detail layer" /><figcaption><b>③ Original + 1.5 × detail</b><span>Stronger local contrast</span></figcaption></figure>
       </div>
-      <p class="intro">The same crop makes the change easier to spot. At α = 1.5 the crater rims stand out more, while α = 3 pushes those light and dark edges so far that the surface starts to look harsh without revealing anything new.</p>
+      <p class="intro">Up close, α = 1.5 makes the crater rims pop, while α = 3 just makes the surface look harsh.</p>
       <div class="gallery three">
         <figure><img src="assets/moon_zoom_original.jpg" alt="Close-up of lunar craters, original" /><figcaption><b>Before (close-up)</b></figcaption></figure>
         <figure><img src="assets/moon_zoom_alpha_1.5.jpg" alt="Close-up of lunar craters, sharpened" /><figcaption><b>After (close-up)</b></figcaption></figure>
@@ -279,7 +277,7 @@
         <figure><img src="assets/tiger_cat_high_aligned.jpg" alt="Aligned tiger" /><figcaption><b>Tiger</b><span>Cropped</span></figcaption></figure>
         <figure><img src="assets/tiger_cat_low_aligned.jpg" alt="Cat aligned to the tiger" /><figcaption><b>Cat</b><span>Eyes matched to the tiger</span></figcaption></figure>
       </div>
-      <p class="intro"><b>2. Filter them.</b> I subtract a Gaussian blur with σ = 4 from the tiger, keeping its stripes and whiskers, then blur the cat with σ = 10 until its fine facial texture mostly disappears. A larger σ lowers the cutoff of the blur and leaves a broader range of detail when that blur is subtracted. I multiply the tiger detail by 1.2 before adding the layers so it shows up clearly nearby.</p>
+      <p class="intro"><b>2. Filter them.</b> I keep the tiger's detail (the photo minus a σ = 4 blur) and blur the cat with σ = 10, then add them. I picked the cutoffs by shrinking the result: with less tiger detail the stripes disappeared up close, and with less blur on the cat its own face kept showing through. I also boost the tiger layer 1.2× so it wins up close.</p>
       <div class="gallery three">
         <figure><img src="assets/tiger_cat_high_frequency.jpg" alt="Tiger fine detail layer" /><figcaption><b>Tiger detail</b><span>Gray means zero</span></figcaption></figure>
         <figure><img src="assets/tiger_cat_low_frequency.jpg" alt="Blurred cat" /><figcaption><b>Blurred cat</b></figcaption></figure>
@@ -309,7 +307,7 @@
       </div>
 
       <h3>An owl on the Moon</h3>
-      <p class="intro">The owl's round face made me think of a full Moon. I kept its feather and eye detail with σ = 2, weighted that layer by 0.7, and put it over a Moon blurred with σ = 6, so the owl appears nearby and the Moon takes over farther away. My first Moon blur was too strong at σ = 10 and erased the dark patches that make it recognizable; I also softened the owl outside the lunar disc so feathers wouldn't stick out into space.</p>
+      <p class="intro">The owl's round face lines up with the full Moon, so up close you see its eyes and feathers, and from farther away it's just the Moon.</p>
       <div class="pair-row">
         <div class="inputs">
           <figure><img src="assets/owl_moon_high_original.jpg" alt="Great gray owl" /><figcaption><b>Owl</b><span>Detail layer</span></figcaption></figure>
@@ -328,7 +326,6 @@
         <figure><img src="assets/federer_older_input.jpg" alt="Aligned older Federer portrait" /><figcaption><b>Older Federer</b><span>High-frequency input</span></figcaption></figure>
         <figure><img src="assets/federer_younger_input.jpg" alt="Aligned younger Federer portrait" /><figcaption><b>Younger Federer</b><span>Low-frequency input</span></figcaption></figure>
       </div>
-      <p class="intro">I take the older portrait's detail by subtracting a Gaussian blur with σ = 3, then add 1.35 times that detail to the younger portrait blurred with σ = 12. Those σ values are measured on the aligned 840-pixel-wide images before cropping. At 1.2× the older face barely came through, but at 1.5× the skin looked harsh, so 1.35× felt like a better balance.</p>
       <div class="distance">
         <figure><img src="assets/federer_old_to_young.jpg" alt="Federer old-to-young hybrid at large size" /><figcaption><b>Up close: older</b></figcaption></figure>
         <figure><img src="assets/federer_old_to_young.jpg" alt="Federer age hybrid at medium size" /><figcaption><b>Farther</b></figcaption></figure>
@@ -411,7 +408,7 @@
       </div>
 
       <h3>Summer to winter at Crystal Lake</h3>
-      <p class="intro">These photos show the same Colorado lake in summer and winter from almost the same spot. After shifting the winter photo up 24 pixels to match the shoreline, I put summer on the left and winter on the right with a vertical mask. Blurring that mask with σ = 60 before building the stack makes the open water gradually turn to ice, instead of leaving the straight line you can see in the hard cut.</p>
+      <p class="intro">The same Colorado lake in summer and winter, blended left to right with a soft vertical mask so the open water slowly turns to ice.</p>
       <div class="gallery three">
         <figure><img src="assets/seasons_image1.jpg" alt="Crystal Lake in summer" /><figcaption><b>Summer</b></figcaption></figure>
         <figure><img src="assets/seasons_image2.jpg" alt="Crystal Lake in winter" /><figcaption><b>Winter</b></figcaption></figure>
@@ -487,8 +484,8 @@
     <section id="takeaway">
       <div class="section-heading"><span>★</span><h2>What I learned</h2></div>
       <div class="prose">
-        <p>I liked seeing the same idea show up in such different results. With the oraple, I could let fine texture switch sides quickly while the colors faded together; with the hybrid images, stepping back did something similar by making the fine detail disappear from view.</p>
-        <p>The experiments also made me spend more time choosing photos than I expected. I could turn the filter settings all day, but the tiger and cat worked best because their faces already had a similar shape and color, while pairs that didn't line up never really came together.</p>
+        <p>The part I found coolest is that you can treat different frequencies differently. In blending, the fine details switch over quickly while the colors and big shapes fade slowly, and hybrid images use the same idea with your eyes: up close you see the high frequencies, but from farther away the details blur out and only the low frequencies are left.</p>
+        <p>I also learned that picking the right photos matters as much as the code. Most of my failed attempts had working code and a bad pair of images, and the ones I like most, like the tiger and the cat, work because the two photos already have a similar shape and color to begin with.</p>
       </div>
     </section>
   </main>
