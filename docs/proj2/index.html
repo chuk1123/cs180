@@ -17,7 +17,7 @@
   <main>
     <p class="eyebrow">Kevin Chu · Fall 2026</p>
     <h1>Fun with Filters and Frequencies</h1>
-    <p class="lede">Every photo is a mix of two kinds of information: slow changes, like lighting and big shapes, and fast changes, like edges and texture. This whole project is about pulling those two apart and putting them back together in new ways. That gets me edge detection, sharpening, images that change when you step back, and seamless photo blends. I play a lot of tennis, so a few tennis ideas snuck in too: a Moon that turns into a tennis ball, and Djokovic giving the Rock's famous side-eye.</p>
+    <p class="lede">Every photo is a mix of two kinds of information: slow changes, like lighting and big shapes, and fast changes, like edges and texture. This whole project is about pulling those two apart and putting them back together in new ways. That gets me edge detection, sharpening, images that change when you step back, and seamless photo blends. I also play a lot of tennis, so Djokovic makes an appearance in the blending section.</p>
 
     <nav class="contents" aria-label="Project sections">
       <a href="#part-1-1">1.1 Convolution</a><a href="#part-1-2">1.2 Edges</a>
@@ -242,18 +242,17 @@ padded = <span class="tok-fn">np.pad</span>(image, ((pad_top, pad_bottom), (pad_
         </div>
       </div>
 
-      <h3>Moonball</h3>
-      <p class="intro">In tennis, a "moonball" is a high, loopy shot that seems to hang in the air. I took that literally. The fine layer is the full Moon and the blurry layer is a tennis ball, scaled so the two circles line up. Up close you see craters and the dark maria. From far away, the craters fade and you see a fuzzy yellow ball with its white seam.</p>
-      <p class="intro">This one took the most tuning. With the usual small σ, only the tiny craters came through and the ball's bright yellow won at every distance. So I raised the Moon's cutoff to σ = 8, which lets its big dark patches into the fine layer, and boosted it by 1.4×. For the ball I used σ = 11, blurry enough to hide its fuzz up close but not so blurry that the seam disappears from far away.</p>
+      <h3>An owl on the Moon</h3>
+      <p class="intro">An owl's face is almost a perfect circle, just like the full Moon. The fine layer is a great gray owl (σ = 2, weighted 0.7) and the blurry layer is the Moon (σ = 6). Up close you see two eyes, a beak, and feathers on the lunar surface. From far away it's just the Moon. On my first try I blurred the Moon too much (σ = 10). That erased its dark patches, so from far away it looked like a gray ball instead of the Moon. I also blurred the owl outside the Moon's circle so feathers wouldn't stick out into space.</p>
       <div class="pair-row">
         <div class="inputs">
-          <figure><img src="assets/moon_ball_high_original.jpg" alt="Full Moon" /><figcaption><b>Moon</b><span>Detail layer</span></figcaption></figure>
-          <figure><img src="assets/moon_ball_low_original.jpg" alt="Tennis ball on a court" /><figcaption><b>Tennis ball</b><span>Blurry layer</span></figcaption></figure>
+          <figure><img src="assets/owl_moon_high_original.jpg" alt="Great gray owl" /><figcaption><b>Owl</b><span>Detail layer</span></figcaption></figure>
+          <figure><img src="assets/owl_moon_low_original.jpg" alt="Full Moon" /><figcaption><b>Moon</b><span>Blurry layer</span></figcaption></figure>
         </div>
         <div class="distance">
-          <figure><img src="assets/moon_ball_hybrid.jpg" alt="Moon and tennis ball hybrid, full size" /><figcaption><b>Up close</b></figcaption></figure>
-          <figure><img src="assets/moon_ball_hybrid.jpg" alt="Moon and tennis ball hybrid, medium" /><figcaption><b>Farther</b></figcaption></figure>
-          <figure><img src="assets/moon_ball_hybrid.jpg" alt="Moon and tennis ball hybrid, small" /><figcaption><b>Far away</b></figcaption></figure>
+          <figure><img src="assets/owl_moon_hybrid.jpg" alt="Owl and Moon hybrid, full size" /><figcaption><b>Up close</b></figcaption></figure>
+          <figure><img src="assets/owl_moon_hybrid.jpg" alt="Owl and Moon hybrid, medium" /><figcaption><b>Farther</b></figcaption></figure>
+          <figure><img src="assets/owl_moon_hybrid.jpg" alt="Owl and Moon hybrid, small" /><figcaption><b>Far away</b></figcaption></figure>
         </div>
       </div>
 
@@ -273,7 +272,7 @@ padded = <span class="tok-fn">np.pad</span>(image, ((pad_top, pad_bottom), (pad_
         <p><strong>Laplacian stack:</strong> subtract each Gaussian level from the one before it. That leaves only the detail that was lost in that one blurring step. The first level is the finest texture and each level after is coarser. The last level is just the blurriest image. If you add all the levels back up, you get exactly the original image.</p>
       </div>
       <h3>Apple</h3>
-      <p class="intro">Top row: Gaussian stack, blurrier going right. Bottom row: Laplacian stack, from fine detail (left) to broad color (right). I boosted the contrast of the Laplacian levels so you can see them.</p>
+      <p class="intro">Top row: Gaussian stack, blurrier going right. Bottom row: Laplacian stack, from fine detail (left) to broad color (right).</p>
       <div class="stack-grid">
         <figure><img src="assets/apple_gaussian_0.jpg" alt="Apple Gaussian 0" /><figcaption>G0 (original)</figcaption></figure><figure><img src="assets/apple_gaussian_1.jpg" alt="Apple Gaussian 1" /><figcaption>G1</figcaption></figure><figure><img src="assets/apple_gaussian_2.jpg" alt="Apple Gaussian 2" /><figcaption>G2</figcaption></figure><figure><img src="assets/apple_gaussian_3.jpg" alt="Apple Gaussian 3" /><figcaption>G3</figcaption></figure><figure><img src="assets/apple_gaussian_4.jpg" alt="Apple Gaussian 4" /><figcaption>G4</figcaption></figure><figure><img src="assets/apple_gaussian_5.jpg" alt="Apple Gaussian 5" /><figcaption>G5</figcaption></figure>
         <figure><img src="assets/apple_laplacian_0.jpg" alt="Apple Laplacian 0" /><figcaption>L0 = G0 − G1</figcaption></figure><figure><img src="assets/apple_laplacian_1.jpg" alt="Apple Laplacian 1" /><figcaption>L1</figcaption></figure><figure><img src="assets/apple_laplacian_2.jpg" alt="Apple Laplacian 2" /><figcaption>L2</figcaption></figure><figure><img src="assets/apple_laplacian_3.jpg" alt="Apple Laplacian 3" /><figcaption>L3</figcaption></figure><figure><img src="assets/apple_laplacian_4.jpg" alt="Apple Laplacian 4" /><figcaption>L4</figcaption></figure><figure><img src="assets/apple_laplacian_5.jpg" alt="Apple Laplacian 5" /><figcaption>L5 = G5</figcaption></figure>
@@ -328,11 +327,11 @@ padded = <span class="tok-fn">np.pad</span>(image, ((pad_top, pad_bottom), (pad_
       </div>
 
       <h3>Summer to winter at Crystal Lake</h3>
-      <p class="intro">Two photos of the same Colorado lake, taken from nearly the same spot, one in summer and one in winter. I shifted the winter photo up 24 pixels so the shorelines line up. Then I used a horizontal mask that puts the snowy winter mountains and stormy sky on top, and the calm summer lake with its reflections on the bottom, with the seam right at the shoreline. In the hard cut you can see a straight line across the right mountain where the two photos meet. The blend smooths it out, so the summer shore grass runs into the winter slopes.</p>
+      <p class="intro">Two photos of the same Colorado lake, taken from nearly the same spot, one in summer and one in winter. I shifted the winter photo up 24 pixels so the shorelines line up, then blended with a vertical mask: summer on the left, winter on the right. I blurred the mask a lot (σ = 60) before building its stack, so the lake goes gradually from open water with reflections to frozen ice, which looks like a lake that is only half frozen. In the hard cut there is a straight line down the middle of the water.</p>
       <div class="gallery three">
         <figure><img src="assets/seasons_image1.jpg" alt="Crystal Lake in summer" /><figcaption><b>Summer</b></figcaption></figure>
         <figure><img src="assets/seasons_image2.jpg" alt="Crystal Lake in winter" /><figcaption><b>Winter</b></figcaption></figure>
-        <figure><img src="assets/seasons_mask.jpg" alt="Vertical mask" /><figcaption><b>Mask</b><span>White = summer lake, black = winter sky</span></figcaption></figure>
+        <figure><img src="assets/seasons_mask.jpg" alt="Vertical mask" /><figcaption><b>Mask</b><span>White = summer</span></figcaption></figure>
       </div>
       <div class="gallery two compare">
         <figure><img src="assets/seasons_hard_cut.jpg" alt="Hard cut between summer and winter" /><figcaption><b>Hard cut</b></figcaption></figure>
@@ -340,8 +339,8 @@ padded = <span class="tok-fn">np.pad</span>(image, ((pad_top, pad_bottom), (pad_
       </div>
 
       <h3>Djokovic gives the side-eye</h3>
-      <p class="intro">This is a photo of Djokovic checking his racket at the 2014 ATP Finals, blended with the famous meme of the Rock raising one eyebrow. The mask isn't a line. It's drawn around the Rock's face: an ellipse over his brows, eyes, nose, and mouth, trimmed so it stays inside the outline of Djokovic's face.</p>
-      <p class="intro">Lining them up was the tricky part. Djokovic is looking down at his racket and the Rock is looking up and to the side, so matching only the eyes wasn't enough. I used three points (both eyes and the mouth) and an affine warp, which can tilt and squash the Rock's face to fit the angle of Djokovic's head.</p>
+      <p class="intro">This is a photo of Djokovic checking his racket at the 2014 ATP Finals, blended with the famous meme of the Rock raising one eyebrow. The mask isn't a line. It's an ellipse drawn around the Rock's whole face.</p>
+      <p class="intro">Lining them up was the tricky part. Djokovic is looking down at his racket and the Rock is looking up and to the side. My first try stretched the Rock's face to hit three points exactly (both eyes and the mouth), which squashed it and looked awful. This version only rotates, scales, and shifts his face, picking the fit that gets closest to those three points, so the Rock's face keeps its real shape. The mask covers his whole face from forehead to chin, and Djokovic keeps his hair and ears.</p>
       <div class="gallery three">
         <figure><img src="assets/rock_djokovic_image2.jpg" alt="Djokovic checking his racket" /><figcaption><b>Djokovic</b></figcaption></figure>
         <figure><img src="assets/rock_djokovic_rock.jpg" alt="The Rock raising an eyebrow" /><figcaption><b>The Rock</b><span>Warped onto Djokovic's face before blending</span></figcaption></figure>
@@ -392,6 +391,14 @@ padded = <span class="tok-fn">np.pad</span>(image, ((pad_top, pad_bottom), (pad_
         <figure><img src="assets/galaxy_eye_process_k.jpg" alt="Masked eye, all levels" /></figure>
         <figure><img src="assets/galaxy_eye_process_l.jpg" alt="Final galaxy eye" /></figure>
       </div>
+      <h3>One that didn't work: a rose in space</h3>
+      <p class="intro">Before the galaxy eye, I tried putting a red rose on the same galaxy. The mask came from the rose itself: I kept every pixel that was clearly red and cleaned up the edges. It's a proper irregular mask, but the result still looks like a sticker. The rose was photographed on a black background, and at the coarse levels that black leaks out past the petals and leaves a dark fringe around the whole flower. There's also nothing tying the two images together: the rose is lit by a studio light, and nothing in the galaxy explains that. The galaxy eye works because the iris and the spiral arms already look alike. Here the two pictures have nothing in common.</p>
+      <div class="gallery four">
+        <figure><img src="assets/cosmic_rose_image1.jpg" alt="Red rose on black" /><figcaption><b>Rose</b></figcaption></figure>
+        <figure><img src="assets/cosmic_rose_image2.jpg" alt="Spiral galaxy" /><figcaption><b>Galaxy</b></figcaption></figure>
+        <figure><img src="assets/cosmic_rose_mask.jpg" alt="Rose-shaped mask" /><figcaption><b>Mask</b><span>White = rose</span></figcaption></figure>
+        <figure><img src="assets/cosmic_rose.jpg" alt="Rose blended onto galaxy" /><figcaption><b>Blend</b><span>Dark fringe around the petals</span></figcaption></figure>
+      </div>
     </section>
 
     <section id="takeaway">
@@ -402,6 +409,6 @@ padded = <span class="tok-fn">np.pad</span>(image, ((pad_top, pad_bottom), (pad_
       </div>
     </section>
   </main>
-  <footer class="photo-credits">Photos from Wikimedia Commons: <a href="https://commons.wikimedia.org/wiki/File:Portrait_Panthera_tigris_altaica_Leipzig_Zoo_2013.jpg">tiger by Appaloosa</a> (<a href="https://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>), <a href="https://commons.wikimedia.org/wiki/File:Cat03.jpg">cat by Fir0002</a> (GFDL 1.2), <a href="https://commons.wikimedia.org/wiki/File:Full_Moon_(15984763045).jpg">Moon by NASA Goddard</a> (public domain), <a href="https://commons.wikimedia.org/wiki/File:Closeup_of_a_tennis_ball_(2).jpg">tennis ball</a> (CC0), <a href="https://commons.wikimedia.org/wiki/File:2014-11-12_2014_ATP_World_Tour_Finals_Novak_Djokiov_checking_racket_by_Michael_Frey.jpg">Djokovic by Michael Frey</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a>), <a href="https://commons.wikimedia.org/wiki/File:Crystal_Lake_Reflection_(7726191492).jpg">summer</a> and <a href="https://commons.wikimedia.org/wiki/File:Crystal_Lake_in_the_Winter_(8341261220).jpg">winter Crystal Lake by Alan Stark</a> (<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC BY-SA 2.0</a>), <a href="https://commons.wikimedia.org/wiki/File:Spiral_Galaxy_NGC_3147.png">NGC 3147 by NASA/ESA</a> (public domain), and <a href="https://commons.wikimedia.org/wiki/File:Iris_-_right_eye_of_a_girl.jpg">eye by Laitr Keiows</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a>). The Rock eyebrow image is a meme frame, used here for a class project.</footer>
+  <footer class="photo-credits">Photos from Wikimedia Commons: <a href="https://commons.wikimedia.org/wiki/File:Portrait_Panthera_tigris_altaica_Leipzig_Zoo_2013.jpg">tiger by Appaloosa</a> (<a href="https://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>), <a href="https://commons.wikimedia.org/wiki/File:Cat03.jpg">cat by Fir0002</a> (GFDL 1.2), <a href="https://commons.wikimedia.org/wiki/File:Great_Grey_Owl_face.jpg">owl by Lisa Hupp/USFWS</a> and <a href="https://commons.wikimedia.org/wiki/File:Full_Moon_(15984763045).jpg">Moon by NASA Goddard</a> (public domain), <a href="https://commons.wikimedia.org/wiki/File:Red_rose_with_black_background_II.jpg">rose by Laitche</a> (<a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>), <a href="https://commons.wikimedia.org/wiki/File:2014-11-12_2014_ATP_World_Tour_Finals_Novak_Djokiov_checking_racket_by_Michael_Frey.jpg">Djokovic by Michael Frey</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a>), <a href="https://commons.wikimedia.org/wiki/File:Crystal_Lake_Reflection_(7726191492).jpg">summer</a> and <a href="https://commons.wikimedia.org/wiki/File:Crystal_Lake_in_the_Winter_(8341261220).jpg">winter Crystal Lake by Alan Stark</a> (<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC BY-SA 2.0</a>), <a href="https://commons.wikimedia.org/wiki/File:Spiral_Galaxy_NGC_3147.png">NGC 3147 by NASA/ESA</a> (public domain), and <a href="https://commons.wikimedia.org/wiki/File:Iris_-_right_eye_of_a_girl.jpg">eye by Laitr Keiows</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a>). The Rock eyebrow image is a meme frame, used here for a class project.</footer>
 </body>
 </html>
