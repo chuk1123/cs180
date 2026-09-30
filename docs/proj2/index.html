@@ -31,7 +31,7 @@
       <div class="prose">
         <p>The four-loop version follows the definition of convolution. For every output pixel, I multiply each filter value by the image pixel underneath and add the products. One important step is flipping the filter horizontally and vertically first. Without that flip, the operation is cross-correlation.</p>
         <p>I then rewrote it with two loops. The outer loops still move across the image, but NumPy multiplies and sums the entire patch at once. Padding was the part that took me the most time to reason through because pixels near the edge do not have a complete neighborhood. I used zeros outside the image: <code>same</code> returns the original size, while <code>full</code> keeps every partial overlap and produces a larger result.</p>
-        <p>On a 50 × 50 crop with a 9 × 9 box filter, one run took 0.0678 seconds with four loops, 0.0065 seconds with two loops, and 0.0004 seconds with <code>scipy.signal.convolve2d</code>. Both of my versions matched SciPy with <code>np.allclose</code>. NumPy speeds up the patch calculation, while SciPy is faster still because its inner work is compiled.</p>
+        <p>On a 50 × 50 crop with a 9 × 9 box filter, a single timing run took 0.0622 seconds with four loops, 0.0068 seconds with two loops, and 0.0003 seconds with <code>scipy.signal.convolve2d</code>. These are example timings, not averages. Both of my versions matched SciPy with <code>np.allclose</code>. NumPy speeds up the patch calculation, while SciPy is faster still because its inner work is compiled.</p>
       </div>
       <h3>Padding and output size</h3>
       <p class="intro">This setup is shared by both versions. For <code>same</code>, the total padding on each axis is one less than the filter size. An even-sized filter puts the extra pixel on the top or left. For <code>full</code>, I pad by one less than the filter size on <em>each</em> side.</p>
@@ -78,12 +78,16 @@ output = <span class="tok-fn">np.zeros</span>((output_h, output_w))</code></pre>
 <span class="tok-var">Dx</span> = <span class="tok-fn">np.array</span>([[<span class="tok-num">1</span>, <span class="tok-num">0</span>, <span class="tok-num">-1</span>]])
 <span class="tok-var">Dy</span> = <span class="tok-fn">np.array</span>([[<span class="tok-num">1</span>], [<span class="tok-num">0</span>], [<span class="tok-num">-1</span>]])</code></pre>
       </div>
-      <div class="gallery four">
+      <div class="gallery three">
+        <figure><img src="assets/personal_original.jpg" alt="Unfiltered grayscale personal photo" /><figcaption><b>Original grayscale photo</b><span>Input to the filters beside it and below</span></figcaption></figure>
         <figure><img src="assets/box_filter_same.jpg" alt="Personal image blurred with same convolution" /><figcaption><b>9 × 9 box filter</b><span>Same mode</span></figcaption></figure>
-        <figure><img src="assets/box_filter_full.jpg" alt="Personal image blurred with full convolution" /><figcaption><b>9 × 9 box filter</b><span>Full mode adds an 8-pixel border</span></figcaption></figure>
+        <figure><img src="assets/box_filter_full.jpg" alt="Personal image blurred with full convolution" /><figcaption><b>9 × 9 box filter</b><span>Full mode is 8 pixels taller and wider than the input</span></figcaption></figure>
+      </div>
+      <div class="gallery two">
         <figure><img src="assets/dx.jpg" alt="Horizontal finite difference response on personal image" /><figcaption><b>Dx response</b><span>Emphasizes vertical edges</span></figcaption></figure>
         <figure><img src="assets/dy.jpg" alt="Vertical finite difference response on personal image" /><figcaption><b>Dy response</b><span>Emphasizes horizontal edges</span></figcaption></figure>
       </div>
+      <p class="figure-summary">The original photo is the reference. A 9 × 9 average smooths it in same or full mode, while Dx and Dy separate vertical and horizontal changes.</p>
     </section>
 
     <section id="part-1-2">
@@ -146,19 +150,25 @@ output = <span class="tok-fn">np.zeros</span>((output_h, output_w))</code></pre>
       </div>
 
       <h3>What changed versus finite differences</h3>
-      <p class="intro">Compare this edge map with the chosen 1.2 result above. The remaining edges are thicker because the blur spreads each transition over more pixels before the derivative runs. The cameraman and tripod stay clear, but more of the background disappears. Both maps were normalized by their own maximum before the 0.28 cut, so this is the same relative threshold, not the same raw gradient value.</p>
+      <p class="intro">Here is the 1.2 edge map next to the blurred-then-differentiated map. Same 0.28 relative threshold. Grass speckle drops out. The remaining edges get thicker, because the blur spreads each brightness jump over more pixels. The coat and tripod stay. Some weak background edges disappear with the grass.</p>
+      <div class="gallery two">
+        <figure><img src="assets/edges_0.28.png" alt="Finite-difference edges from part 1.2 at threshold 0.28" /><figcaption><b>1.2 finite difference</b><span>No blur. Grass still passes the 0.28 cut.</span></figcaption></figure>
+        <figure><img src="assets/blurred_edges.png" alt="Edges after Gaussian blur then derivatives" /><figcaption><b>1.3 after blur</b><span>Same threshold. Cleaner outline, thicker strokes.</span></figcaption></figure>
+      </div>
 
       <h3>Method 2: fuse the filters, then convolve once</h3>
-      <p class="intro">Convolution is associative, so blur-then-Dx is the same as convolving the image with (G ∗ Dx). I convolved the Gaussian with Dx and with Dy to get two derivative-of-Gaussian filters, then applied each once to the original cameraman. Both methods use the same symmetric padding and crop only at the end. Cropping the intermediate blur would change the border pixels. The kernels below are shown pixelated so their positive and negative lobes are readable.</p>
-      <div class="gallery two kernels">
-        <figure><img src="assets/dog_x_filter.png" alt="Derivative of Gaussian filter in x, shown as a small kernel" /><figcaption><b>DoG x</b><span>G ∗ Dx</span></figcaption></figure>
-        <figure><img src="assets/dog_y_filter.png" alt="Derivative of Gaussian filter in y, shown as a small kernel" /><figcaption><b>DoG y</b><span>G ∗ Dy</span></figcaption></figure>
+      <p class="intro">Convolution is associative, so blur-then-Dx is the same as convolving the image with (G ∗ Dx). I convolved the Gaussian with Dx and with Dy to get two derivative-of-Gaussian filters, then applied each once to the original cameraman. Both methods use the same symmetric padding and crop only at the end. Cropping the intermediate blur would change the border pixels. These kernels are enlarged by the same amount. G has only positive values and is divided by its maximum for display. Each signed DoG filter is mapped from its own minimum to maximum, placing zero near mid-gray. Brightness is not a common numerical scale across these three panels.</p>
+      <div class="gallery three kernels">
+        <figure><img src="assets/gaussian_filter.png" alt="Nine by nine Gaussian kernel" /><figcaption><b>Gaussian G</b><span>9 × 9, σ = 2. All-positive smoothing weights, dark to light.</span></figcaption></figure>
+        <figure><img src="assets/dog_x_filter.png" alt="Derivative of Gaussian filter in x, shown as a small kernel" /><figcaption><b>DoG x</b><span>G ∗ Dx. Signed values, mid-gray near zero.</span></figcaption></figure>
+        <figure><img src="assets/dog_y_filter.png" alt="Derivative of Gaussian filter in y, shown as a small kernel" /><figcaption><b>DoG y</b><span>G ∗ Dy. Signed values, mid-gray near zero.</span></figcaption></figure>
       </div>
-      <div class="gallery narrow">
-        <figure><img src="assets/dog_edges.png" alt="Thresholded edges using derivative of Gaussian" /><figcaption><b>DoG edges</b><span>Same result as method 1 at threshold 0.28</span></figcaption></figure>
+      <div class="gallery two">
+        <figure><img src="assets/dog_gradient.jpg" alt="Gradient magnitude using derivative of Gaussian filters" /><figcaption><b>DoG gradient</b><span>One convolution per direction</span></figcaption></figure>
+        <figure><img src="assets/dog_edges.png" alt="Thresholded edges using derivative of Gaussian" /><figcaption><b>DoG edges</b><span>Threshold 0.28, same cut as method 1</span></figcaption></figure>
       </div>
       <div class="prose">
-        <p>These match method 1. The two binarized images differ in zero pixels.</p>
+        <p>These match method 1. The two binarized images differ in zero pixels, so one combined filter replaces blur-then-Dx and blur-then-Dy.</p>
       </div>
     </section>
 
@@ -168,14 +178,31 @@ output = <span class="tok-fn">np.zeros</span>((output_h, output_w))</code></pre>
         <p>For unsharp masking, I blur the image and subtract that blurred copy from the original. The difference contains mostly edges and fine texture because the blur kept the low frequencies. I then add a scaled version of that detail back: <span class="formula">sharp = image + α(image − blur)</span>.</p>
         <p>I combined those steps into the single unsharp-mask filter <span class="formula">(1 + α)I − αG</span>. Increasing α makes the Taj's windows and outlines more distinct, but α = 3 also creates obvious halos and harsh contrast. α = 1.5 gave the best balance here. Blurring and then sharpening again restores some edge contrast, but it cannot recover fine information that was already averaged away.</p>
       </div>
-      <div class="gallery four">
-        <figure><img src="assets/taj_original.jpg" alt="Original Taj Mahal image" /><figcaption><b>Original Taj</b></figcaption></figure>
-        <figure><img src="assets/taj_blurred.jpg" alt="Blurred Taj Mahal image" /><figcaption><b>Gaussian blur</b><span>σ = 2</span></figcaption></figure>
-        <figure><img src="assets/taj_high_frequency.jpg" alt="High frequency details of Taj Mahal" /><figcaption><b>High frequencies</b><span>Shifted by 0.5 for display</span></figcaption></figure>
-        <figure><img src="assets/taj_sharpened_alpha_0.5.jpg" alt="Taj Mahal sharpened with alpha 0.5" /><figcaption><b>α = 0.5</b></figcaption></figure>
-        <figure><img src="assets/taj_sharpened_alpha_1.5.jpg" alt="Taj Mahal sharpened with alpha 1.5" /><figcaption><b>α = 1.5</b><span>Best balance</span></figcaption></figure>
-        <figure><img src="assets/taj_sharpened_alpha_3.jpg" alt="Taj Mahal sharpened with alpha 3" /><figcaption><b>α = 3</b><span>Strong halos and contrast</span></figcaption></figure>
-        <figure><img src="assets/taj_blurred_then_resharpened.jpg" alt="Taj Mahal blurred and then resharpened" /><figcaption><b>Blurred, then sharpened</b><span>Edges return, but lost detail does not</span></figcaption></figure>
+      <div class="gallery three">
+        <figure><img src="assets/taj_original.jpg" alt="Original Taj Mahal before sharpening" /><figcaption><b>Original Taj</b><span>Starting point for blur, detail extraction, and sharpening.</span></figcaption></figure>
+        <figure><img src="assets/taj_blurred.jpg" alt="Blurred Taj Mahal image" /><figcaption><b>Gaussian blur</b><span>9 × 9, σ = 2. Keeps the slow shading.</span></figcaption></figure>
+        <figure><img src="assets/taj_high_frequency.jpg" alt="High frequency details of Taj Mahal" /><figcaption><b>High frequencies</b><span>Original minus blur. Shifted by +0.5 so negatives are visible as dark gray.</span></figcaption></figure>
+      </div>
+      <h3>Changing how much detail I add back</h3>
+      <p class="intro">The same unsharp-mask filter, three values of α. Larger α puts more of that high-frequency layer back.</p>
+      <div class="gallery three">
+        <figure><img src="assets/taj_sharpened_alpha_0.5.jpg" alt="Taj Mahal sharpened with alpha 0.5" /><figcaption><b>α = 0.5</b><span>Mild. Windows are a bit crisper.</span></figcaption></figure>
+        <figure><img src="assets/taj_sharpened_alpha_1.5.jpg" alt="Taj Mahal sharpened with alpha 1.5" /><figcaption><b>α = 1.5</b><span>The setting I would actually use.</span></figcaption></figure>
+        <figure><img src="assets/taj_sharpened_alpha_3.jpg" alt="Taj Mahal sharpened with alpha 3" /><figcaption><b>α = 3</b><span>Halos along the dome and trees.</span></figcaption></figure>
+      </div>
+      <h3>Dome detail at two sharpening strengths</h3>
+      <p class="intro">The same 152 × 135 crop from the original Taj image appears in each panel. The 9 × 9 Gaussian has σ = 2, so only α changes. This makes the dome edge and any sharpening halo easier to compare than in the full image.</p>
+      <div class="gallery three dome-detail">
+        <figure><img src="assets/taj_dome_original.jpg" alt="Unsharpened Taj dome crop" /><figcaption><b>Original detail</b><span>Same crop in all three panels</span></figcaption></figure>
+        <figure><img src="assets/taj_dome_alpha_1.5.jpg" alt="Taj dome crop sharpened with alpha 1.5" /><figcaption><b>α = 1.5</b><span>Moderate unsharp mask</span></figcaption></figure>
+        <figure><img src="assets/taj_dome_alpha_3.jpg" alt="Taj dome crop sharpened with alpha 3" /><figcaption><b>α = 3</b><span>Look for the brighter rim where the dome meets the sky.</span></figcaption></figure>
+      </div>
+      <p class="figure-summary">This fixed crop isolates the dome. With σ = 2 held constant, raising α from 1.5 to 3 amplifies edge contrast and halos.</p>
+      <h3>Blur a sharp photo, then try to sharpen it back</h3>
+      <p class="intro">I started from the original Taj, blurred it with the same Gaussian, then ran unsharp masking (α = 1.5). Contrast on the big edges comes back a little. The fine carving that the blur averaged away does not.</p>
+      <div class="gallery two">
+        <figure><img src="assets/taj_original.jpg" alt="Original Taj Mahal before blur-then-sharpen test" /><figcaption><b>Original</b><span>Sharp source.</span></figcaption></figure>
+        <figure><img src="assets/taj_blurred_then_resharpened.jpg" alt="Taj Mahal blurred and then resharpened" /><figcaption><b>Blurred, then sharpened</b><span>α = 1.5 on the blurred copy. Softer than the original.</span></figcaption></figure>
       </div>
       <h3>Second example: a tree tunnel</h3>
       <p class="intro">The branches and leaves in this tree tunnel give sharpening a lot to work with. At α = 1.5, they become easier to pick out, but the image also looks more contrasty. The filter emphasizes existing edges. It does not create detail that was not in the photo.</p>
@@ -192,6 +219,17 @@ output = <span class="tok-fn">np.zeros</span>((output_h, output_w))</code></pre>
       <div class="prose">
         <p>Hybrid images were the most fun part of the project, but also much more finicky than I expected. Up close, sharp edges and small details grab my attention. When I shrink the image or step away, those details disappear and I mostly see the broad low-frequency structure.</p>
         <p>The code itself is short: high-pass one image, low-pass the other, and add them. Getting a convincing result is the hard part. I tried pairs with matching shapes and checked each result at a much smaller size. If the silhouettes fight each other, changing the cutoff cannot really fix it.</p>
+      </div>
+      <div class="table-wrap">
+        <table class="parameter-table">
+          <caption>Settings and intended close-to-far reading for each hybrid</caption>
+          <thead><tr><th>Hybrid</th><th>Alignment</th><th>High σ</th><th>Low σ</th><th>High weight</th><th>Close → far</th></tr></thead>
+          <tbody>
+            <tr><td>Nutmeg × Derek</td><td>Eye landmarks, then crop</td><td>3</td><td>8</td><td>1.0</td><td>Cat details → Derek face</td></tr>
+            <tr><td>Owl × Moon</td><td>Matching circular crops</td><td>2</td><td>10</td><td>0.6</td><td>Owl face → lunar disc</td></tr>
+            <tr><td>Wheel × Sunflower</td><td>Centered circular crops</td><td>2</td><td>10</td><td>0.65</td><td>Wheel spokes → sunflower</td></tr>
+          </tbody>
+        </table>
       </div>
       <h3>Nutmeg × Derek</h3>
       <p class="intro">I aligned their eyes and put Nutmeg in the high-frequency layer over a low-pass Derek. I used σ = 3 for Nutmeg and σ = 8 for Derek, then cropped away the empty corners from alignment. Up close, Nutmeg's eyes, nose, and whiskers show through. At a smaller size, Derek is easier to recognize.</p>
@@ -215,13 +253,14 @@ output = <span class="tok-fn">np.zeros</span>((output_h, output_w))</code></pre>
         <figure><img src="assets/owl_moon_hybrid.jpg" alt="Owl and Moon hybrid" /><figcaption><b>Final hybrid</b></figcaption></figure>
       </div>
       <div class="gallery one"><figure><img class="small-hybrid" src="assets/owl_moon_small.jpg" alt="Owl Moon hybrid reduced to 96 pixels" /><figcaption><b>Reduced to 96 × 96</b><span>The lunar disc is easier to see</span></figcaption></figure></div>
-      <h3>Frequency analysis of Owl × Moon</h3>
+      <h3>Log-magnitude Fourier spectra of Owl × Moon</h3>
+      <p class="intro">Each panel shows log(1 + |F|), divided by its own maximum for display. Brightness across separate panels is therefore not a shared energy scale. A bright center indicates slow, large-scale structure. Energy farther out indicates small details. Cutoffs were σ = 2 on the owl (high-pass) and σ = 10 on the Moon (low-pass). I picked those by shrinking the hybrid until the disc read as a moon without the owl face taking over.</p>
       <div class="gallery five spectra">
-        <figure><img src="assets/owl_moon_high_original_fft.jpg" alt="Fourier spectrum of aligned owl" /><figcaption><b>Owl</b></figcaption></figure>
-        <figure><img src="assets/owl_moon_low_original_fft.jpg" alt="Fourier spectrum of aligned Moon" /><figcaption><b>Moon</b></figcaption></figure>
-        <figure><img src="assets/owl_moon_high_frequency_fft.jpg" alt="Spectrum of high-pass owl" /><figcaption><b>High-pass owl</b></figcaption></figure>
-        <figure><img src="assets/owl_moon_low_frequency_fft.jpg" alt="Spectrum of low-pass Moon" /><figcaption><b>Low-pass Moon</b></figcaption></figure>
-        <figure><img src="assets/owl_moon_hybrid_fft.jpg" alt="Spectrum of owl Moon hybrid" /><figcaption><b>Hybrid</b></figcaption></figure>
+        <figure><img src="assets/owl_moon_high_original_fft.jpg" alt="Log-magnitude Fourier spectrum of aligned owl" /><figcaption><b>Owl</b><span>Log-magnitude spectrum of aligned input</span></figcaption></figure>
+        <figure><img src="assets/owl_moon_low_original_fft.jpg" alt="Log-magnitude Fourier spectrum of aligned Moon" /><figcaption><b>Moon</b><span>Log-magnitude spectrum of aligned input</span></figcaption></figure>
+        <figure><img src="assets/owl_moon_high_frequency_fft.jpg" alt="Log-magnitude Fourier spectrum of high-pass owl" /><figcaption><b>High-pass owl</b><span>Log-magnitude spectrum after filtering</span></figcaption></figure>
+        <figure><img src="assets/owl_moon_low_frequency_fft.jpg" alt="Log-magnitude Fourier spectrum of low-pass Moon" /><figcaption><b>Low-pass Moon</b><span>Log-magnitude spectrum after filtering</span></figcaption></figure>
+        <figure><img src="assets/owl_moon_hybrid_fft.jpg" alt="Log-magnitude Fourier spectrum of owl Moon hybrid" /><figcaption><b>Hybrid</b><span>Log-magnitude spectrum of the sum</span></figcaption></figure>
       </div>
       <div class="prose">
         <p>The Moon's low-pass spectrum is concentrated near the bright center, where low frequencies live. The owl's high-pass spectrum loses much of that center and keeps energy farther outward. The final spectrum contains both.</p>
@@ -245,18 +284,22 @@ output = <span class="tok-fn">np.zeros</span>((output_h, output_w))</code></pre>
         <p>I formed each Laplacian level by subtracting adjacent Gaussian levels. The early levels contain small edges and texture, while later levels contain broader shapes and color changes. I keep the final Gaussian image as the lowest-frequency residual. These bands do not lose information: summing all six Laplacian levels reconstructs the original image.</p>
       </div>
       <h3>Apple Gaussian stack</h3>
+      <p class="intro">These six full-size levels show increasing blur. Each new level uses twice the previous σ, so small details disappear first and the broad apple shape remains.</p>
       <div class="stack-grid">
         <figure><img src="assets/apple_gaussian_0.jpg" alt="Apple Gaussian level 0" /><figcaption>G0</figcaption></figure><figure><img src="assets/apple_gaussian_1.jpg" alt="Apple Gaussian level 1" /><figcaption>G1</figcaption></figure><figure><img src="assets/apple_gaussian_2.jpg" alt="Apple Gaussian level 2" /><figcaption>G2</figcaption></figure><figure><img src="assets/apple_gaussian_3.jpg" alt="Apple Gaussian level 3" /><figcaption>G3</figcaption></figure><figure><img src="assets/apple_gaussian_4.jpg" alt="Apple Gaussian level 4" /><figcaption>G4</figcaption></figure><figure><img src="assets/apple_gaussian_5.jpg" alt="Apple Gaussian level 5" /><figcaption>G5</figcaption></figure>
       </div>
       <h3>Apple Laplacian stack</h3>
+      <p class="intro">Subtract adjacent Gaussian levels to isolate fine-to-coarse bands. The last panel is the remaining low-frequency image rather than another difference.</p>
       <div class="stack-grid">
         <figure><img src="assets/apple_laplacian_0.jpg" alt="Apple Laplacian level 0" /><figcaption>L0</figcaption></figure><figure><img src="assets/apple_laplacian_1.jpg" alt="Apple Laplacian level 1" /><figcaption>L1</figcaption></figure><figure><img src="assets/apple_laplacian_2.jpg" alt="Apple Laplacian level 2" /><figcaption>L2</figcaption></figure><figure><img src="assets/apple_laplacian_3.jpg" alt="Apple Laplacian level 3" /><figcaption>L3</figcaption></figure><figure><img src="assets/apple_laplacian_4.jpg" alt="Apple Laplacian level 4" /><figcaption>L4</figcaption></figure><figure><img src="assets/apple_laplacian_5.jpg" alt="Apple Laplacian residual" /><figcaption>L5 residual</figcaption></figure>
       </div>
       <h3>Orange Gaussian stack</h3>
+      <p class="intro">The same six blur levels on the orange let me compare its changing structure with the apple without resizing either image.</p>
       <div class="stack-grid">
         <figure><img src="assets/orange_gaussian_0.jpg" alt="Orange Gaussian level 0" /><figcaption>G0</figcaption></figure><figure><img src="assets/orange_gaussian_1.jpg" alt="Orange Gaussian level 1" /><figcaption>G1</figcaption></figure><figure><img src="assets/orange_gaussian_2.jpg" alt="Orange Gaussian level 2" /><figcaption>G2</figcaption></figure><figure><img src="assets/orange_gaussian_3.jpg" alt="Orange Gaussian level 3" /><figcaption>G3</figcaption></figure><figure><img src="assets/orange_gaussian_4.jpg" alt="Orange Gaussian level 4" /><figcaption>G4</figcaption></figure><figure><img src="assets/orange_gaussian_5.jpg" alt="Orange Gaussian level 5" /><figcaption>G5</figcaption></figure>
       </div>
       <h3>Orange Laplacian stack</h3>
+      <p class="intro">The orange differences are also ordered from texture to broad color. Adding all six levels recovers the original orange.</p>
       <div class="stack-grid">
         <figure><img src="assets/orange_laplacian_0.jpg" alt="Orange Laplacian level 0" /><figcaption>L0</figcaption></figure><figure><img src="assets/orange_laplacian_1.jpg" alt="Orange Laplacian level 1" /><figcaption>L1</figcaption></figure><figure><img src="assets/orange_laplacian_2.jpg" alt="Orange Laplacian level 2" /><figcaption>L2</figcaption></figure><figure><img src="assets/orange_laplacian_3.jpg" alt="Orange Laplacian level 3" /><figcaption>L3</figcaption></figure><figure><img src="assets/orange_laplacian_4.jpg" alt="Orange Laplacian level 4" /><figcaption>L4</figcaption></figure><figure><img src="assets/orange_laplacian_5.jpg" alt="Orange Laplacian residual" /><figcaption>L5 residual</figcaption></figure>
       </div>
@@ -275,13 +318,32 @@ output = <span class="tok-fn">np.zeros</span>((output_h, output_w))</code></pre>
         <figure><img src="assets/oraple.jpg" alt="Final multiresolution blend of apple and orange" /><figcaption><b>Oraple</b></figcaption></figure>
       </div>
       <h3>Figure 3.42 recreation</h3>
-      <p class="intro">The top row shows masked Apple bands, the middle row shows masked Orange bands, and the bottom row adds each pair together. Moving left to right goes from fine details toward broad, low-frequency structure. The narrow high-frequency transition preserves texture near the seam, while the wider low-frequency transition makes the overall color change gradual.</p>
-      <div class="figure-grid">
-        <figure><img src="assets/figure_3_42_a.jpg" alt="Figure 3.42 panel a" /><figcaption>(a)</figcaption></figure><figure><img src="assets/figure_3_42_b.jpg" alt="Figure 3.42 panel b" /><figcaption>(b)</figcaption></figure><figure><img src="assets/figure_3_42_c.jpg" alt="Figure 3.42 panel c" /><figcaption>(c)</figcaption></figure><figure><img src="assets/figure_3_42_d.jpg" alt="Figure 3.42 panel d" /><figcaption>(d)</figcaption></figure>
-        <figure><img src="assets/figure_3_42_e.jpg" alt="Figure 3.42 panel e" /><figcaption>(e)</figcaption></figure><figure><img src="assets/figure_3_42_f.jpg" alt="Figure 3.42 panel f" /><figcaption>(f)</figcaption></figure><figure><img src="assets/figure_3_42_g.jpg" alt="Figure 3.42 panel g" /><figcaption>(g)</figcaption></figure><figure><img src="assets/figure_3_42_h.jpg" alt="Figure 3.42 panel h" /><figcaption>(h)</figcaption></figure>
-        <figure><img src="assets/figure_3_42_i.jpg" alt="Figure 3.42 panel i" /><figcaption>(i)</figcaption></figure><figure><img src="assets/figure_3_42_j.jpg" alt="Figure 3.42 panel j" /><figcaption>(j)</figcaption></figure><figure><img src="assets/figure_3_42_k.jpg" alt="Figure 3.42 panel k" /><figcaption>(k)</figcaption></figure><figure><img src="assets/figure_3_42_l.jpg" alt="Figure 3.42 panel l" /><figcaption>(l)</figcaption></figure>
+      <p class="intro">Each row is one role in the blend. Columns go from fine texture (L0) to the leftover low-frequency image (L5). I skipped L1 and L3 so the 12 panels match Szeliski’s (a)–(l) layout: four levels × three rows.</p>
+      <div class="band-chart">
+        <p class="corner">Fine → coarse</p>
+        <p class="col-h">(a,e,i) L0</p>
+        <p class="col-h">(b,f,j) L2</p>
+        <p class="col-h">(c,g,k) L4</p>
+        <p class="col-h">(d,h,l) L5</p>
+        <p class="row-h">Masked Apple</p>
+        <figure><img src="assets/figure_3_42_a.jpg" alt="Masked Apple fine band L0" /><figcaption>(a)</figcaption></figure>
+        <figure><img src="assets/figure_3_42_b.jpg" alt="Masked Apple band L2" /><figcaption>(b)</figcaption></figure>
+        <figure><img src="assets/figure_3_42_c.jpg" alt="Masked Apple band L4" /><figcaption>(c)</figcaption></figure>
+        <figure><img src="assets/figure_3_42_d.jpg" alt="Masked Apple coarse residual L5" /><figcaption>(d)</figcaption></figure>
+        <p class="row-h">Masked Orange</p>
+        <figure><img src="assets/figure_3_42_e.jpg" alt="Masked Orange fine band L0" /><figcaption>(e)</figcaption></figure>
+        <figure><img src="assets/figure_3_42_f.jpg" alt="Masked Orange band L2" /><figcaption>(f)</figcaption></figure>
+        <figure><img src="assets/figure_3_42_g.jpg" alt="Masked Orange band L4" /><figcaption>(g)</figcaption></figure>
+        <figure><img src="assets/figure_3_42_h.jpg" alt="Masked Orange coarse residual L5" /><figcaption>(h)</figcaption></figure>
+        <p class="row-h">Sum</p>
+        <figure><img src="assets/figure_3_42_i.jpg" alt="Sum of masked Apple and Orange fine bands L0" /><figcaption>(i)</figcaption></figure>
+        <figure><img src="assets/figure_3_42_j.jpg" alt="Sum of masked Apple and Orange bands L2" /><figcaption>(j)</figcaption></figure>
+        <figure><img src="assets/figure_3_42_k.jpg" alt="Sum of masked Apple and Orange bands L4" /><figcaption>(k)</figcaption></figure>
+        <figure><img src="assets/figure_3_42_l.jpg" alt="Sum of masked Apple and Orange coarse residuals L5" /><figcaption>(l)</figcaption></figure>
       </div>
+      <p class="band-note">High-frequency columns switch from apple to orange over a short distance. The L5 column changes color over a much wider strip. That is the whole point of blending per band.</p>
       <h3>Custom blends</h3>
+      <p class="intro">I made two blends beyond the oraple. Crystal Lake uses a vertical seam on a pair of seasonal lake photos. The rose uses a petal-shaped mask instead of a line.</p>
       <h4>Summer to winter at Crystal Lake</h4>
       <p class="intro">These were taken at the same Colorado lake. I moved the winter photo up by 24 pixels to bring the far shoreline closer to the summer one. I also softened the vertical mask by 15 pixels before making its Gaussian stack. The hard cut stops the water reflection abruptly. The stack result has a gentler transition, although the sky and lake still make the change of season obvious.</p>
       <div class="gallery three">
@@ -308,11 +370,28 @@ output = <span class="tok-fn">np.zeros</span>((output_h, output_w))</code></pre>
         <figure><img src="assets/cosmic_rose_masked_image2.jpg" alt="Masked galaxy input" /><figcaption><b>Masked galaxy</b></figcaption></figure>
       </div>
       <h4>Inside the cosmic rose blend</h4>
-      <p class="intro">As in the Oraple figure, the top row is the masked rose, the middle row is the masked galaxy, and the bottom row is their sum. Left to right moves from fine bands toward broader ones. The coarser mask is why the large color regions can cross the petal boundary more gradually than the tiny star details.</p>
-      <div class="figure-grid">
-        <figure><img src="assets/cosmic_rose_process_a.jpg" alt="Masked rose fine band 1" /><figcaption>(a)</figcaption></figure><figure><img src="assets/cosmic_rose_process_b.jpg" alt="Masked rose band 2" /><figcaption>(b)</figcaption></figure><figure><img src="assets/cosmic_rose_process_c.jpg" alt="Masked rose band 3" /><figcaption>(c)</figcaption></figure><figure><img src="assets/cosmic_rose_process_d.jpg" alt="Masked rose coarse band" /><figcaption>(d)</figcaption></figure>
-        <figure><img src="assets/cosmic_rose_process_e.jpg" alt="Masked galaxy fine band 1" /><figcaption>(e)</figcaption></figure><figure><img src="assets/cosmic_rose_process_f.jpg" alt="Masked galaxy band 2" /><figcaption>(f)</figcaption></figure><figure><img src="assets/cosmic_rose_process_g.jpg" alt="Masked galaxy band 3" /><figcaption>(g)</figcaption></figure><figure><img src="assets/cosmic_rose_process_h.jpg" alt="Masked galaxy coarse band" /><figcaption>(h)</figcaption></figure>
-        <figure><img src="assets/cosmic_rose_process_i.jpg" alt="Combined fine band 1" /><figcaption>(i)</figcaption></figure><figure><img src="assets/cosmic_rose_process_j.jpg" alt="Combined band 2" /><figcaption>(j)</figcaption></figure><figure><img src="assets/cosmic_rose_process_k.jpg" alt="Combined band 3" /><figcaption>(k)</figcaption></figure><figure><img src="assets/cosmic_rose_process_l.jpg" alt="Combined coarse band" /><figcaption>(l)</figcaption></figure>
+      <p class="intro">I used the same fine-to-coarse layout as Figure 3.42 for this irregular mask. The masked inputs show what each photo contributes before the band-by-band combination, similar to Burt and Adelson Figure 10.</p>
+      <div class="band-chart">
+        <p class="corner">Fine → coarse</p>
+        <p class="col-h">L0</p>
+        <p class="col-h">L2</p>
+        <p class="col-h">L4</p>
+        <p class="col-h">L5</p>
+        <p class="row-h">Masked Rose</p>
+        <figure><img src="assets/cosmic_rose_process_a.jpg" alt="Masked Rose fine band L0" /><figcaption>(a)</figcaption></figure>
+        <figure><img src="assets/cosmic_rose_process_b.jpg" alt="Masked Rose band L2" /><figcaption>(b)</figcaption></figure>
+        <figure><img src="assets/cosmic_rose_process_c.jpg" alt="Masked Rose band L4" /><figcaption>(c)</figcaption></figure>
+        <figure><img src="assets/cosmic_rose_process_d.jpg" alt="Masked Rose coarse residual L5" /><figcaption>(d)</figcaption></figure>
+        <p class="row-h">Masked Galaxy</p>
+        <figure><img src="assets/cosmic_rose_process_e.jpg" alt="Masked Galaxy fine band L0" /><figcaption>(e)</figcaption></figure>
+        <figure><img src="assets/cosmic_rose_process_f.jpg" alt="Masked Galaxy band L2" /><figcaption>(f)</figcaption></figure>
+        <figure><img src="assets/cosmic_rose_process_g.jpg" alt="Masked Galaxy band L4" /><figcaption>(g)</figcaption></figure>
+        <figure><img src="assets/cosmic_rose_process_h.jpg" alt="Masked Galaxy coarse residual L5" /><figcaption>(h)</figcaption></figure>
+        <p class="row-h">Sum</p>
+        <figure><img src="assets/cosmic_rose_process_i.jpg" alt="Sum of masked Rose and Galaxy fine bands L0" /><figcaption>(i)</figcaption></figure>
+        <figure><img src="assets/cosmic_rose_process_j.jpg" alt="Sum of masked Rose and Galaxy bands L2" /><figcaption>(j)</figcaption></figure>
+        <figure><img src="assets/cosmic_rose_process_k.jpg" alt="Sum of masked Rose and Galaxy bands L4" /><figcaption>(k)</figcaption></figure>
+        <figure><img src="assets/cosmic_rose_process_l.jpg" alt="Sum of masked Rose and Galaxy coarse residuals L5" /><figcaption>(l)</figcaption></figure>
       </div>
     </section>
 
@@ -321,24 +400,7 @@ output = <span class="tok-fn">np.zeros</span>((output_h, output_w))</code></pre>
       <div class="prose"><p>The most useful lesson was that filtering and image choice have to work together. The owl and Moon share a round shape, so their edges line up well enough for the hybrid to read at two distances. The Crystal Lake photos share a shoreline, which gives the summer-to-winter blend a place to meet. I could change filter widths and weights, but I still had to check the images at the size where someone would actually see them.</p></div>
     </section>
 
-    <section id="sources">
-      <div class="section-heading"><span>↗</span><h2>Image credits</h2></div>
-      <div class="prose credits">
-        <p>I cropped, filtered, and combined these Wikimedia Commons source images. Credits are kept here for the photographers and licenses.</p>
-        <details><summary>View image sources</summary>
-        <ul>
-          <li><a href="https://commons.wikimedia.org/wiki/File:Great_Grey_Owl_face.jpg">Great Grey Owl face</a>: Lisa Hupp/USFWS, public domain</li>
-          <li><a href="https://commons.wikimedia.org/wiki/File:Full_Moon_(15984763045).jpg">Full Moon</a>: NASA Goddard, public domain</li>
-          <li><a href="https://commons.wikimedia.org/wiki/File:Ferris_Wheel_at_night_(2690872267).jpg">Ferris Wheel at night</a>: Mack Male, CC BY-SA 2.0</li>
-          <li><a href="https://commons.wikimedia.org/wiki/File:Sunflower_head.jpg">Sunflower head</a>: Brandon Weeks, CC BY 3.0</li>
-          <li><a href="https://commons.wikimedia.org/wiki/File:Spiral_Galaxy_NGC_3147.png">Spiral Galaxy NGC 3147</a>: NASA/ESA collaborators, public domain</li>
-          <li><a href="https://commons.wikimedia.org/wiki/File:Red_rose_with_black_background_II.jpg">Red rose with black background II</a>: Laitche, CC BY-SA 4.0</li>
-          <li><a href="https://commons.wikimedia.org/wiki/File:Crystal_Lake_Reflection_(7726191492).jpg">Crystal Lake Reflection</a> and <a href="https://commons.wikimedia.org/wiki/File:Crystal_Lake_in_the_Winter_(8341261220).jpg">Crystal Lake in the Winter</a>: Alan Stark, CC BY-SA 2.0</li>
-          <li><a href="https://commons.wikimedia.org/wiki/File:Tree_Tunnel_(51536815526).jpg">Tree Tunnel</a>: John Brighenti, CC BY 2.0</li>
-        </ul>
-        </details>
-      </div>
-    </section>
   </main>
+  <footer class="photo-credits">Adapted photos: <a href="https://commons.wikimedia.org/wiki/File:Ferris_Wheel_at_night_(2690872267).jpg">Ferris wheel by Mack Male</a> and <a href="https://commons.wikimedia.org/wiki/File:Crystal_Lake_Reflection_(7726191492).jpg">summer</a>/<a href="https://commons.wikimedia.org/wiki/File:Crystal_Lake_in_the_Winter_(8341261220).jpg">winter Crystal Lake by Alan Stark</a> (<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC BY-SA 2.0</a>), <a href="https://commons.wikimedia.org/wiki/File:Sunflower_head.jpg">sunflower by Brandon Weeks</a> (<a href="https://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>), <a href="https://commons.wikimedia.org/wiki/File:Red_rose_with_black_background_II.jpg">rose by Laitche</a> (<a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>), and <a href="https://commons.wikimedia.org/wiki/File:Tree_Tunnel_(51536815526).jpg">tree tunnel by John Brighenti</a> (<a href="https://creativecommons.org/licenses/by/2.0/">CC BY 2.0</a>).</footer>
 </body>
 </html>
