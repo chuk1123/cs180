@@ -396,7 +396,7 @@
       <div class="section-heading"><span>2.4</span><h2>Multiresolution blending</h2></div>
       <div class="prose">
         <p>Now that I have a Laplacian stack for each image, blending them just means mixing the two stacks one level at a time. The mask gets its own Gaussian stack, so it stays sharp at the fine levels and gets blurrier at the coarse ones. That way small details like texture are basically hard-cut right at the seam, while colors and big shapes fade smoothly across a wide area. A plain hard cut would leave an obvious line, and blurring the whole seam by one amount would make the details look ghosted, so this gets the best of both.</p>
-        <p>At each level I compute <span class="formula">blend<sub>k</sub> = mask<sub>k</sub> · A<sub>k</sub> + (1 − mask<sub>k</sub>) · B<sub>k</sub></span> and then add all the levels back up, which is exactly what Figure 3.42 shows step by step. Here's the oraple first, followed by my own blends.</p>
+        <p>At each level I compute <span class="formula">blend<sub>k</sub> = mask<sub>k</sub> · A<sub>k</sub> + (1 − mask<sub>k</sub>) · B<sub>k</sub></span>, where A<sub>k</sub> and B<sub>k</sub> are level k of the two images' Laplacian stacks and mask<sub>k</sub> is level k of the mask's Gaussian stack (white keeps image A, black keeps image B). Then I add all the levels back up, which is exactly what Figure 3.42 shows step by step. Here's the oraple first, followed by my own blends.</p>
       </div>
 
       <h3>The oraple</h3>
