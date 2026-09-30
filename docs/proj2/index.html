@@ -204,13 +204,19 @@ output = <span class="tok-fn">np.zeros</span>((output_h, output_w))</code></pre>
         <figure><img src="assets/taj_original.jpg" alt="Original Taj Mahal before blur-then-sharpen test" /><figcaption><b>Original</b><span>Sharp source.</span></figcaption></figure>
         <figure><img src="assets/taj_blurred_then_resharpened.jpg" alt="Taj Mahal blurred and then resharpened" /><figcaption><b>Blurred, then sharpened</b><span>α = 1.5 on the blurred copy. Softer than the original.</span></figcaption></figure>
       </div>
-      <h3>Second example: a tree tunnel</h3>
-      <p class="intro">The branches and leaves in this tree tunnel give sharpening a lot to work with. At α = 1.5, they become easier to pick out, but the image also looks more contrasty. The filter emphasizes existing edges. It does not create detail that was not in the photo.</p>
+      <h3>Second example: a soft photo of the full Moon</h3>
+      <p class="intro">This full-Moon photo is slightly soft, which makes it a good test for unsharp masking. I used the same 9 × 9 Gaussian with σ = 2. The high-frequency layer is almost entirely crater rims and the bright ray streaks around young craters. Adding it back at α = 1.5 makes the maria edges and small craters much crisper without changing the overall shading of the disc.</p>
       <div class="gallery two">
-        <figure><img src="assets/forest_original.jpg" alt="Original tree tunnel" /><figcaption><b>Original</b></figcaption></figure>
-        <figure><img src="assets/forest_blurred.jpg" alt="Blurred tree tunnel" /><figcaption><b>Gaussian blur</b></figcaption></figure>
-        <figure><img src="assets/forest_high_frequency.jpg" alt="High-frequency detail in the tree tunnel" /><figcaption><b>High frequencies</b></figcaption></figure>
-        <figure><img src="assets/forest_sharpened_alpha_1.5.jpg" alt="Sharpened tree tunnel" /><figcaption><b>Sharpened</b><span>α = 1.5</span></figcaption></figure>
+        <figure><img src="assets/moon_original.jpg" alt="Original full Moon photo" /><figcaption><b>Original</b></figcaption></figure>
+        <figure><img src="assets/moon_blurred.jpg" alt="Blurred full Moon" /><figcaption><b>Gaussian blur</b><span>9 × 9, σ = 2</span></figcaption></figure>
+        <figure><img src="assets/moon_high_frequency.jpg" alt="High-frequency detail of the Moon" /><figcaption><b>High frequencies</b><span>Shifted by +0.5 for display</span></figcaption></figure>
+        <figure><img src="assets/moon_sharpened_alpha_1.5.jpg" alt="Moon sharpened with alpha 1.5" /><figcaption><b>Sharpened</b><span>α = 1.5</span></figcaption></figure>
+      </div>
+      <p class="intro">The same 340 × 340 crop of the lunar surface in each panel. At α = 1.5 the small craters and ray streaks become distinct. At α = 3 the filter starts amplifying JPEG noise and grain, so the surface looks gritty rather than more detailed.</p>
+      <div class="gallery three">
+        <figure><img src="assets/moon_zoom_original.jpg" alt="Unsharpened crop of lunar craters" /><figcaption><b>Original detail</b></figcaption></figure>
+        <figure><img src="assets/moon_zoom_alpha_1.5.jpg" alt="Lunar crater crop sharpened with alpha 1.5" /><figcaption><b>α = 1.5</b><span>Craters and rays pop</span></figcaption></figure>
+        <figure><img src="assets/moon_zoom_alpha_3.jpg" alt="Lunar crater crop sharpened with alpha 3" /><figcaption><b>α = 3</b><span>Noise gets amplified too</span></figcaption></figure>
       </div>
     </section>
 
@@ -222,11 +228,11 @@ output = <span class="tok-fn">np.zeros</span>((output_h, output_w))</code></pre>
       </div>
       <div class="table-wrap">
         <table class="parameter-table">
-          <caption>Settings and intended close-to-far reading for each hybrid</caption>
+          <caption>Settings and intended close-to-far reading for the three featured hybrids</caption>
           <thead><tr><th>Hybrid</th><th>Alignment</th><th>High σ</th><th>Low σ</th><th>High weight</th><th>Close → far</th></tr></thead>
           <tbody>
             <tr><td>Nutmeg × Derek</td><td>Eye landmarks, then crop</td><td>3</td><td>8</td><td>1.0</td><td>Cat details → Derek face</td></tr>
-            <tr><td>Owl × Moon</td><td>Matching circular crops</td><td>2</td><td>10</td><td>0.6</td><td>Owl face → lunar disc</td></tr>
+            <tr><td>Owl × Moon</td><td>Matching circular crops</td><td>2</td><td>6</td><td>0.7</td><td>Owl face → lunar disc</td></tr>
             <tr><td>Wheel × Sunflower</td><td>Centered circular crops</td><td>2</td><td>10</td><td>0.65</td><td>Wheel spokes → sunflower</td></tr>
           </tbody>
         </table>
@@ -240,11 +246,11 @@ output = <span class="tok-fn">np.zeros</span>((output_h, output_w))</code></pre>
       </div>
       <div class="gallery one"><figure><img class="small-hybrid" src="assets/derek_nutmeg_small.jpg" alt="Nutmeg and Derek hybrid reduced to 96 pixels" /><figcaption><b>96 × 96 view</b><span>Derek's face reads more clearly</span></figcaption></figure></div>
       <h3>Owl × Moon</h3>
-      <p class="intro">I wanted the owl's face to fit inside the Moon's round disc. I cropped both around that circle, then used σ = 2 for the owl's high-pass and σ = 10 for the Moon's low-pass. I weighted the owl layer at 0.6 so its feathers would not overpower the Moon at a small size. The eyes still linger a little.</p>
+      <p class="intro">I wanted the owl's face to fit inside the Moon's round disc. I cropped both around that circle, then used σ = 2 for the owl's high-pass and σ = 6 for the Moon's low-pass. My first try used σ = 10 for the Moon, but that blurred away the dark maria and left a plain gray blob that did not read as the Moon from far away. σ = 6 keeps the maria. Outside the lunar disc, I replaced the owl with its own blur, so its high-pass is close to zero there and no feathers spill into the black sky. I weighted the owl layer at 0.7 so its feathers do not overpower the Moon at a small size.</p>
       <div class="gallery four">
         <figure><img src="assets/owl_moon_high_original.jpg" alt="Original great gray owl" /><figcaption><b>Owl source</b></figcaption></figure>
         <figure><img src="assets/owl_moon_low_original.jpg" alt="Original Moon" /><figcaption><b>Moon source</b></figcaption></figure>
-        <figure><img src="assets/owl_moon_high_aligned.jpg" alt="Cropped owl" /><figcaption><b>Aligned owl</b></figcaption></figure>
+        <figure><img src="assets/owl_moon_high_aligned.jpg" alt="Cropped owl, blurred outside the Moon disc" /><figcaption><b>Aligned owl</b><span>Blurred outside the lunar disc</span></figcaption></figure>
         <figure><img src="assets/owl_moon_low_aligned.jpg" alt="Cropped Moon" /><figcaption><b>Aligned Moon</b></figcaption></figure>
       </div>
       <div class="gallery three feature-row">
@@ -252,9 +258,9 @@ output = <span class="tok-fn">np.zeros</span>((output_h, output_w))</code></pre>
         <figure><img src="assets/owl_moon_low_frequency.jpg" alt="Low-pass Moon" /><figcaption><b>Low-pass Moon</b></figcaption></figure>
         <figure><img src="assets/owl_moon_hybrid.jpg" alt="Owl and Moon hybrid" /><figcaption><b>Final hybrid</b></figcaption></figure>
       </div>
-      <div class="gallery one"><figure><img class="small-hybrid" src="assets/owl_moon_small.jpg" alt="Owl Moon hybrid reduced to 96 pixels" /><figcaption><b>Reduced to 96 × 96</b><span>The lunar disc is easier to see</span></figcaption></figure></div>
+      <div class="gallery one"><figure><img class="small-hybrid" src="assets/owl_moon_small.jpg" alt="Owl Moon hybrid reduced to 96 pixels" /><figcaption><b>Reduced to 96 × 96</b><span>The owl fades and the maria take over</span></figcaption></figure></div>
       <h3>Log-magnitude Fourier spectra of Owl × Moon</h3>
-      <p class="intro">Each panel shows log(1 + |F|), divided by its own maximum for display. Brightness across separate panels is therefore not a shared energy scale. A bright center indicates slow, large-scale structure. Energy farther out indicates small details. Cutoffs were σ = 2 on the owl (high-pass) and σ = 10 on the Moon (low-pass). I picked those by shrinking the hybrid until the disc read as a moon without the owl face taking over.</p>
+      <p class="intro">Each panel shows log(1 + |F|), divided by its own maximum for display. Brightness across separate panels is therefore not a shared energy scale. A bright center indicates slow, large-scale structure. Energy farther out indicates small details. Cutoffs were σ = 2 on the owl (high-pass) and σ = 6 on the Moon (low-pass). I picked those by shrinking the hybrid until the disc read as a moon without the owl face taking over.</p>
       <div class="gallery five spectra">
         <figure><img src="assets/owl_moon_high_original_fft.jpg" alt="Log-magnitude Fourier spectrum of aligned owl" /><figcaption><b>Owl</b><span>Log-magnitude spectrum of aligned input</span></figcaption></figure>
         <figure><img src="assets/owl_moon_low_original_fft.jpg" alt="Log-magnitude Fourier spectrum of aligned Moon" /><figcaption><b>Moon</b><span>Log-magnitude spectrum of aligned input</span></figcaption></figure>
@@ -274,6 +280,11 @@ output = <span class="tok-fn">np.zeros</span>((output_h, output_w))</code></pre>
         </div>
         <p class="note">The wheel's spokes are strong up close, but the round sunflower and its yellow petals take over in the 96 × 96 view. I used 0.65 of the wheel's high-frequency layer so it would not drown out the flower.</p>
         <div class="gallery one"><figure><img class="small-hybrid" src="assets/wheel_sunflower_small.jpg" alt="Wheel sunflower hybrid reduced to 96 pixels" /><figcaption><b>96 × 96 view</b></figcaption></figure></div>
+      </div>
+      <h3>A failed expression experiment</h3>
+      <p class="intro">I also tried to make a face change expression with viewing distance, with a frown in the high-frequency input and a smile in the low-frequency input. This one did not switch clearly. The two faces have nearly the same broad structure, while the differences around the eyes and mouth are too subtle to give the small view a distinct smile. I kept the failure here because it shows why simply aligning two related photos is not enough.</p>
+      <div class="gallery one">
+        <figure><img src="assets/expression_comparison.jpg" alt="Failed expression hybrid with frowning and smiling inputs, hybrid, and 96 and 48 pixel views" /><figcaption><b>Frown to smile attempt</b><span>The two inputs, hybrid, and reduced views are shown together. The expression remains ambiguous instead of switching cleanly with distance.</span></figcaption></figure>
       </div>
     </section>
 
@@ -343,9 +354,9 @@ output = <span class="tok-fn">np.zeros</span>((output_h, output_w))</code></pre>
       </div>
       <p class="band-note">High-frequency columns switch from apple to orange over a short distance. The L5 column changes color over a much wider strip. That is the whole point of blending per band.</p>
       <h3>Custom blends</h3>
-      <p class="intro">I made two blends beyond the oraple. Crystal Lake uses a vertical seam on a pair of seasonal lake photos. The rose uses a petal-shaped mask instead of a line.</p>
+      <p class="intro">I made two blends beyond the oraple. Crystal Lake uses a vertical seam on a pair of seasonal lake photos. Galaxy Eye uses an iris-shaped mask instead of a line.</p>
       <h4>Summer to winter at Crystal Lake</h4>
-      <p class="intro">These were taken at the same Colorado lake. I moved the winter photo up by 24 pixels to bring the far shoreline closer to the summer one. I also softened the vertical mask by 15 pixels before making its Gaussian stack. The hard cut stops the water reflection abruptly. The stack result has a gentler transition, although the sky and lake still make the change of season obvious.</p>
+      <p class="intro">These were taken at the same Colorado lake. I moved the winter photo up by 24 pixels to bring the far shoreline closer to the summer one. I also softened the vertical mask with a Gaussian of σ = 60 pixels before making its stack. The hard cut stops the water reflection abruptly. The stack result has a gentler transition, although the sky and lake still make the change of season obvious.</p>
       <div class="gallery three">
         <figure><img src="assets/seasons_image1.jpg" alt="Crystal Lake in summer" /><figcaption><b>Summer</b></figcaption></figure>
         <figure><img src="assets/seasons_image2.jpg" alt="Crystal Lake in winter" /><figcaption><b>Winter</b></figcaption></figure>
@@ -355,43 +366,52 @@ output = <span class="tok-fn">np.zeros</span>((output_h, output_w))</code></pre>
         <figure><img src="assets/seasons_hard_cut.jpg" alt="Hard cut between summer and winter" /><figcaption><b>Hard cut</b></figcaption></figure>
         <figure><img src="assets/seasons.jpg" alt="Multiresolution blend between summer and winter" /><figcaption><b>Stack blend</b></figcaption></figure>
       </div>
-      <h4>Cosmic rose with an irregular mask</h4>
-      <p class="intro">I made this mask from the rose's silhouette instead of using a circle or straight line. White selects the rose. Black selects the galaxy. The hard-cut version leaves an obvious petal edge, while the stack blend lets the red petals fade into the stars at several scales.</p>
-      <div class="gallery five">
-        <figure><img src="assets/cosmic_rose_image1.jpg" alt="Red rose on black background" /><figcaption><b>Rose</b></figcaption></figure>
-        <figure><img src="assets/cosmic_rose_image2.jpg" alt="Spiral galaxy" /><figcaption><b>Galaxy</b></figcaption></figure>
-        <figure><img src="assets/cosmic_rose_mask.jpg" alt="Rose-shaped irregular mask" /><figcaption><b>Irregular mask</b></figcaption></figure>
-        <figure><img src="assets/cosmic_rose_hard_cut.jpg" alt="Hard-cut rose and galaxy" /><figcaption><b>Hard cut</b></figcaption></figure>
-        <figure><img src="assets/cosmic_rose.jpg" alt="Multiresolution rose and galaxy blend" /><figcaption><b>Stack blend</b></figcaption></figure>
+      <h4>Galaxy Eye: an irregular iris mask</h4>
+      <p class="intro">The arms of the spiral galaxy NGC 3147 look a lot like the radial fibers of an iris, so I blended the galaxy into the iris of a close-up eye. I scaled the galaxy by 0.6 so its core sits on the pupil and its arms fill the iris. The mask is not a line or a plain circle. It is the iris disc, cut off by the curve of the upper eyelid, with the pupil and the window catchlight removed, so the eye keeps its real pupil, reflection, and lashes.</p>
+      <p class="intro">One thing went wrong on the first try: the galaxy's bright core sits right under the pupil, and the coarse mask levels are wide enough that it leaked in and turned the pupil a washed-out brown. Before building the stacks, I copied the eye's real pupil and catchlight into the galaxy input, so both images agree there and nothing can bleed in.</p>
+      <div class="gallery three">
+        <figure><img src="assets/galaxy_eye_image1.jpg" alt="Spiral galaxy scaled and centered on the pupil, with the eye's pupil copied in" /><figcaption><b>Galaxy input</b><span>Scaled 0.6, core on the pupil</span></figcaption></figure>
+        <figure><img src="assets/galaxy_eye_image2.jpg" alt="Close-up of a blue eye" /><figcaption><b>Eye input</b></figcaption></figure>
+        <figure><img src="assets/galaxy_eye_mask.jpg" alt="Iris-shaped irregular mask with pupil and catchlight removed" /><figcaption><b>Irregular mask</b><span>White selects the galaxy</span></figcaption></figure>
       </div>
-      <p class="intro">These are the two inputs after applying the unblurred mask. They make it easier to see what each source contributes before the band-by-band combination.</p>
       <div class="gallery two">
-        <figure><img src="assets/cosmic_rose_masked_image1.jpg" alt="Masked rose input" /><figcaption><b>Masked rose</b></figcaption></figure>
-        <figure><img src="assets/cosmic_rose_masked_image2.jpg" alt="Masked galaxy input" /><figcaption><b>Masked galaxy</b></figcaption></figure>
+        <figure><img src="assets/galaxy_eye_hard_cut.jpg" alt="Hard cut of the galaxy into the iris" /><figcaption><b>Hard cut</b><span>Mask applied with no blending</span></figcaption></figure>
+        <figure><img src="assets/galaxy_eye.jpg" alt="Multiresolution blend of a spiral galaxy into an iris" /><figcaption><b>Stack blend</b><span>6 levels, σ = 2 doubling per level</span></figcaption></figure>
       </div>
-      <h4>Inside the cosmic rose blend</h4>
-      <p class="intro">I used the same fine-to-coarse layout as Figure 3.42 for this irregular mask. The masked inputs show what each photo contributes before the band-by-band combination, similar to Burt and Adelson Figure 10.</p>
+      <p class="intro">At full size the two look similar, so here is the same 260 × 260 crop of the eyelid and the left edge of the iris.</p>
+      <div class="gallery two">
+        <figure><img src="assets/galaxy_eye_zoom_hard_cut.jpg" alt="Zoomed hard cut showing a sharp eyelid line and a chopped iris edge" /><figcaption><b>Hard cut, zoomed</b><span>Sharp line under the eyelid, and the galaxy stops abruptly at the white of the eye</span></figcaption></figure>
+        <figure><img src="assets/galaxy_eye_zoom_blend.jpg" alt="Zoomed stack blend with a soft iris edge and dark limbal ring" /><figcaption><b>Stack blend, zoomed</b><span>The lid shadow and the dark ring around the real iris carry over</span></figcaption></figure>
+      </div>
+      <p class="figure-summary">In the hard cut, the galaxy is pasted on top of the eye. In the stack blend, the eye's broad shading (the eyelid shadow and the dark ring at the iris edge) comes from the coarse levels, while the galaxy supplies the fine texture. That is why it reads as an iris instead of a sticker.</p>
+      <p class="intro">These are the two inputs after applying the unblurred mask. They show what each photo contributes before the band-by-band combination, like Burt and Adelson's Figure 10.</p>
+      <div class="gallery two">
+        <figure><img src="assets/galaxy_eye_masked_image1.jpg" alt="Masked galaxy input" /><figcaption><b>Masked galaxy</b></figcaption></figure>
+        <figure><img src="assets/galaxy_eye_masked_image2.jpg" alt="Masked eye input" /><figcaption><b>Masked eye</b></figcaption></figure>
+      </div>
+      <h4>Inside the Galaxy Eye blend</h4>
+      <p class="intro">Same fine-to-coarse layout as Figure 3.42. In the galaxy row, fine bands stay inside the iris while L5 spreads well past it. In the sum row, L0 carries the star-like detail and the lashes, and L5 carries the brown core glow and the blue sclera.</p>
       <div class="band-chart">
         <p class="corner">Fine → coarse</p>
         <p class="col-h">L0</p>
         <p class="col-h">L2</p>
         <p class="col-h">L4</p>
         <p class="col-h">L5</p>
-        <p class="row-h">Masked Rose</p>
-        <figure><img src="assets/cosmic_rose_process_a.jpg" alt="Masked Rose fine band L0" /><figcaption>(a)</figcaption></figure>
-        <figure><img src="assets/cosmic_rose_process_b.jpg" alt="Masked Rose band L2" /><figcaption>(b)</figcaption></figure>
-        <figure><img src="assets/cosmic_rose_process_c.jpg" alt="Masked Rose band L4" /><figcaption>(c)</figcaption></figure>
-        <figure><img src="assets/cosmic_rose_process_d.jpg" alt="Masked Rose coarse residual L5" /><figcaption>(d)</figcaption></figure>
         <p class="row-h">Masked Galaxy</p>
-        <figure><img src="assets/cosmic_rose_process_e.jpg" alt="Masked Galaxy fine band L0" /><figcaption>(e)</figcaption></figure>
-        <figure><img src="assets/cosmic_rose_process_f.jpg" alt="Masked Galaxy band L2" /><figcaption>(f)</figcaption></figure>
-        <figure><img src="assets/cosmic_rose_process_g.jpg" alt="Masked Galaxy band L4" /><figcaption>(g)</figcaption></figure>
-        <figure><img src="assets/cosmic_rose_process_h.jpg" alt="Masked Galaxy coarse residual L5" /><figcaption>(h)</figcaption></figure>
+        <figure><img src="assets/galaxy_eye_process_a.jpg" alt="Masked Galaxy fine band L0" /><figcaption>(a)</figcaption></figure>
+        <figure><img src="assets/galaxy_eye_process_b.jpg" alt="Masked Galaxy band L2" /><figcaption>(b)</figcaption></figure>
+        <figure><img src="assets/galaxy_eye_process_c.jpg" alt="Masked Galaxy band L4" /><figcaption>(c)</figcaption></figure>
+        <figure><img src="assets/galaxy_eye_process_d.jpg" alt="Masked Galaxy coarse residual L5" /><figcaption>(d)</figcaption></figure>
+        <p class="row-h">Masked Eye</p>
+        <figure><img src="assets/galaxy_eye_process_e.jpg" alt="Masked Eye fine band L0" /><figcaption>(e)</figcaption></figure>
+        <figure><img src="assets/galaxy_eye_process_f.jpg" alt="Masked Eye band L2" /><figcaption>(f)</figcaption></figure>
+        <figure><img src="assets/galaxy_eye_process_g.jpg" alt="Masked Eye band L4" /><figcaption>(g)</figcaption></figure>
+        <figure><img src="assets/galaxy_eye_process_h.jpg" alt="Masked Eye coarse residual L5" /><figcaption>(h)</figcaption></figure>
         <p class="row-h">Sum</p>
-        <figure><img src="assets/cosmic_rose_process_i.jpg" alt="Sum of masked Rose and Galaxy fine bands L0" /><figcaption>(i)</figcaption></figure>
-        <figure><img src="assets/cosmic_rose_process_j.jpg" alt="Sum of masked Rose and Galaxy bands L2" /><figcaption>(j)</figcaption></figure>
-        <figure><img src="assets/cosmic_rose_process_k.jpg" alt="Sum of masked Rose and Galaxy bands L4" /><figcaption>(k)</figcaption></figure>
-        <figure><img src="assets/cosmic_rose_process_l.jpg" alt="Sum of masked Rose and Galaxy coarse residuals L5" /><figcaption>(l)</figcaption></figure>
+        <figure><img src="assets/galaxy_eye_process_i.jpg" alt="Sum of masked Galaxy and Eye fine band L0" /><figcaption>(i)</figcaption></figure>
+        <figure><img src="assets/galaxy_eye_process_j.jpg" alt="Sum of masked Galaxy and Eye band L2" /><figcaption>(j)</figcaption></figure>
+        <figure><img src="assets/galaxy_eye_process_k.jpg" alt="Sum of masked Galaxy and Eye band L4" /><figcaption>(k)</figcaption></figure>
+        <figure><img src="assets/galaxy_eye_process_l.jpg" alt="Sum of masked Galaxy and Eye coarse residual L5" /><figcaption>(l)</figcaption></figure>
       </div>
     </section>
 
@@ -401,6 +421,6 @@ output = <span class="tok-fn">np.zeros</span>((output_h, output_w))</code></pre>
     </section>
 
   </main>
-  <footer class="photo-credits">Adapted photos: <a href="https://commons.wikimedia.org/wiki/File:Ferris_Wheel_at_night_(2690872267).jpg">Ferris wheel by Mack Male</a> and <a href="https://commons.wikimedia.org/wiki/File:Crystal_Lake_Reflection_(7726191492).jpg">summer</a>/<a href="https://commons.wikimedia.org/wiki/File:Crystal_Lake_in_the_Winter_(8341261220).jpg">winter Crystal Lake by Alan Stark</a> (<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC BY-SA 2.0</a>), <a href="https://commons.wikimedia.org/wiki/File:Sunflower_head.jpg">sunflower by Brandon Weeks</a> (<a href="https://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>), <a href="https://commons.wikimedia.org/wiki/File:Red_rose_with_black_background_II.jpg">rose by Laitche</a> (<a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>), and <a href="https://commons.wikimedia.org/wiki/File:Tree_Tunnel_(51536815526).jpg">tree tunnel by John Brighenti</a> (<a href="https://creativecommons.org/licenses/by/2.0/">CC BY 2.0</a>).</footer>
+  <footer class="photo-credits">Adapted photos: <a href="https://commons.wikimedia.org/wiki/File:Ferris_Wheel_at_night_(2690872267).jpg">Ferris wheel by Mack Male</a> and <a href="https://commons.wikimedia.org/wiki/File:Crystal_Lake_Reflection_(7726191492).jpg">summer</a>/<a href="https://commons.wikimedia.org/wiki/File:Crystal_Lake_in_the_Winter_(8341261220).jpg">winter Crystal Lake by Alan Stark</a> (<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC BY-SA 2.0</a>), <a href="https://commons.wikimedia.org/wiki/File:Sunflower_head.jpg">sunflower by Brandon Weeks</a> (<a href="https://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>), and <a href="https://commons.wikimedia.org/wiki/File:Iris_-_right_eye_of_a_girl.jpg">eye by Laitr Keiows</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a>).</footer>
 </body>
 </html>
