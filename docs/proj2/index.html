@@ -283,12 +283,12 @@
         <figure><img src="assets/tiger_cat_low_frequency.jpg" alt="Blurred cat" /><figcaption><b>Blurred cat</b></figcaption></figure>
         <figure><img src="assets/tiger_cat_hybrid.jpg" alt="Tiger and cat hybrid" /><figcaption><b>Sum = hybrid</b></figcaption></figure>
       </div>
-      <p class="intro"><b>3. Check it in the frequency domain.</b> In these log-magnitude Fourier transforms, the center represents broad changes and the outer area represents fine detail. The blurred cat stays bright near the center, while the tiger detail loses much of its center; the hybrid shows both patterns together.</p>
+      <p class="intro"><b>3. Check it in the frequency domain.</b> In these log-magnitude Fourier transforms, the center represents broad changes and the outer area represents fine detail. The blurred cat has most of its energy near the center, while the tiger detail loses much of its center; the hybrid shows both patterns together. The bright cross in the cat's plot is mostly from the square crop's edges: the Fourier transform treats opposite edges as touching, and they do not match perfectly. It appears in the original cat spectrum too, then stands out more after the surrounding detail is blurred away.</p>
       <div class="gallery five spectra">
         <figure><img src="assets/tiger_cat_high_original_fft.jpg" alt="Fourier transform of tiger" /><figcaption><b>Tiger</b></figcaption></figure>
         <figure><img src="assets/tiger_cat_low_original_fft.jpg" alt="Fourier transform of cat" /><figcaption><b>Cat</b></figcaption></figure>
         <figure><img src="assets/tiger_cat_high_frequency_fft.jpg" alt="Fourier transform of tiger detail" /><figcaption><b>Tiger detail</b><span>Center removed</span></figcaption></figure>
-        <figure><img src="assets/tiger_cat_low_frequency_fft.jpg" alt="Fourier transform of blurred cat" /><figcaption><b>Blurred cat</b><span>Only the center</span></figcaption></figure>
+        <figure><img src="assets/tiger_cat_low_frequency_fft.jpg" alt="Fourier transform of blurred cat with bright cross from crop boundaries" /><figcaption><b>Blurred cat</b><span>Low frequencies dominate; crop edges form the cross</span></figcaption></figure>
         <figure><img src="assets/tiger_cat_hybrid_fft.jpg" alt="Fourier transform of hybrid" /><figcaption><b>Hybrid</b><span>Both</span></figcaption></figure>
       </div>
 
