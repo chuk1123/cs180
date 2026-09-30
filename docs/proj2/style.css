@@ -261,3 +261,10 @@ figcaption .method { font-family: ui-monospace, SFMono-Regular, Menlo, monospace
   .band-chart.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 .gallery.compare-single { grid-template-columns: minmax(0, 560px); }
+
+/* When printing to PDF, stack the code blocks and wrap long lines so no code is cut off. */
+@media print {
+  .code-grid { grid-template-columns: minmax(0, 1fr); }
+  .code-grid pre { height: auto; }
+  pre { white-space: pre-wrap; overflow: visible; word-break: break-word; }
+}
