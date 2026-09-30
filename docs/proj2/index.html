@@ -222,6 +222,21 @@
         <figure><img src="assets/taj_sharpened_alpha_5.jpg" alt="Taj sharpened with alpha 5" /><figcaption><b>α = 5</b><span>Exaggerated</span></figcaption></figure>
         <figure><img src="assets/taj_sharpened_alpha_10.jpg" alt="Taj sharpened with alpha 10" /><figcaption><b>α = 10</b><span>Way too much</span></figcaption></figure>
       </div>
+      <h3 id="moon-sharpening">My own example: the Moon</h3>
+      <p class="intro">The Moon photo was a little soft, so sharpening brings out the craters.</p>
+      <div class="gallery two compare">
+        <figure><img src="assets/moon_original.jpg" alt="Original Moon" /><figcaption><b>Before</b></figcaption></figure>
+        <figure><img src="assets/moon_sharpened_alpha_1.5.jpg" alt="Sharpened Moon" /><figcaption><b>After</b><span>α = 1.5</span></figcaption></figure>
+      </div>
+      <p class="intro">Here is the same close-up of the surface at each α. The crater rims get crisper up to about 1.5, and past 3 the surface turns into speckled noise.</p>
+      <div class="gallery three">
+        <figure><img src="assets/moon_zoom_original.jpg" alt="Lunar close-up, original" /><figcaption><b>Original</b></figcaption></figure>
+        <figure><img src="assets/moon_zoom_alpha_0.5.jpg" alt="Lunar close-up, alpha 0.5" /><figcaption><b>α = 0.5</b></figcaption></figure>
+        <figure class="pick"><img src="assets/moon_zoom_alpha_1.5.jpg" alt="Lunar close-up, alpha 1.5" /><figcaption><b>α = 1.5 (my pick)</b></figcaption></figure>
+        <figure><img src="assets/moon_zoom_alpha_3.jpg" alt="Lunar close-up, alpha 3" /><figcaption><b>α = 3</b></figcaption></figure>
+        <figure><img src="assets/moon_zoom_alpha_5.jpg" alt="Lunar close-up, alpha 5" /><figcaption><b>α = 5</b></figcaption></figure>
+        <figure><img src="assets/moon_zoom_alpha_10.jpg" alt="Lunar close-up, alpha 10" /><figcaption><b>α = 10</b></figcaption></figure>
+      </div>
       <h3 id="blur-recovery">Can sharpening undo a blur?</h3>
       <p class="intro">Here I blurred the photo on purpose first and then sharpened the blurry version.</p>
       <div class="gallery three">
@@ -234,23 +249,6 @@
         <figure><img src="assets/forest_original.jpg" alt="Original forest path with detailed leaves and tree bark" /><figcaption><b>① Original forest</b><span>Reference detail</span></figcaption></figure>
         <figure><img src="assets/forest_blurred.jpg" alt="Forest deliberately blurred with a Gaussian" /><figcaption><b>② Blur the original</b></figcaption></figure>
         <figure><img src="assets/forest_blurred_then_resharpened.jpg" alt="Previously blurred forest sharpened with an unsharp mask" /><figcaption><b>③ Sharpen the blurred image</b><span>α = 1.5</span></figcaption></figure>
-      </div>
-      <h3 id="moon-sharpening">My own example: the Moon</h3>
-      <p class="intro">The Moon photo was a little soft, so sharpening brings out the craters.</p>
-      <div class="gallery two compare">
-        <figure><img src="assets/moon_original.jpg" alt="Original Moon" /><figcaption><b>Before</b></figcaption></figure>
-        <figure><img src="assets/moon_sharpened_alpha_1.5.jpg" alt="Sharpened Moon" /><figcaption><b>After</b><span>α = 1.5</span></figcaption></figure>
-      </div>
-      <div class="gallery three steps">
-        <figure><img src="assets/moon_blurred.jpg" alt="Low-frequency Moon from Gaussian smoothing" /><figcaption><b>① Blur the original</b></figcaption></figure>
-        <figure><img src="assets/moon_high_frequency.jpg" alt="Moon original minus its Gaussian blur" /><figcaption><b>② Original minus blur</b><span>Detail layer; gray represents zero</span></figcaption></figure>
-        <figure><img src="assets/moon_sharpened_alpha_1.5.jpg" alt="Original Moon plus 1.5 times its detail layer" /><figcaption><b>③ Original + detail</b><span>Stronger local contrast</span></figcaption></figure>
-      </div>
-      <p class="intro">Up close, α = 1.5 makes the crater rims pop, while α = 3 just makes the surface look harsh.</p>
-      <div class="gallery three">
-        <figure><img src="assets/moon_zoom_original.jpg" alt="Close-up of lunar craters, original" /><figcaption><b>Before (close-up)</b></figcaption></figure>
-        <figure><img src="assets/moon_zoom_alpha_1.5.jpg" alt="Close-up of lunar craters, sharpened" /><figcaption><b>After (close-up)</b></figcaption></figure>
-        <figure><img src="assets/moon_zoom_alpha_3.jpg" alt="Same lunar crater crop with stronger sharpening" /><figcaption><b>Stronger sharpening</b><span>α = 3</span></figcaption></figure>
       </div>
     </section>
 
