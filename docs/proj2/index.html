@@ -366,7 +366,7 @@
 
       <h3>Recreating Figure 3.42 from Szeliski</h3>
       <p class="intro">This figure follows the apple and orange through the blend. Each row shows one scale: the left column keeps the apple's contribution with a blurred mask, the middle keeps the orange's contribution with the opposite mask, and the right adds them together. In the bottom row, I add up every scale to get the final image.</p>
-      <p class="intro">The bottom-right panel adds up all the levels into the finished oraple. The next question is where, at each scale, one fruit gives way to the other.</p>
+      <p class="intro">Notice that in the fine-detail row the switch from apple to orange happens right at the seam, while in the coarse row it fades across a wide strip.</p>
       <div class="band-chart three">
         <p class="corner"></p>
         <p class="col-h">Apple side</p>
@@ -395,8 +395,8 @@
     <section id="part-2-4">
       <div class="section-heading"><span>2.4</span><h2>Multiresolution blending</h2></div>
       <div class="prose">
-        <p>That's where the mask comes in. A hard cut leaves an obvious seam, but blurring the whole join by one fixed amount either leaves a color jump or makes the details look ghosted. I blur the mask differently at each level, so fine texture switches sides quickly while the larger color changes fade more gradually.</p>
-        <p>At each level, I use that mask to mix the apple and orange's Laplacian layers, <span class="formula">blend<sub>k</sub> = mask<sub>k</sub> · A<sub>k</sub> + (1 − mask<sub>k</sub>) · B<sub>k</sub></span>. Adding the six blended layers gives the oraple shown above. Here are its inputs and mask together, followed by the same method on my own image pairs.</p>
+        <p>Now that I have a Laplacian stack for each image, blending them just means mixing the two stacks one level at a time. The mask gets its own Gaussian stack, so it stays sharp at the fine levels and gets blurrier at the coarse ones. That way small details like texture are basically hard-cut right at the seam, while colors and big shapes fade smoothly across a wide area. A plain hard cut would leave an obvious line, and blurring the whole seam by one amount would make the details look ghosted, so this gets the best of both.</p>
+        <p>At each level I compute <span class="formula">blend<sub>k</sub> = mask<sub>k</sub> · A<sub>k</sub> + (1 − mask<sub>k</sub>) · B<sub>k</sub></span> and then add all the levels back up, which is exactly what Figure 3.42 shows step by step. Here's the oraple first, followed by my own blends.</p>
       </div>
 
       <h3>The oraple</h3>
