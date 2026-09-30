@@ -339,11 +339,12 @@ padded = <span class="tok-fn">np.pad</span>(image, ((pad_top, pad_bottom), (pad_
       </div>
 
       <h3>Djokovic gives the side-eye</h3>
-      <p class="intro">This is a photo of Djokovic checking his racket at the 2014 ATP Finals, blended with the famous meme of the Rock raising one eyebrow. The mask isn't a line. It's a shape I drew by hand around the Rock's face.</p>
-      <p class="intro">Lining them up was the tricky part. Djokovic is looking down at his racket and the Rock is looking up and to the side. My automatic attempts, which fit the faces using the eyes and mouth, either squashed the Rock's face or left it at the wrong angle. In the end I wrote a small browser tool where I could drag the Rock over Djokovic, rotate him (14.5°) and scale him (0.63×) until the eyes, nose, and mouth lined up, and then click out the mask around his face. The tool just saves those numbers and the mask points. The blending itself is the same Laplacian stack code as everything else.</p>
+      <p class="intro">This is a photo of Djokovic checking his racket at the 2014 ATP Finals, blended with the famous meme of the Rock raising one eyebrow. The mask isn't a line. It follows the outline of Djokovic's face.</p>
+      <p class="intro">Lining them up was the hard part. Djokovic is looking down at his racket, and the Rock is looking up and to the side, so no amount of rotating or scaling made the two faces match. There was always a strip of Djokovic's face left over, or the Rock's features landed in the wrong place. So I morphed the Rock's face instead. I found 478 matching points on both faces (eye corners, brows, nose, lips, jawline) with a face-landmark detector, split the face into triangles between those points, and warped each triangle of the Rock's face onto the matching triangle of Djokovic's. The Rock's features end up in the shape and angle of Djokovic's face.</p>
+      <p class="intro">The mask is Djokovic's face outline, shrunk slightly toward the center, with the top of the forehead cut off so the Rock's bald head doesn't paint over Djokovic's hair. The Rock's skin is also paler and lit differently, so before blending I shifted his colors to match the average and spread of Djokovic's skin inside the mask.</p>
       <div class="gallery three">
         <figure><img src="assets/rock_djokovic_image2.jpg" alt="Djokovic checking his racket" /><figcaption><b>Djokovic</b></figcaption></figure>
-        <figure><img src="assets/rock_djokovic_rock.jpg" alt="The Rock raising an eyebrow" /><figcaption><b>The Rock</b><span>Warped onto Djokovic's face before blending</span></figcaption></figure>
+        <figure><img src="assets/rock_djokovic_rock.jpg" alt="The Rock raising an eyebrow" /><figcaption><b>The Rock</b><span>Morphed onto Djokovic's face before blending</span></figcaption></figure>
         <figure><img src="assets/rock_djokovic_mask.jpg" alt="Face-shaped mask" /><figcaption><b>Mask</b><span>White = the Rock</span></figcaption></figure>
       </div>
       <div class="gallery one compare-single">

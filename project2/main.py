@@ -627,29 +627,48 @@ save_blend_results(
     summer, winter, season_mask, 'seasons'
 )
 
-# Irregular mask: the Rock's side-eye on Djokovic checking his racket.
-# The placement and mask polygon were set by hand in tools/align_tool.html
-# and exported to data/rock_djokovic.json. Coordinates are in a 1000 x 1000
-# crop of the Djokovic photo.
+# Irregular mask: the Rock's side-eye morphed onto Djokovic checking his racket.
+# The 478 matching face landmarks were found once with MediaPipe FaceMesh and
+# saved to data/rock_djokovic_landmarks.json. Djokovic's points are in a
+# 1000 x 1000 crop of his photo.
+with open(data_dir / 'rock_djokovic_landmarks.json') as f:
+    landmarks = json.load(f)
+left, top = landmarks['crop_origin']
 djokovic = load_small_image(data_dir / 'downloaded' / 'djokovic_racket.jpg', max_size=3264)
-rock = load_small_image(data_dir / 'downloaded' / 'rock_side_eye.jpg', max_size=463)
-with open(data_dir / 'rock_djokovic.json') as f:
-    placement = json.load(f)
-left, top = placement['crop_origin']
 djokovic = djokovic[top:top + 1000, left:left + 1000]
+rock = load_small_image(data_dir / 'downloaded' / 'rock_side_eye.jpg', max_size=463)
+rock_points = np.array(landmarks['rock'])
+djokovic_points = np.array(landmarks['djokovic'])
 
-rock_height, rock_width = rock.shape[:2]
-rock_transform = cv2.getRotationMatrix2D(
-    (rock_width / 2, rock_height / 2), -placement['angle_degrees'],
-    placement['scale']
-)
-rock_transform[0, 2] += placement['rock_center'][0] - rock_width / 2
-rock_transform[1, 2] += placement['rock_center'][1] - rock_height / 2
-rock_aligned = np.clip(cv2.warpAffine(
-    rock, rock_transform, (1000, 1000), borderMode=cv2.BORDER_REPLICATE), 0, 1)
+# Morph: split the face into triangles between landmarks and warp each Rock
+# triangle onto the matching Djokovic triangle.
+morph = sk.transform.PiecewiseAffineTransform()
+morph.estimate(djokovic_points, rock_points)
+rock_aligned = sk.transform.warp(rock, morph, output_shape=(1000, 1000), mode='edge')
 
+# Mask: Djokovic's face outline, shrunk a little toward the center, with the
+# top of the forehead cut off so the Rock's bald head doesn't cover the hair.
+center = djokovic_points.mean(axis=0)
+outline = cv2.convexHull(np.int32(center + 0.88 * (djokovic_points - center)))
 rock_mask = np.zeros((1000, 1000), np.float32)
-cv2.fillPoly(rock_mask, [np.int32(np.round(placement['mask_polygon']))], 1)
+cv2.fillConvexPoly(rock_mask, outline, 1)
+rows = np.where(rock_mask.any(axis=1))[0]
+rock_mask[:int(rows.min() + 0.08 * (rows.max() - rows.min()))] = 0
+# Skip anything that came from the white border of the meme image.
+rock_face = cv2.erode((rock.min(axis=2) < 0.8).astype(np.float32),
+                      np.ones((9, 9), np.uint8))
+rock_mask *= sk.transform.warp(rock_face, morph, output_shape=(1000, 1000)) > 0.5
+
+# The Rock is paler and lit differently. Match the mean and spread of each
+# color channel inside the mask to Djokovic's skin before blending.
+inside = rock_mask > 0.5
+for channel in range(3):
+    source = rock_aligned[:, :, channel]
+    target = djokovic[:, :, channel]
+    rock_aligned[:, :, channel] = (
+        (source - source[inside].mean()) / source[inside].std()
+        * target[inside].std() + target[inside].mean())
+rock_aligned = np.clip(rock_aligned, 0, 1)
 
 rock_djokovic = save_blend_results(rock_aligned, djokovic, rock_mask, 'rock_djokovic')
 hard_cut = rock_mask[:, :, np.newaxis] * rock_aligned
