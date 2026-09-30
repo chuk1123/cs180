@@ -339,8 +339,8 @@ padded = <span class="tok-fn">np.pad</span>(image, ((pad_top, pad_bottom), (pad_
       </div>
 
       <h3>Djokovic gives the side-eye</h3>
-      <p class="intro">This is a photo of Djokovic checking his racket at the 2014 ATP Finals, blended with the famous meme of the Rock raising one eyebrow. The mask isn't a line. It's an ellipse drawn around the Rock's whole face.</p>
-      <p class="intro">Lining them up was the tricky part. Djokovic is looking down at his racket and the Rock is looking up and to the side. My first try stretched the Rock's face to hit three points exactly (both eyes and the mouth), which squashed it and looked awful. This version only rotates, scales, and shifts his face, picking the fit that gets closest to those three points, so the Rock's face keeps its real shape. The mask covers his whole face from forehead to chin, and Djokovic keeps his hair and ears.</p>
+      <p class="intro">This is a photo of Djokovic checking his racket at the 2014 ATP Finals, blended with the famous meme of the Rock raising one eyebrow. The mask isn't a line. It's a shape I drew by hand around the Rock's face.</p>
+      <p class="intro">Lining them up was the tricky part. Djokovic is looking down at his racket and the Rock is looking up and to the side. My automatic attempts, which fit the faces using the eyes and mouth, either squashed the Rock's face or left it at the wrong angle. In the end I wrote a small browser tool where I could drag the Rock over Djokovic, rotate him (14.5°) and scale him (0.63×) until the eyes, nose, and mouth lined up, and then click out the mask around his face. The tool just saves those numbers and the mask points. The blending itself is the same Laplacian stack code as everything else.</p>
       <div class="gallery three">
         <figure><img src="assets/rock_djokovic_image2.jpg" alt="Djokovic checking his racket" /><figcaption><b>Djokovic</b></figcaption></figure>
         <figure><img src="assets/rock_djokovic_rock.jpg" alt="The Rock raising an eyebrow" /><figcaption><b>The Rock</b><span>Warped onto Djokovic's face before blending</span></figcaption></figure>

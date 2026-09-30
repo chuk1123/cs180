@@ -1,5 +1,6 @@
 # CS180 Project 2
 
+import json
 from pathlib import Path
 from time import perf_counter
 
@@ -627,29 +628,29 @@ save_blend_results(
 )
 
 # Irregular mask: the Rock's side-eye on Djokovic checking his racket.
+# The placement and mask polygon were set by hand in tools/align_tool.html
+# and exported to data/rock_djokovic.json. Coordinates are in a 1000 x 1000
+# crop of the Djokovic photo.
 djokovic = load_small_image(data_dir / 'downloaded' / 'djokovic_racket.jpg', max_size=3264)
 rock = load_small_image(data_dir / 'downloaded' / 'rock_side_eye.jpg', max_size=463)
-# Fit rotation, scale, and shift (no stretching) to three landmarks: both
-# eyes and the mouth. This keeps the Rock's face proportions intact.
-rock_points = np.float32([[275, 174], [376, 205], [307, 347]])
-djokovic_points = np.float32([[975, 777], [1052, 793], [965, 877]])
-rock_transform, _ = cv2.estimateAffinePartial2D(rock_points, djokovic_points)
-height, width = djokovic.shape[:2]
+with open(data_dir / 'rock_djokovic.json') as f:
+    placement = json.load(f)
+left, top = placement['crop_origin']
+djokovic = djokovic[top:top + 1000, left:left + 1000]
+
+rock_height, rock_width = rock.shape[:2]
+rock_transform = cv2.getRotationMatrix2D(
+    (rock_width / 2, rock_height / 2), -placement['angle_degrees'],
+    placement['scale']
+)
+rock_transform[0, 2] += placement['rock_center'][0] - rock_width / 2
+rock_transform[1, 2] += placement['rock_center'][1] - rock_height / 2
 rock_aligned = np.clip(cv2.warpAffine(
-    rock, rock_transform, (width, height), borderMode=cv2.BORDER_REPLICATE), 0, 1)
+    rock, rock_transform, (1000, 1000), borderMode=cv2.BORDER_REPLICATE), 0, 1)
 
-# Mask: an ellipse around the Rock's whole face, forehead to chin, minus the
-# white sticker border.
-rock_mask = np.zeros(rock.shape[:2], np.float32)
-cv2.ellipse(rock_mask, (275, 255), (135, 155), 0, 0, 360, 1, -1)
-rock_mask *= rock.min(axis=2) < 0.85
-rock_mask = cv2.erode(rock_mask, np.ones((9, 9), np.uint8))
-rock_mask = cv2.warpAffine(rock_mask, rock_transform, (width, height))
+rock_mask = np.zeros((1000, 1000), np.float32)
+cv2.fillPoly(rock_mask, [np.int32(np.round(placement['mask_polygon']))], 1)
 
-top, bottom, left, right = 500, 1500, 500, 1500
-rock_aligned = rock_aligned[top:bottom, left:right]
-djokovic = djokovic[top:bottom, left:right]
-rock_mask = rock_mask[top:bottom, left:right]
 rock_djokovic = save_blend_results(rock_aligned, djokovic, rock_mask, 'rock_djokovic')
 hard_cut = rock_mask[:, :, np.newaxis] * rock_aligned
 hard_cut += (1 - rock_mask[:, :, np.newaxis]) * djokovic
