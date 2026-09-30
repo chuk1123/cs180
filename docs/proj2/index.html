@@ -108,7 +108,7 @@
       </div>
       <h3>What happens at the border?</h3>
       <div class="prose">
-        <p>Pixels near the edge don't have a full neighborhood, so I surround the image with zeros before sliding the filter over it. With <code>same</code> padding, the output stays the size of the input; <code>full</code> padding keeps every position where the filter touches the image, making each dimension 8 pixels larger for a 9 × 9 filter. The zero-filled border can darken the result slightly because those added black pixels count toward the average.</p>
+        <p>Pixels near the edge don't have a full neighborhood, so I surround the image with zeros before sliding the filter over it. With <code>same</code> padding, the output stays the size of the input; <code>full</code> padding keeps every position where the filter touches the image, so the output ends up a little bigger than the input. The zero-filled border can darken the result slightly because those added black pixels count toward the average.</p>
       </div>
       <h3>How fast is it?</h3>
       <div class="prose">
@@ -154,7 +154,7 @@
         <figure><img src="assets/cameraman_gradient.jpg" alt="Cameraman gradient magnitude" /><figcaption><b>Gradient magnitude</b></figcaption></figure>
       </div>
       <h3>Step 3: pick a threshold</h3>
-      <p class="intro">I turn the gradient into an edge map by marking anything above a threshold white. At 0.10 the grass overwhelms the picture, while 0.50 breaks up the tripod; 0.28, measured relative to the brightest gradient pixel, keeps the cameraman and camera fairly connected without showing quite so much grass. A few specks remain, which is why I try blurring first in 1.3.</p>
+      <p class="intro">I turn the gradient into an edge map by marking anything above a threshold white. At 0.10 the grass overwhelms the picture, while 0.50 breaks up the tripod; 0.28 keeps the cameraman and camera fairly connected without showing quite so much grass. A few specks remain, which is why I try blurring first in 1.3.</p>
       <div class="gallery three">
         <figure><img src="assets/edges_0.1.png" alt="Edges at threshold 0.10" /><figcaption><b>0.10</b><span>Too low. The grass is all noise.</span></figcaption></figure>
         <figure class="pick"><img src="assets/edges_0.28.png" alt="Edges at threshold 0.28" /><figcaption><b>0.28 (my pick)</b><span>Clean outline, a little grass left</span></figcaption></figure>
@@ -230,8 +230,8 @@
       <p class="intro">The edges get some contrast back, but the small carvings (and the forest's branches) stay merged, because sharpening can only boost detail that's still in the image. It makes edges look crisper, but it can't undo a blur.</p>
       <div class="gallery three">
         <figure><img src="assets/forest_original.jpg" alt="Original forest path with detailed leaves and tree bark" /><figcaption><b>① Original forest</b><span>Reference detail</span></figcaption></figure>
-        <figure><img src="assets/forest_blurred.jpg" alt="Forest deliberately blurred with a Gaussian" /><figcaption><b>② Blur the original</b><span>9 × 9 Gaussian, σ = 2</span></figcaption></figure>
-        <figure><img src="assets/forest_blurred_then_resharpened.jpg" alt="Previously blurred forest sharpened with an unsharp mask" /><figcaption><b>③ Sharpen the blurred image</b><span>α = 1.5; no original detail added back</span></figcaption></figure>
+        <figure><img src="assets/forest_blurred.jpg" alt="Forest deliberately blurred with a Gaussian" /><figcaption><b>② Blur the original</b></figcaption></figure>
+        <figure><img src="assets/forest_blurred_then_resharpened.jpg" alt="Previously blurred forest sharpened with an unsharp mask" /><figcaption><b>③ Sharpen the blurred image</b><span>α = 1.5</span></figcaption></figure>
       </div>
       <h3 id="moon-sharpening">My own example: the Moon</h3>
       <p class="intro">The Moon photo was a little soft, so sharpening brings out the craters.</p>
@@ -240,9 +240,9 @@
         <figure><img src="assets/moon_sharpened_alpha_1.5.jpg" alt="Sharpened Moon" /><figcaption><b>After</b><span>α = 1.5</span></figcaption></figure>
       </div>
       <div class="gallery three steps">
-        <figure><img src="assets/moon_blurred.jpg" alt="Low-frequency Moon from Gaussian smoothing" /><figcaption><b>① Blur the original</b><span>9 × 9 Gaussian, σ = 2</span></figcaption></figure>
+        <figure><img src="assets/moon_blurred.jpg" alt="Low-frequency Moon from Gaussian smoothing" /><figcaption><b>① Blur the original</b></figcaption></figure>
         <figure><img src="assets/moon_high_frequency.jpg" alt="Moon original minus its Gaussian blur" /><figcaption><b>② Original minus blur</b><span>Detail layer; gray represents zero</span></figcaption></figure>
-        <figure><img src="assets/moon_sharpened_alpha_1.5.jpg" alt="Original Moon plus 1.5 times its detail layer" /><figcaption><b>③ Original + 1.5 × detail</b><span>Stronger local contrast</span></figcaption></figure>
+        <figure><img src="assets/moon_sharpened_alpha_1.5.jpg" alt="Original Moon plus 1.5 times its detail layer" /><figcaption><b>③ Original + detail</b><span>Stronger local contrast</span></figcaption></figure>
       </div>
       <p class="intro">Up close, α = 1.5 makes the crater rims pop, while α = 3 just makes the surface look harsh.</p>
       <div class="gallery three">
@@ -277,7 +277,7 @@
         <figure><img src="assets/tiger_cat_high_aligned.jpg" alt="Aligned tiger" /><figcaption><b>Tiger</b><span>Cropped</span></figcaption></figure>
         <figure><img src="assets/tiger_cat_low_aligned.jpg" alt="Cat aligned to the tiger" /><figcaption><b>Cat</b><span>Eyes matched to the tiger</span></figcaption></figure>
       </div>
-      <p class="intro"><b>2. Filter them.</b> I keep the tiger's detail (the photo minus a σ = 4 blur) and blur the cat with σ = 10, then add them. I picked the cutoffs by shrinking the result: with less tiger detail the stripes disappeared up close, and with less blur on the cat its own face kept showing through. I also boost the tiger layer 1.2× so it wins up close.</p>
+      <p class="intro"><b>2. Filter them.</b> I keep the tiger's detail (the photo minus a σ = 4 blur) and blur the cat with σ = 10, then add them. I picked the cutoffs by shrinking the result: with less tiger detail the stripes disappeared up close, and with less blur on the cat its own face kept showing through. I also turned the tiger layer up a bit so it wins up close.</p>
       <div class="gallery three">
         <figure><img src="assets/tiger_cat_high_frequency.jpg" alt="Tiger fine detail layer" /><figcaption><b>Tiger detail</b><span>Gray means zero</span></figcaption></figure>
         <figure><img src="assets/tiger_cat_low_frequency.jpg" alt="Blurred cat" /><figcaption><b>Blurred cat</b></figcaption></figure>
@@ -293,7 +293,7 @@
       </div>
 
       <h3>Nutmeg the cat and Derek</h3>
-      <p class="intro">For the assignment pair, I lined up Nutmeg's and Derek's eyes, kept the cat's detail with σ = 3, and blurred Derek with σ = 8. The whiskers and fur show up across his face nearby, but at a distance Derek's smile comes through.</p>
+      <p class="intro">For the assignment pair, I lined up Nutmeg's and Derek's eyes, then added the cat's detail to a blurred Derek. The whiskers and fur show up across his face nearby, but at a distance Derek's smile comes through.</p>
       <div class="pair-row">
         <div class="inputs">
           <figure><img src="assets/derek_nutmeg_high_original.jpg" alt="Nutmeg the cat" /><figcaption><b>Nutmeg</b><span>Detail layer</span></figcaption></figure>
