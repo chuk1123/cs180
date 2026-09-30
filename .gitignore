@@ -8,6 +8,10 @@ project1/data/
 project1/output/
 project1/main.py
 
+# Project 2 working files. Official sample inputs stay tracked.
+project2/data/personal/
+project2/output/
+
 # Local submission artifacts
 /output/
 
@@ -16,3 +20,7 @@ project1/main.py
 IMG_*.JPG
 Dolly Zoom/
 tmp/
+project2/data/cand/
+project2/data/sweep/
+project2/TODO.md
+project2/sweep.py
