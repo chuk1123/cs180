@@ -328,7 +328,7 @@
         <figure><img src="assets/federer_older_input.jpg" alt="Aligned older Federer portrait" /><figcaption><b>Older Federer</b><span>High-frequency input</span></figcaption></figure>
         <figure><img src="assets/federer_younger_input.jpg" alt="Aligned younger Federer portrait" /><figcaption><b>Younger Federer</b><span>Low-frequency input</span></figcaption></figure>
       </div>
-      <p class="intro">I subtract a Gaussian blur with σ = 3 from the older portrait and add 1.2 times that detail layer to the younger portrait blurred with σ = 12. These values are in pixels on the aligned 840-pixel-wide images, before cropping. A stronger 1.5× detail layer made the skin look too harsh, so I reduced it to 1.2× to keep the close-up recognizable while allowing the younger face to come through at a distance.</p>
+      <p class="intro">I subtract a Gaussian blur with σ = 3 from the older portrait and add 1.35 times that detail layer to the younger portrait blurred with σ = 12. These values are in pixels on the aligned 840-pixel-wide images, before cropping. At 1.2× the older face was a little too subtle, while 1.5× made the skin look too harsh. I chose 1.35× as the middle ground: clearer older-face detail up close, with the younger face still emerging at a distance.</p>
       <div class="distance">
         <figure><img src="assets/federer_old_to_young.jpg" alt="Federer old-to-young hybrid at large size" /><figcaption><b>Up close: older</b></figcaption></figure>
         <figure><img src="assets/federer_old_to_young.jpg" alt="Federer age hybrid at medium size" /><figcaption><b>Farther</b></figcaption></figure>
