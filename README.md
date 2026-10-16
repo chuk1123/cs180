@@ -30,10 +30,24 @@ docs/
   index.html          # course-project landing page
   site.css            # shared landing-page styles
   proj0/              # Project 0 page and its assets
-  proj1/              # add when Project 1 begins
-  proj2/              # add when Project 2 begins
+  proj1/              # Project 1 report and assets
+  proj2/              # Project 2 report and assets
 ```
 
 Each future project gets its own `docs/projN/` directory with an `index.html`,
 optional project-specific stylesheet, and an `assets/` directory. Add a link to
 the new project in `docs/index.html` when it is ready.
+
+## Local project folders
+
+Only `docs/` is committed. Everything else stays on this machine, because the
+course asks students not to host project code publicly.
+
+```text
+project0/      # camera originals (dolly zoom, etc.)
+project1/      # Project 1 code, data, outputs
+project2/      # Project 2 code (main.py), inputs in data/, results in output/
+project3/      # Project 3 notebooks: partA/ (flow models), partB/ (flow matching)
+submissions/   # what was turned in, e.g. submissions/project2/submission.zip
+```
+

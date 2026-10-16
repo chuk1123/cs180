@@ -2,25 +2,17 @@
 .venv/
 __pycache__/
 *.py[cod]
+.ipynb_checkpoints/
 
-# Project 1 source scans and generated results stay local. Web-sized copies live in docs/.
-project1/data/
-project1/output/
-project1/main.py
+# Only the website (docs/) is public. Project code, data, outputs, and
+# submissions stay on this machine: the course says not to host code publicly.
+project0/
+project1/
+project2/
+project3/
+submissions/
 
-# Project 2 working files. Official sample inputs stay tracked.
-project2/data/personal/
-project2/output/
-
-# Local submission artifacts
-/output/
-
-# Source camera originals are intentionally kept local; the optimized web assets live in /assets.
+# Camera originals and scratch
 *.HEIC
 IMG_*.JPG
-Dolly Zoom/
 tmp/
-project2/data/cand/
-project2/data/sweep/
-project2/TODO.md
-project2/sweep.py
