@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="CS180 Project 3: flow models, sampling, guidance, image editing, visual anagrams, hybrid images, and flow matching from scratch on MNIST." />
+  <title>Fun with Flow Models | CS180</title>
+  <link rel="icon" href="../favicon.png" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="../">CS180</a>
+    <nav><a href="../">Projects</a><a class="active" href="./">proj3</a></nav>
+  </header>
+
+  <main>
+    <p class="eyebrow">Kevin Chu · Fall 2026</p>
+    <h1>Fun with Flow Models</h1>
+    <p class="lede">A flow model makes a picture by starting from pure noise and nudging it, a little at a time, until it turns into a real image. In Part A I played with a big pretrained model to see how that works and what you can do with it, and in Part B I built and trained a small one myself on handwritten digits.</p>
+
+    <nav class="contents" aria-label="Project sections">
+      <a href="#part-a">Part A · Exploring the Power of Flow Models</a>
+      <a href="#part-b">Part B · Flow Matching from Scratch!</a>
+      <a href="#takeaway">What I learned</a>
+    </nav>
+
+    <!-- ===================== PART A ===================== -->
+    <div class="part-heading" id="part-a">
+      <p class="eyebrow">Part A</p>
+      <h2>Exploring the Power of Flow Models</h2>
+      <nav class="contents section-contents" aria-label="Part A sections">
+        <a href="#a1-1"><b>1.1</b> Constructing Noisy Training Inputs</a>
+        <a href="#a1-2"><b>1.2</b> Classical Denoising</a>
+        <a href="#a1-3"><b>1.3</b> One-Step Denoising</a>
+        <a href="#a1-4"><b>1.4</b> Visualizing Velocity</a>
+        <a href="#a1-5"><b>1.5</b> Iterative Denoising with Euler Sampling</a>
+        <a href="#a1-6"><b>1.6</b> Generating Images from Noise</a>
+        <a href="#a2-1"><b>2.1</b> Classifier-Free Guidance (CFG)</a>
+        <a href="#a3-1"><b>3.1</b> Image-to-Image Editing</a>
+        <a href="#a3-2"><b>3.2</b> Text-Guided Image Editing</a>
+        <a href="#a3-3"><b>3.3</b> Visual Anagrams</a>
+        <a href="#a3-4"><b>3.4</b> Hybrid Images</a>
+      </nav>
+    </div>
+
+    <section class="chapter" id="a1">
+      <div class="section-heading"><span>1</span><h3>Visualizing Training and Sampling</h3></div>
+      <div class="prose">
+        <p>The model I used is PixNerd, which was already trained, so Part A is all about using it. The one idea everything here builds on is a straight line between noise and an image. I write the noise as ε and the clean image as x, and for any time t between 0 and 1 the in-between image is <span class="formula">x<sub>t</sub> = (1 − t) · ε + t · x</span>. At t = 0 it's pure noise, at t = 1 it's the clean image, and the model's job is to look at a noisy image and predict which way to move it to get closer to the real picture. That direction is called the velocity.</p>
+      </div>
+
+      <section class="experiment" id="a1-1" aria-labelledby="a1-1-title">
+        <h4 class="experiment-heading" id="a1-1-title"><span>1.1</span> Constructing Noisy Training Inputs</h4>
+      <p class="intro">I used a photo of a squirrel I took in Yosemite, and mixed it with one fixed noise pattern at three different times, so the only thing changing is how much noise gets mixed in. At t = 0.25 it's 75% noise and you can barely tell there's a squirrel at all, while at t = 0.75 it's only 25% noise and most of the photo is back.</p>
+      <div class="gallery one">
+        <figure><img src="assets/a_training_inputs.jpg" alt="Squirrel photo and noisy versions at t = 0.25, 0.5, and 0.75" /></figure>
+      </div>
+      </section>
+
+      <section class="experiment" id="a1-2" aria-labelledby="a1-2-title">
+        <h4 class="experiment-heading" id="a1-2-title"><span>1.2</span> Classical Denoising</h4>
+      <p class="intro">Before using the model, I tried cleaning up the noise the old-fashioned way. Since mixing in noise also dims the image by a factor of t, I first scale it back up by 1/t, then apply a Gaussian blur, trying a few blur sizes and keeping whichever one ends up closest to the original at each t. It helps a bit, but blurring can't tell noise apart from real detail, so it smears out the fur and rock along with the noise, and at t = 0.25 it's mostly colorful mush.</p>
+      <div class="gallery three">
+        <figure><img src="assets/a_blur_0.25.jpg" alt="Noisy image and best blur at t = 0.25" /><figcaption><b>t = 0.25</b></figcaption></figure>
+        <figure><img src="assets/a_blur_0.5.jpg" alt="Noisy image and best blur at t = 0.5" /><figcaption><b>t = 0.5</b></figcaption></figure>
+        <figure><img src="assets/a_blur_0.75.jpg" alt="Noisy image and best blur at t = 0.75" /><figcaption><b>t = 0.75</b></figcaption></figure>
+      </div>
+      </section>
+
+      <section class="experiment" id="a1-3" aria-labelledby="a1-3-title">
+        <h4 class="experiment-heading" id="a1-3-title"><span>1.3</span> One-Step Denoising</h4>
+      <p class="intro">Next I used the model with the prompt "a high quality photo". I can use its predicted velocity to jump all the way to t = 1 in one move: <span class="formula">x̂ = x<sub>t</sub> + (1 − t) · v</span>. This is way better than the blur, and the squirrel comes back clearly even at t = 0.25. It still looks soft, though, especially around the fur. A single jump keeps the initial velocity fixed instead of updating it as the image changes, so it misses detail that the smaller steps can recover.</p>
+      <div class="gallery one">
+        <figure><img src="assets/a_one_step_0.25.jpg" alt="Original, noisy at t = 0.25, and one-step estimate" /><figcaption><b>t = 0.25</b></figcaption></figure>
+        <figure><img src="assets/a_one_step_0.5.jpg" alt="Original, noisy at t = 0.5, and one-step estimate" /><figcaption><b>t = 0.5</b></figcaption></figure>
+        <figure><img src="assets/a_one_step_0.75.jpg" alt="Original, noisy at t = 0.75, and one-step estimate" /><figcaption><b>t = 0.75</b></figcaption></figure>
+      </div>
+      </section>
+
+      <section class="experiment" id="a1-4" aria-labelledby="a1-4-title">
+        <h4 class="experiment-heading" id="a1-4-title"><span>1.4</span> Visualizing Velocity</h4>
+      <p class="intro">Here I compare the update the model predicts with the update that would land exactly on my photo. Gray means no change in the middle two panels, and brighter colors in the last panel mean a bigger error. I kept the scales the same across all three times so they're easy to compare. The two updates look pretty similar, but the model misses more of the granite speckles and fur than the blurred background. The error gets smaller as t goes up.</p>
+      <div class="gallery narrow">
+        <figure><img src="assets/a_velocity_original.jpg" alt="Original squirrel photo" /><figcaption><b>Original</b></figcaption></figure>
+      </div>
+      <div class="gallery one">
+        <figure><img src="assets/a_velocity_0.25.jpg" alt="Velocity comparison at t = 0.25" /></figure>
+        <figure><img src="assets/a_velocity_0.50.jpg" alt="Velocity comparison at t = 0.50" /></figure>
+        <figure><img src="assets/a_velocity_0.75.jpg" alt="Velocity comparison at t = 0.75" /></figure>
+      </div>
+      </section>
+
+      <section class="experiment" id="a1-5" aria-labelledby="a1-5-title">
+        <h4 class="experiment-heading" id="a1-5-title"><span>1.5</span> Iterative Denoising with Euler Sampling</h4>
+      <p class="intro">Instead of one big jump, Euler sampling takes many small steps (step size 0.02), asking the model for a new velocity each time, and shortening the last step so it lands exactly on t = 1. Starting from the t = 0.5 image, the noise slowly clears up over 25 steps, and the grid shows the start, every fifth step, and the end.</p>
+      <div class="gallery one">
+        <figure><img src="assets/a_trajectory.jpg" alt="Euler sampling from t = 0.5 to t = 1" /></figure>
+      </div>
+      <p class="intro">Side by side with the blur from 1.2 and the one-step guess from 1.3, all starting from that same noisy image, the Euler result brings back much more of the fur and rock texture. Funny enough, the one-step version is still closer to my original by pixel error. The Euler result fills in detail that looks right, but isn't exactly the detail that was there.</p>
+      <div class="gallery one">
+        <figure><img src="assets/a_comparison.jpg" alt="Original, blur, one-step, and Euler results from the same noisy input" /></figure>
+      </div>
+      </section>
+
+      <section class="experiment" id="a1-6" aria-labelledby="a1-6-title">
+        <h4 class="experiment-heading" id="a1-6-title"><span>1.6</span> Generating Images from Noise</h4>
+      <p class="intro">If I start from pure noise at t = 0, the same sampler makes brand new images. With the prompt "a high quality photo", four of the five came out as portraits, so faces were definitely a theme here. They're also kind of rough without any guidance, like the first guy's scrunched-up face, and one of them isn't even a person, just a weird cardboard shape.</p>
+      <div class="gallery one">
+        <figure><img src="assets/a_conditional_samples.jpg" alt="Five samples from noise with the prompt a high quality photo" /></figure>
+      </div>
+      </section>
+
+    </section>
+
+    <section class="chapter" id="a2">
+      <div class="section-heading"><span>2</span><h3>Conditional Generation and Guidance</h3></div>
+      <section class="experiment" id="a2-1" aria-labelledby="a2-1-title">
+        <h4 class="experiment-heading" id="a2-1-title"><span>2.1</span> Classifier-Free Guidance (CFG)</h4>
+      <div class="prose">
+        <p>To make the images actually follow the prompt better, I ask the model for two velocities at every step, one with my prompt and one with an empty prompt, and push further in the direction the prompt adds: <span class="formula">v = v<sub>c</sub> + w · (v<sub>c</sub> − v<sub>u</sub>)</span> with w = 7. Using the same starting noise as before (seeds 2026 to 2030 again), the difference is huge, and all five are now clean, sharp portraits, even the one that was a cardboard shape before. In this batch, the extra guidance improves the faces but also makes the subjects less varied, since now every single one is a portrait.</p>
+      </div>
+      <div class="gallery one">
+        <figure><img src="assets/a_cfg_samples.jpg" alt="Five guided samples with w = 7" /></figure>
+      </div>
+      </section>
+
+    </section>
+
+    <section class="chapter" id="a3">
+      <div class="section-heading"><span>3</span><h3>Creative Applications</h3></div>
+
+      <section class="experiment" id="a3-1" aria-labelledby="a3-1-title">
+        <h4 class="experiment-heading" id="a3-1-title"><span>3.1</span> Image-to-Image Editing</h4>
+      <p class="intro">To edit a picture, I add noise back to it up to some time t, then let the guided sampler finish the rest. The smaller t is, the more noise there is and the more the model gets to make up, while a larger t keeps more of the original. All the creative applications use Euler step size 0.02, CFG weight w = 7, and an empty prompt for the unconditional prediction. For 3.1, the conditional prompt is "a high quality photo". Within each grid I reuse one noise pattern, so only the amount mixed in changes, from 98% noise at t = 0.02 down to 50% at t = 0.5. I used seed 180 for my images and seed 2026 for the Campanile.</p>
+      <div class="gallery one">
+        <figure><img src="assets/a_edit_campanile.jpg" alt="Campanile edited at seven starting times" /><figcaption><b>The Campanile</b><span>At t = 0.02 it turns into a person (the portrait habit again), for a while it's just a plain pillar, and by t = 0.14 the windows and clock start coming back.</span></figcaption></figure>
+        <figure><img src="assets/a_edit_my_image_1.jpg" alt="Squirrel photo edited at seven starting times" /><figcaption><b>My squirrel</b></figcaption></figure>
+        <figure><img src="assets/a_edit_my_image_2.jpg" alt="Half Dome photo edited at seven starting times" /><figcaption><b>My photo of Half Dome</b></figcaption></figure>
+      </div>
+
+      <h5>Editing a web image</h5>
+      <p class="intro">For the web image, I used a cartoon red car and edited it with the same "a high quality photo" prompt. At t = 0.02 it becomes a real red sports car that mostly keeps the color and white background. Around t = 0.04 to 0.06, it still looks like a real car but now faces the same way as the cartoon. By t = 0.10 to 0.14 it looks more like a shiny toy, and by t = 0.5 it's basically the original cartoon again.</p>
+      <div class="gallery one">
+        <figure><img src="assets/a_edit_web_image.jpg" alt="Cartoon car edited at seven starting times" /><figcaption><b>Cartoon car from the web</b><span>"Red Car Closed Window Cartoon Vector" by VideoPlasty, CC BY-SA 4.0, via Wikimedia Commons</span></figcaption></figure>
+      </div>
+      <h5>Editing my own drawings</h5>
+      <p class="intro">I drew a self-portrait and a mountain landscape and edited both with the same "a high quality photo" prompt. The self-portrait turns into a photo of a guy at t = 0.04 while keeping my black hair, light blue shirt, and blue background. This fits with the portraits the model kept making in 1.6 and 2.1: even without a more specific prompt, it does a good job turning the drawn face into a realistic one.</p>
+      <p class="intro">The mountain drawing doesn't make that same jump to a photo. At small t, the model makes up unrelated things like a computer screen, a pink box, or a person. By around t = 0.06, it mostly copies the drawing instead. Here, adding more noise loses the landscape, while keeping more of the input also keeps its flat, cartoon style.</p>
+      <div class="gallery one">
+        <figure><img src="assets/a_edit_drawing_1.jpg" alt="Self-portrait drawing edited at seven starting times" /><figcaption><b>Drawing 1: me</b><span>At t = 0.04, the face becomes realistic while keeping the colors and layout of my drawing.</span></figcaption></figure>
+        <figure><img src="assets/a_edit_drawing_2.jpg" alt="Mountain drawing edited at seven starting times" /><figcaption><b>Drawing 2: mountains under the sun</b><span>At low t, the landscape gets lost; at higher t, it stays a drawing.</span></figcaption></figure>
+      </div>
+      </section>
+
+      <section class="experiment" id="a3-2" aria-labelledby="a3-2-title">
+        <h4 class="experiment-heading" id="a3-2-title"><span>3.2</span> Text-Guided Image Editing</h4>
+      <p class="intro">Same idea, but now I give it a real prompt. At small t the prompt mostly wins, and at large t it's basically the original again, but the fun part is in the middle, where the edit follows the layout of my photo. My favorite is the fox at t = 0.10 to 0.14, which keeps the squirrel's spot on the rock even though its pose changes.</p>
+      <div class="gallery one">
+        <figure><img src="assets/a_text_edit_campanile.jpg" alt="Campanile edited toward a watercolor lighthouse" /><figcaption><b>"a watercolor painting of a lighthouse by the sea"</b></figcaption></figure>
+        <figure><img src="assets/a_text_edit_my_image_1.jpg" alt="Squirrel edited toward a red fox" /><figcaption><b>"a photo of a red fox sitting on a granite rock"</b></figcaption></figure>
+        <figure><img src="assets/a_text_edit_my_image_2.jpg" alt="Half Dome edited toward a snowy sunset" /><figcaption><b>"a photo of Half Dome covered in snow at sunset"</b></figcaption></figure>
+      </div>
+      </section>
+
+      <section class="experiment" id="a3-3" aria-labelledby="a3-3-title">
+        <h4 class="experiment-heading" id="a3-3-title"><span>3.3</span> Visual Anagrams</h4>
+      <p class="intro">A visual anagram looks like one thing right side up and something else upside down. At every step I get the guided velocity for prompt A on the image, and for prompt B on the image rotated 180° (then rotate that velocity back), and average the two, so the image has to make sense both ways. I tried a bunch of pairs and seeds and kept these two. The wave and mountain share blue and white shapes, while the hummingbird and tennis player use the same shapes for very different poses.</p>
+      <div class="gallery one">
+        <figure><img src="assets/a_anagram_views_wave_mountain.jpg" alt="Curling ocean wave upright and snowy mountain peak after rotating the same image 180 degrees" /><figcaption><b>Ocean wave ↔ snowy mountain peak</b><span>The wave's blue-and-white shapes become a snowy ridge when flipped. Left: upright. Right: the same image rotated 180°. Seed 2028.</span></figcaption></figure>
+        <figure><img src="assets/a_anagram_views_hummingbird.jpg" alt="Hummingbird upright and tennis player serving when rotated" /><figcaption><b>Hummingbird ↔ tennis player serving</b><span>The bird's spread wings become the player's arms and racket mid-serve. Left: upright. Right: rotated 180°. Seed 185.</span></figcaption></figure>
+      </div>
+      </section>
+
+      <section class="experiment" id="a3-4" aria-labelledby="a3-4-title">
+        <h4 class="experiment-heading" id="a3-4-title"><span>3.4</span> Hybrid Images</h4>
+      <p class="intro">This is like the hybrid images from Project 2, except the model makes them from scratch. At every step I take the blurry (low-frequency) part of one prompt's velocity and the detail (high-frequency) part of the other prompt's velocity, and add them, so the big shape follows one prompt and the fine texture follows the other. To get the high-frequency part, I subtract the blurred velocity from the original. Like before, look at the big image, then at the smaller copies (seeds 183 and 184).</p>
+      <h5>A tennis racket made of spider web</h5>
+      <p class="intro">Far away: "a lithograph of a tennis racket". Up close: "a lithograph of a spider web".</p>
+      <div class="distance">
+        <figure><img src="assets/a_hybrid_0.jpg" alt="Hybrid of a tennis racket and a spider web, large" /><figcaption><b>Up close</b><span>A spider web up close, a racket from far away</span></figcaption></figure>
+        <figure><img src="assets/a_hybrid_0.jpg" alt="Hybrid of a tennis racket and a spider web, medium" /><figcaption><b>Farther</b></figcaption></figure>
+        <figure><img src="assets/a_hybrid_0.jpg" alt="Hybrid of a tennis racket and a spider web, small" /><figcaption><b>Far away</b></figcaption></figure>
+      </div>
+      <h5>A guitar made of a city</h5>
+      <p class="intro">Far away: "a lithograph of an acoustic guitar". Up close: "a lithograph of a huge sprawling city seen from far away, thousands of tiny buildings and windows". My first tries with a normal city or skyline didn't work, because big buildings show up in the blurry part too and the guitar disappeared. Asking for tiny buildings kept the city in the fine details.</p>
+      <div class="distance">
+        <figure><img src="assets/a_hybrid_1.jpg" alt="Hybrid of a guitar and a city, large" /><figcaption><b>Up close</b><span>Apartment buildings up close, a guitar from far away</span></figcaption></figure>
+        <figure><img src="assets/a_hybrid_1.jpg" alt="Hybrid of a guitar and a city, medium" /><figcaption><b>Farther</b></figcaption></figure>
+        <figure><img src="assets/a_hybrid_1.jpg" alt="Hybrid of a guitar and a city, small" /><figcaption><b>Far away</b></figcaption></figure>
+      </div>
+      <p class="intro">Up close you see the web strands and the windows, and once the image is small those details blur out and you see the overall racket and guitar shapes.</p>
+      </section>
+
+    </section>
+
+    <!-- ===================== PART B ===================== -->
+    <div class="part-heading" id="part-b">
+      <p class="eyebrow">Part B</p>
+      <h2>Flow Matching from Scratch!</h2>
+      <nav class="contents section-contents" aria-label="Part B sections">
+        <a href="#b1-1"><b>1.1</b> Implementing the UNet</a>
+        <a href="#b1-2"><b>1.2</b> Using the UNet to Train a Denoiser</a>
+        <a href="#b1-2-1"><b>1.2.1</b> Training</a>
+        <a href="#b1-2-2"><b>1.2.2</b> Out-of-Distribution Testing</a>
+        <a href="#b1-2-3"><b>1.2.3</b> Denoising Pure Noise</a>
+        <a href="#b2-1"><b>2.1</b> Adding Time Conditioning to UNet</a>
+        <a href="#b2-2"><b>2.2</b> Training the UNet</a>
+        <a href="#b2-3"><b>2.3</b> Sampling from the UNet</a>
+        <a href="#b2-4"><b>2.4</b> Adding Class-Conditioning to UNet</a>
+        <a href="#b2-5"><b>2.5</b> Training the UNet</a>
+        <a href="#b2-6"><b>2.6</b> Sampling from the UNet</a>
+      </nav>
+    </div>
+
+    <section class="chapter" id="b1">
+      <div class="section-heading"><span>1</span><h3>Training a Single-Step Denoising UNet</h3></div>
+      <section class="experiment" id="b1-1" aria-labelledby="b1-1-title">
+        <h4 class="experiment-heading" id="b1-1-title"><span>1.1</span> Implementing the UNet</h4>
+      <div class="prose">
+        <p>For Part B I built everything myself and trained it on MNIST, the dataset of handwritten digits. The network is a UNet, which shrinks the image down to a tiny summary and then builds it back up, with skip connections that pass the fine details straight across from the shrinking side to the growing side. Before doing any flow matching, I started with a simpler job: take a noisy digit and clean it up. I used seed 2026 to initialize the models and kept the test examples and sampling noise fixed for the epoch comparisons.</p>
+      </div>
+      </section>
+
+      <section class="experiment" id="b1-2" aria-labelledby="b1-2-title">
+        <h4 class="experiment-heading" id="b1-2-title"><span>1.2</span> Using the UNet to Train a Denoiser</h4>
+      <p class="intro">Here I add noise as <span class="formula">z = x + σ · ε</span>, where ε is random Gaussian noise and σ controls how strong it is. I keep each digit and its noise pattern the same across the row, so the only thing changing is the noise strength. As σ goes up, the strokes get harder to pick out.</p>
+      <div class="gallery one">
+        <figure><img src="assets/b_noise_levels.jpg" alt="MNIST digits with noise from sigma 0 to 1" /></figure>
+      </div>
+      </section>
+
+      <section class="experiment" id="b1-2-1" aria-labelledby="b1-2-1-title">
+        <h4 class="experiment-heading" id="b1-2-1-title"><span>1.2.1</span> Training</h4>
+      <p class="intro">I trained the UNet to turn digits with σ = 0.5 noise back into clean digits, drawing fresh noise every batch so it gets different noisy inputs each epoch. The loss measures how far the output is from the clean digit, and it drops fast before gradually leveling off. On the test digits below, it already cleans things up pretty well after one epoch, while by epoch five they're sharper.</p>
+      <div class="gallery loss">
+        <figure><img src="assets/b_denoise_loss.jpg" alt="Denoiser training loss" /></figure>
+      </div>
+      <div class="gallery grids">
+        <figure><img src="assets/b_denoise_epoch1.jpg" alt="Denoising results after epoch 1" /><figcaption><b>After epoch 1</b></figcaption></figure>
+        <figure><img src="assets/b_denoise_epoch5.jpg" alt="Denoising results after epoch 5" /><figcaption><b>After epoch 5</b></figcaption></figure>
+      </div>
+      </section>
+
+      <section class="experiment" id="b1-2-2" aria-labelledby="b1-2-2-title">
+        <h4 class="experiment-heading" id="b1-2-2-title"><span>1.2.2</span> Out-of-Distribution Testing</h4>
+      <p class="intro">The model only ever saw σ = 0.5, so I tested three test digits (a 7, a 2, and a 0) at other noise levels, keeping the same noise pattern for each digit. All three come out clean up to around 0.6, but at 0.8 and 1.0 it starts leaving smudges and extra strokes, since it's never seen that much noise before.</p>
+      <div class="gallery one">
+        <figure><img src="assets/b_denoise_ood.jpg" alt="Denoiser tested on three digits at different noise levels" /></figure>
+      </div>
+      </section>
+
+      <section class="experiment" id="b1-2-3" aria-labelledby="b1-2-3-title">
+        <h4 class="experiment-heading" id="b1-2-3-title"><span>1.2.3</span> Denoising Pure Noise</h4>
+      <p class="intro">Then I trained a fresh UNet where the input is pure noise with nothing of the digit in it. Every output comes out as the same blurry blob, no matter what noise goes in. Since the input tells the model nothing about which digit it should be, the best it can do to keep the squared error low is output the average of all the training digits, which is why the blob looks like a mix of a 0, 8, and 9 stacked on top of each other. So this one-step MSE setup doesn't learn to generate different digits from noise. Flow matching gives it a different training target and a sequence of smaller steps.</p>
+      <div class="gallery loss">
+        <figure><img src="assets/b_pure_noise_loss.jpg" alt="Pure-noise training loss" /></figure>
+      </div>
+      <div class="gallery grids">
+        <figure><img src="assets/b_pure_noise_epoch1.jpg" alt="Pure-noise outputs after epoch 1" /><figcaption><b>After epoch 1</b></figcaption></figure>
+        <figure><img src="assets/b_pure_noise_epoch5.jpg" alt="Pure-noise outputs after epoch 5" /><figcaption><b>After epoch 5</b></figcaption></figure>
+      </div>
+      </section>
+
+    </section>
+
+    <section class="chapter" id="b2">
+      <div class="section-heading"><span>2</span><h3>Training a Flow Matching Model</h3></div>
+      <div class="prose">
+        <p>Flow matching fixes that by not jumping straight to the answer. It uses the same straight line as Part A, going from noise at t = 0 to a clean digit at t = 1, <span class="formula">x<sub>t</sub> = (1 − t) · x<sub>0</sub> + t · x<sub>1</sub></span> where x<sub>0</sub> is noise and x<sub>1</sub> is a real digit, and trains the UNet to predict the velocity x<sub>1</sub> − x<sub>0</sub> at a random time t. To make a new digit, I start from noise and take small Euler steps along the predicted velocity until t = 1, just like in Part A.</p>
+      </div>
+
+      <section class="experiment" id="b2-1" aria-labelledby="b2-1-title">
+        <h4 class="experiment-heading" id="b2-1-title"><span>2.1</span> Adding Time Conditioning to UNet</h4>
+      <p class="intro">The UNet needs to know what time t it's at, since a nearly clean image and a very noisy one need different moves. I pass t through two small fully connected blocks, then multiply the results into features at two points on the upsampling side. That lets the same network change its prediction depending on how far the image is along the path from noise to a digit.</p>
+      </section>
+
+      <section class="experiment" id="b2-2" aria-labelledby="b2-2-title">
+        <h4 class="experiment-heading" id="b2-2-title"><span>2.2</span> Training the UNet</h4>
+      <p class="intro">For each batch of training digits, I draw fresh noise and a random time for each image, then mix the noise and digit at that time. The target is the velocity x<sub>1</sub> − x<sub>0</sub>, and the loss is the mean squared difference between that target and the model's prediction. I trained for ten epochs using only the training split. The samples in the next section reuse the same starting noise, so the changes come from the model learning.</p>
+      <div class="gallery loss">
+        <figure><img src="assets/b_time_loss.jpg" alt="Time-conditioned training loss" /></figure>
+      </div>
+      </section>
+
+      <section class="experiment" id="b2-3" aria-labelledby="b2-3-title">
+        <h4 class="experiment-heading" id="b2-3-title"><span>2.3</span> Sampling from the UNet</h4>
+      <p class="intro">After one epoch the samples are mostly scribbles, by epoch five a lot of them look like digits, and by epoch ten most are readable, though some are still wobbly or don't look like any digit in particular.</p>
+      <div class="gallery grids">
+        <figure><img src="assets/b_time_epoch1.jpg" alt="Time-conditioned samples after epoch 1" /><figcaption><b>Epoch 1</b></figcaption></figure>
+        <figure><img src="assets/b_time_epoch5.jpg" alt="Time-conditioned samples after epoch 5" /><figcaption><b>Epoch 5</b></figcaption></figure>
+        <figure><img src="assets/b_time_epoch10.jpg" alt="Time-conditioned samples after epoch 10" /><figcaption><b>Epoch 10</b></figcaption></figure>
+      </div>
+      </section>
+
+      <section class="experiment" id="b2-4" aria-labelledby="b2-4-title">
+        <h4 class="experiment-heading" id="b2-4-title"><span>2.4</span> Adding Class-Conditioning to UNet</h4>
+      <p class="intro">To pick which digit I get, I also feed the model the class as a one-hot vector: ten entries, all zero except for a 1 at the requested digit. Two more fully connected blocks turn that label into features that scale the upsampling features, while the time features are added. During training I blank out the label 10% of the time, so the model also learns to work without a class. That lets me use classifier-free guidance again when sampling.</p>
+      </section>
+
+      <section class="experiment" id="b2-5" aria-labelledby="b2-5-title">
+        <h4 class="experiment-heading" id="b2-5-title"><span>2.5</span> Training the UNet</h4>
+      <p class="intro">I trained this model for ten epochs too, drawing fresh noise and random times just like the time-only model. The target is still the velocity from noise to the clean digit, but now the model also gets the digit label unless it is dropped for that training example. Here's how the training loss changed.</p>
+      <div class="gallery loss">
+        <figure><img src="assets/b_class_loss.jpg" alt="Class-conditioned training loss" /></figure>
+      </div>
+      </section>
+
+      <section class="experiment" id="b2-6" aria-labelledby="b2-6-title">
+        <h4 class="experiment-heading" id="b2-6-title"><span>2.6</span> Sampling from the UNet</h4>
+      <p class="intro">At each sampling step, I ask the model for a velocity with the requested label and another with the label blanked out. Guidance pushes the update toward what the label adds, helping the result match the digit I asked for. I used a guidance scale of 5 here, which is equivalent to w = 4 in Part A because the two formulas define the scale differently.</p>
+      <p class="intro">Each column below is one digit, 0 through 9, with four samples each. These look much cleaner than the time-only results, and by epoch five each column is recognizable as the requested digit. I also used more sampling steps here, so the class label isn't the only thing changing between the two runs.</p>
+      <div class="gallery grids">
+        <figure><img src="assets/b_class_epoch1.jpg" alt="Class-conditioned samples after epoch 1" /><figcaption><b>Epoch 1</b></figcaption></figure>
+        <figure><img src="assets/b_class_epoch5.jpg" alt="Class-conditioned samples after epoch 5" /><figcaption><b>Epoch 5</b></figcaption></figure>
+        <figure><img src="assets/b_class_epoch10.jpg" alt="Class-conditioned samples after epoch 10" /><figcaption><b>Epoch 10</b></figcaption></figure>
+      </div>
+
+      <h5 id="b2-6-scheduler">2.6 Experiment: removing the learning rate scheduler</h5>
+      <p class="intro">Normally the learning rate gets smaller as training goes on. To try removing that scheduler, I trained a fresh model with a smaller learning rate of 0.001 and left it there the whole time. The idea was to take smaller updates from the start instead of waiting for the scheduler to bring them down.</p>
+      <p class="intro">By epoch ten the digits look about as good as with the scheduler, and the epoch-one grid even looks cleaner. Both models start with seed 2026 and use the same sampling noise, though their training batches aren't matched exactly.</p>
+      <div class="gallery loss">
+        <figure><img src="assets/b_class_no_scheduler_loss.jpg" alt="No-scheduler training loss" /></figure>
+      </div>
+      <div class="gallery grids">
+        <figure><img src="assets/b_class_no_scheduler_epoch1.jpg" alt="No-scheduler samples after epoch 1" /><figcaption><b>Epoch 1</b></figcaption></figure>
+        <figure><img src="assets/b_class_no_scheduler_epoch5.jpg" alt="No-scheduler samples after epoch 5" /><figcaption><b>Epoch 5</b></figcaption></figure>
+        <figure><img src="assets/b_class_no_scheduler_epoch10.jpg" alt="No-scheduler samples after epoch 10" /><figcaption><b>Epoch 10</b></figcaption></figure>
+      </div>
+      </section>
+
+    </section>
+
+    <section id="takeaway">
+      <div class="section-heading"><span>★</span><h2>What I learned</h2></div>
+      <div class="prose">
+        <p>The coolest part for me was seeing how much the model's habits matter. "A high quality photo" almost always meant a portrait to it, which explained why my landscape drawings kept failing and why drawing myself finally worked.</p>
+        <p>It was also really satisfying to build the small version in Part B and see the same ideas work at a tiny scale, from the blurry average digit you get with plain denoising to clean digits once the model learns to take small steps instead of one big guess.</p>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

@@ -16,3 +16,6 @@ submissions/
 *.HEIC
 IMG_*.JPG
 tmp/
+
+# Local archived project code and experiments stay private.
+/archive/
