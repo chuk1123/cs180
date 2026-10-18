@@ -165,7 +165,7 @@
 
       <section class="experiment" id="a3-3" aria-labelledby="a3-3-title">
         <h4 class="experiment-heading" id="a3-3-title"><span>3.3</span> Visual Anagrams</h4>
-      <p class="intro">A visual anagram looks like one thing right side up and something else upside down. At every step I get the guided velocity for prompt A on the image, and for prompt B on the image rotated 180° (then rotate that velocity back), and average the two, so the image has to make sense both ways. I tried a bunch of pairs and seeds and kept these two. The wave and mountain share blue and white shapes, while the hummingbird and tennis player use the same shapes for very different poses.</p>
+      <p class="intro">A visual anagram looks like one thing right side up and something else upside down. At every step I get the guided velocity for prompt A on the image, and for prompt B on the image rotated 180° (then rotate that velocity back), and average the two, so the image has to make sense both ways. The wave and mountain share blue and white shapes, while the hummingbird and tennis player use the same shapes for very different poses.</p>
       <div class="gallery one">
         <figure><img src="assets/a_anagram_views_wave_mountain.jpg" alt="Curling ocean wave upright and snowy mountain peak after rotating the same image 180 degrees" /><figcaption><b>Ocean wave ↔ snowy mountain peak</b><span>The wave's blue-and-white shapes become a snowy ridge when flipped. Left: upright. Right: the same image rotated 180°. Seed 2028.</span></figcaption></figure>
         <figure><img src="assets/a_anagram_views_hummingbird.jpg" alt="Hummingbird upright and tennis player serving when rotated" /><figcaption><b>Hummingbird ↔ tennis player serving</b><span>The bird's spread wings become the player's arms and racket mid-serve. Left: upright. Right: rotated 180°. Seed 185.</span></figcaption></figure>
@@ -183,7 +183,7 @@
         <figure><img src="assets/a_hybrid_0.jpg" alt="Hybrid of a tennis racket and a spider web, small" /><figcaption><b>Far away</b></figcaption></figure>
       </div>
       <h5>A guitar made of a city</h5>
-      <p class="intro">Far away: "a lithograph of an acoustic guitar". Up close: "a lithograph of a huge sprawling city seen from far away, thousands of tiny buildings and windows". My first tries with a normal city or skyline didn't work, because big buildings show up in the blurry part too and the guitar disappeared. Asking for tiny buildings kept the city in the fine details.</p>
+      <p class="intro">Far away: "a lithograph of an acoustic guitar". Up close: "a lithograph of a huge sprawling city seen from far away, thousands of tiny buildings and windows".</p>
       <div class="distance">
         <figure><img src="assets/a_hybrid_1.jpg" alt="Hybrid of a guitar and a city, large" /><figcaption><b>Up close</b><span>Apartment buildings up close, a guitar from far away</span></figcaption></figure>
         <figure><img src="assets/a_hybrid_1.jpg" alt="Hybrid of a guitar and a city, medium" /><figcaption><b>Farther</b></figcaption></figure>
@@ -334,7 +334,7 @@
     <section id="takeaway">
       <div class="section-heading"><span>★</span><h2>What I learned</h2></div>
       <div class="prose">
-        <p>The coolest part for me was seeing how much the model's habits matter. "A high quality photo" almost always meant a portrait to it, which explained why my landscape drawings kept failing and why drawing myself finally worked.</p>
+        <p>The coolest part for me was seeing how much the model's habits matter. "A high quality photo" almost always meant a portrait to it, which is why my self-portrait drawing turned into such a convincing photo.</p>
         <p>It was also really satisfying to build the small version in Part B and see the same ideas work at a tiny scale, from the blurry average digit you get with plain denoising to clean digits once the model learns to take small steps instead of one big guess.</p>
       </div>
     </section>
