@@ -118,7 +118,7 @@
       <section class="experiment" id="a2-1" aria-labelledby="a2-1-title">
         <h4 class="experiment-heading" id="a2-1-title"><span>2.1</span> Classifier-Free Guidance (CFG)</h4>
       <div class="prose">
-        <p>To make the images actually follow the prompt better, I ask the model for two velocities at every step, one with my prompt and one with an empty prompt, and push further in the direction the prompt adds: <span class="formula">v = v<sub>c</sub> + w · (v<sub>c</sub> − v<sub>u</sub>)</span> with w = 7. Using the same starting noise as before (seeds 2026 to 2030 again), the difference is huge, and all five are now clean, sharp portraits, even the one that was a cardboard shape before. In this batch, the extra guidance improves the faces but also makes the subjects less varied, since now every single one is a portrait.</p>
+        <p>To make the images actually follow the prompt better, I ask the model for two velocities at every step, one with my prompt and one with an empty prompt, and push further in the direction the prompt adds: <span class="formula">v = v<sub>c</sub> + w · (v<sub>c</sub> − v<sub>u</sub>)</span> with w = 7. I used the same five starting noises as in 1.6 (seeds 2026 to 2030), so each image here lines up with the one above it. The difference is huge: all five are now clean, sharp portraits, even the one that was a cardboard shape in 1.6. In this batch, the extra guidance improves the faces but also makes the subjects less varied, since now every single one is a portrait.</p>
       </div>
       <div class="gallery one">
         <figure><img src="assets/a_cfg_samples.jpg" alt="Five guided samples with w = 7" /></figure>
@@ -134,7 +134,7 @@
         <h4 class="experiment-heading" id="a3-1-title"><span>3.1</span> Image-to-Image Editing</h4>
       <p class="intro">To edit a picture, I add noise back to it up to some time t, then let the guided sampler finish the rest. The smaller t is, the more noise there is and the more the model gets to make up, while a larger t keeps more of the original. All the creative applications use Euler step size 0.02, CFG weight w = 7, and an empty prompt for the unconditional prediction. For 3.1, the conditional prompt is "a high quality photo". Within each grid I reuse one noise pattern, so only the amount mixed in changes, from 98% noise at t = 0.02 down to 50% at t = 0.5. I used seed 180 for my images and seed 2026 for the Campanile.</p>
       <div class="gallery one">
-        <figure><img src="assets/a_edit_campanile.jpg" alt="Campanile edited at seven starting times" /><figcaption><b>The Campanile</b><span>At t = 0.02 it turns into a person (the portrait habit again), for a while it's just a plain pillar, and by t = 0.14 the windows and clock start coming back.</span></figcaption></figure>
+        <figure><img src="assets/a_edit_campanile.jpg" alt="Campanile edited at seven starting times" /><figcaption><b>The Campanile</b><span>At t = 0.02 it turns into a person, since this model tends to turn "a high quality photo" into a portrait. For a while it's just a plain pillar, and by t = 0.14 the windows and clock start coming back.</span></figcaption></figure>
         <figure><img src="assets/a_edit_my_image_1.jpg" alt="Squirrel photo edited at seven starting times" /><figcaption><b>My squirrel</b></figcaption></figure>
         <figure><img src="assets/a_edit_my_image_2.jpg" alt="Half Dome photo edited at seven starting times" /><figcaption><b>My photo of Half Dome</b></figcaption></figure>
       </div>
@@ -155,7 +155,7 @@
 
       <section class="experiment" id="a3-2" aria-labelledby="a3-2-title">
         <h4 class="experiment-heading" id="a3-2-title"><span>3.2</span> Text-Guided Image Editing</h4>
-      <p class="intro">Same idea, but now I give it a real prompt. At small t the prompt mostly wins, and at large t it's basically the original again, but the fun part is in the middle, where the edit follows the layout of my photo. My favorite is the fox at t = 0.10 to 0.14, which keeps the squirrel's spot on the rock even though its pose changes.</p>
+      <p class="intro">This works the same way as 3.1, but with a descriptive prompt instead of "a high quality photo". At small t the prompt mostly wins, and at large t the result stays close to my original photo, but the fun part is in the middle, where the edit follows the layout of my photo. My favorite is the fox at t = 0.10 to 0.14, which keeps the squirrel's spot on the rock even though its pose changes.</p>
       <div class="gallery one">
         <figure><img src="assets/a_text_edit_campanile.jpg" alt="Campanile edited toward a watercolor lighthouse" /><figcaption><b>"a watercolor painting of a lighthouse by the sea"</b></figcaption></figure>
         <figure><img src="assets/a_text_edit_my_image_1.jpg" alt="Squirrel edited toward a red fox" /><figcaption><b>"a photo of a red fox sitting on a granite rock"</b></figcaption></figure>
@@ -174,7 +174,7 @@
 
       <section class="experiment" id="a3-4" aria-labelledby="a3-4-title">
         <h4 class="experiment-heading" id="a3-4-title"><span>3.4</span> Hybrid Images</h4>
-      <p class="intro">This is like the hybrid images from Project 2, except the model makes them from scratch. At every step I take the blurry (low-frequency) part of one prompt's velocity and the detail (high-frequency) part of the other prompt's velocity, and add them, so the big shape follows one prompt and the fine texture follows the other. To get the high-frequency part, I subtract the blurred velocity from the original. Like before, look at the big image, then at the smaller copies (seeds 183 and 184).</p>
+      <p class="intro">A hybrid image looks like one thing up close and something else from far away, because we only notice fine detail when an image is big. Here the model generates them from scratch. At every step I take the blurry (low-frequency) part of one prompt's velocity and the detail (high-frequency) part of the other prompt's velocity, and add them, so the big shape follows one prompt and the fine texture follows the other. To get the high-frequency part, I subtract the blurred velocity from the original. To see both, look at the big image, then at the smaller copies, which act like stepping back from it (seeds 183 and 184).</p>
       <h5>A tennis racket made of spider web</h5>
       <p class="intro">Far away: "a lithograph of a tennis racket". Up close: "a lithograph of a spider web".</p>
       <div class="distance">
@@ -295,7 +295,7 @@
 
       <section class="experiment" id="b2-4" aria-labelledby="b2-4-title">
         <h4 class="experiment-heading" id="b2-4-title"><span>2.4</span> Adding Class-Conditioning to UNet</h4>
-      <p class="intro">To pick which digit I get, I also feed the model the class as a one-hot vector: ten entries, all zero except for a 1 at the requested digit. Two more fully connected blocks turn that label into features that scale the upsampling features, while the time features are added. During training I blank out the label 10% of the time, so the model also learns to work without a class. That lets me use classifier-free guidance again when sampling.</p>
+      <p class="intro">To pick which digit I get, I also feed the model the class as a one-hot vector: ten entries, all zero except for a 1 at the requested digit. Two more fully connected blocks turn that label into features that scale the upsampling features, while the time features are added. During training I blank out the label 10% of the time, so the model also learns to work without a class. That lets me use classifier-free guidance when sampling, the same trick as in Part A 2.1.</p>
       </section>
 
       <section class="experiment" id="b2-5" aria-labelledby="b2-5-title">
