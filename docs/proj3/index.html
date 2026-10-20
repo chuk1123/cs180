@@ -142,11 +142,11 @@
       <h5>Editing a web image</h5>
       <p class="intro">For the web image, I used a cartoon red car and edited it with the same "a high quality photo" prompt. At t = 0.02 it becomes a real red sports car that mostly keeps the color and white background. Around t = 0.04 to 0.06, it still looks like a real car but now faces the same way as the cartoon. By t = 0.10 to 0.14 it looks more like a shiny toy, and by t = 0.5 it's basically the original cartoon again.</p>
       <div class="gallery one">
-        <figure><img src="assets/a_edit_web_image.jpg" alt="Cartoon car edited at seven starting times" /><figcaption><b>Cartoon car from the web</b><span>"Red Car Closed Window Cartoon Vector" by VideoPlasty, CC BY-SA 4.0, via Wikimedia Commons</span></figcaption></figure>
+        <figure><img src="assets/a_edit_web_image.jpg" alt="Cartoon car edited at seven starting times" /></figure>
       </div>
       <h5>Editing my own drawings</h5>
       <p class="intro">I drew a self-portrait and a mountain landscape and edited both with the same "a high quality photo" prompt. The self-portrait turns into a photo of a guy at t = 0.04 while keeping my black hair, light blue shirt, and blue background. This fits with the portraits the model kept making in 1.6 and 2.1: even without a more specific prompt, it does a good job turning the drawn face into a realistic one.</p>
-      <p class="intro">The mountain drawing doesn't make that same jump to a photo. At small t, the model makes up unrelated things like a computer screen, a pink box, or a person. By around t = 0.06, it mostly copies the drawing instead. Here, adding more noise loses the landscape, while keeping more of the input also keeps its flat, cartoon style.</p>
+      <p class="intro">The mountain drawing doesn't make that same jump to a photo. At small t, the model makes up unrelated things like a computer screen or a pink box. By around t = 0.06, it mostly copies the drawing instead. Here, adding more noise loses the landscape, while keeping more of the input also keeps its flat, cartoon style.</p>
       <div class="gallery one">
         <figure><img src="assets/a_edit_drawing_1.jpg" alt="Self-portrait drawing edited at seven starting times" /><figcaption><b>Drawing 1: me</b><span>At t = 0.04, the face becomes realistic while keeping the colors and layout of my drawing.</span></figcaption></figure>
         <figure><img src="assets/a_edit_drawing_2.jpg" alt="Mountain drawing edited at seven starting times" /><figcaption><b>Drawing 2: mountains under the sun</b><span>At low t, the landscape gets lost; at higher t, it stays a drawing.</span></figcaption></figure>
@@ -252,7 +252,7 @@
 
       <section class="experiment" id="b1-2-3" aria-labelledby="b1-2-3-title">
         <h4 class="experiment-heading" id="b1-2-3-title"><span>1.2.3</span> Denoising Pure Noise</h4>
-      <p class="intro">Then I trained a fresh UNet where the input is pure noise with nothing of the digit in it. Every output comes out as the same blurry blob, no matter what noise goes in. Since the input tells the model nothing about which digit it should be, the best it can do to keep the squared error low is output the average of all the training digits, which is why the blob looks like a mix of a 0, 8, and 9 stacked on top of each other. So this one-step MSE setup doesn't learn to generate different digits from noise. Flow matching gives it a different training target and a sequence of smaller steps.</p>
+      <p class="intro">Then I trained a fresh UNet where the input is pure noise with nothing of the digit in it. Every output comes out as the same blurry blob, no matter what noise goes in. Since the input tells the model nothing about which digit it should be, the best it can do to keep the squared error low is output the average of all the training digits, which is why the blob looks like all the digits from 0 to 9 stacked on top of each other. So this one-step MSE setup doesn't learn to generate different digits from noise. Flow matching gives it a different training target and a sequence of smaller steps.</p>
       <div class="gallery loss">
         <figure><img src="assets/b_pure_noise_loss.jpg" alt="Pure-noise training loss" /></figure>
       </div>
