@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="CS180 Project 3: flow models, sampling, guidance, image editing, visual anagrams, hybrid images, and flow matching from scratch on MNIST." />
+  <meta name="description" content="CS180 Project 3 covering flow models, sampling, guidance, image editing, visual anagrams, hybrid images, and flow matching from scratch on MNIST." />
   <title>Fun with Flow Models | CS180</title>
   <link rel="icon" href="../favicon.png" />
   <link rel="stylesheet" href="style.css" />
@@ -70,7 +70,7 @@
 
       <section class="experiment" id="a1-3" aria-labelledby="a1-3-title">
         <h4 class="experiment-heading" id="a1-3-title"><span>1.3</span> One-Step Denoising</h4>
-      <p class="intro">Next I used the model with the prompt "a high quality photo". I can use its predicted velocity to jump all the way to t = 1 in one move: <span class="formula">x̂ = x<sub>t</sub> + (1 − t) · v</span>. This is way better than the blur, and the squirrel comes back clearly even at t = 0.25. It still looks soft, though, especially around the fur. A single jump keeps the initial velocity fixed instead of updating it as the image changes, so it misses detail that the smaller steps can recover.</p>
+      <p class="intro">Next I used the model with the prompt "a high quality photo". I can use its predicted velocity to jump all the way to t = 1 in one move using <span class="formula">x̂ = x<sub>t</sub> + (1 − t) · v</span>. This is way better than the blur, and the squirrel comes back clearly even at t = 0.25. It still looks soft, though, especially around the fur. A single jump keeps the initial velocity fixed instead of updating it as the image changes, so it misses detail that the smaller steps can recover.</p>
       <div class="gallery one">
         <figure><img src="assets/a_one_step_0.25.jpg" alt="Original, noisy at t = 0.25, and one-step estimate" /><figcaption><b>t = 0.25</b></figcaption></figure>
         <figure><img src="assets/a_one_step_0.5.jpg" alt="Original, noisy at t = 0.5, and one-step estimate" /><figcaption><b>t = 0.5</b></figcaption></figure>
@@ -118,7 +118,7 @@
       <section class="experiment" id="a2-1" aria-labelledby="a2-1-title">
         <h4 class="experiment-heading" id="a2-1-title"><span>2.1</span> Classifier-Free Guidance (CFG)</h4>
       <div class="prose">
-        <p>To make the images actually follow the prompt better, I ask the model for two velocities at every step, one with my prompt and one with an empty prompt, and push further in the direction the prompt adds: <span class="formula">v = v<sub>c</sub> + w · (v<sub>c</sub> − v<sub>u</sub>)</span> with w = 7. I used the same five starting noises as in 1.6 (seeds 2026 to 2030), so each image here lines up with the one above it. The difference is huge: all five are now clean, sharp portraits, even the one that was a cardboard shape in 1.6. In this batch, the extra guidance improves the faces but also makes the subjects less varied, since now every single one is a portrait.</p>
+        <p>To make the images actually follow the prompt better, I ask the model for two velocities at every step, one with my prompt and one with an empty prompt, and push further in the direction the prompt adds using <span class="formula">v = v<sub>c</sub> + w · (v<sub>c</sub> − v<sub>u</sub>)</span> with w = 7. I used the same five starting noises as in 1.6 (seeds 2026 to 2030), so each image here lines up with the one above it. The difference is huge. All five are now clean, sharp portraits, even the one that was a cardboard shape in 1.6. In this batch, the extra guidance improves the faces but also makes the subjects less varied, since now every single one is a portrait.</p>
       </div>
       <div class="gallery one">
         <figure><img src="assets/a_cfg_samples.jpg" alt="Five guided samples with w = 7" /></figure>
@@ -145,11 +145,11 @@
         <figure><img src="assets/a_edit_web_image.jpg" alt="Cartoon car edited at seven starting times" /></figure>
       </div>
       <h5>Editing my own drawings</h5>
-      <p class="intro">I drew a self-portrait and a mountain landscape and edited both with the same "a high quality photo" prompt. The self-portrait turns into a photo of a guy at t = 0.04 while keeping my black hair, light blue shirt, and blue background. This fits with the portraits the model kept making in 1.6 and 2.1: even without a more specific prompt, it does a good job turning the drawn face into a realistic one.</p>
+      <p class="intro">I drew a self-portrait and a mountain landscape and edited both with the same "a high quality photo" prompt. The self-portrait turns into a photo of a guy at t = 0.04 while keeping my black hair, light blue shirt, and blue background. This fits with the portraits the model kept making in 1.6 and 2.1. Even without a more specific prompt, it does a good job turning the drawn face into a realistic one.</p>
       <p class="intro">The mountain drawing doesn't make that same jump to a photo. At small t, the model makes up unrelated things like a computer screen or a pink box. By around t = 0.06, it mostly copies the drawing instead. Here, adding more noise loses the landscape, while keeping more of the input also keeps its flat, cartoon style.</p>
       <div class="gallery one">
-        <figure><img src="assets/a_edit_drawing_1.jpg" alt="Self-portrait drawing edited at seven starting times" /><figcaption><b>Drawing 1: me</b><span>At t = 0.04, the face becomes realistic while keeping the colors and layout of my drawing.</span></figcaption></figure>
-        <figure><img src="assets/a_edit_drawing_2.jpg" alt="Mountain drawing edited at seven starting times" /><figcaption><b>Drawing 2: mountains under the sun</b><span>At low t, the landscape gets lost; at higher t, it stays a drawing.</span></figcaption></figure>
+        <figure><img src="assets/a_edit_drawing_1.jpg" alt="Self-portrait drawing edited at seven starting times" /><figcaption><b>Drawing 1, me</b><span>At t = 0.04, the face becomes realistic while keeping the colors and layout of my drawing.</span></figcaption></figure>
+        <figure><img src="assets/a_edit_drawing_2.jpg" alt="Mountain drawing edited at seven starting times" /><figcaption><b>Drawing 2, mountains under the sun</b><span>At low t, the landscape gets lost; at higher t, it stays a drawing.</span></figcaption></figure>
       </div>
       </section>
 
@@ -167,8 +167,8 @@
         <h4 class="experiment-heading" id="a3-3-title"><span>3.3</span> Visual Anagrams</h4>
       <p class="intro">A visual anagram looks like one thing right side up and something else upside down. At every step I get the guided velocity for prompt A on the image, and for prompt B on the image rotated 180° (then rotate that velocity back), and average the two, so the image has to make sense both ways. The wave and mountain share blue and white shapes, while the hummingbird and tennis player use the same shapes for very different poses.</p>
       <div class="gallery one">
-        <figure><img src="assets/a_anagram_views_wave_mountain.jpg" alt="Curling ocean wave upright and snowy mountain peak after rotating the same image 180 degrees" /><figcaption><b>Ocean wave ↔ snowy mountain peak</b><span>The wave's blue-and-white shapes become a snowy ridge when flipped. Left: upright. Right: the same image rotated 180°. Seed 2028.</span></figcaption></figure>
-        <figure><img src="assets/a_anagram_views_hummingbird.jpg" alt="Hummingbird upright and tennis player serving when rotated" /><figcaption><b>Hummingbird ↔ tennis player serving</b><span>The bird's spread wings become the player's arms and racket mid-serve. Left: upright. Right: rotated 180°. Seed 185.</span></figcaption></figure>
+        <figure><img src="assets/a_anagram_views_wave_mountain.jpg" alt="Curling ocean wave upright and snowy mountain peak after rotating the same image 180 degrees" /><figcaption><b>Ocean wave ↔ snowy mountain peak</b><span>The wave's blue-and-white shapes become a snowy ridge when flipped. The left image is upright. The right shows the same image rotated 180°. Seed 2028.</span></figcaption></figure>
+        <figure><img src="assets/a_anagram_views_hummingbird.jpg" alt="Hummingbird upright and tennis player serving when rotated" /><figcaption><b>Hummingbird ↔ tennis player serving</b><span>The bird's spread wings become the player's arms and racket mid-serve. The left image is upright. The right is rotated 180°. Seed 185.</span></figcaption></figure>
       </div>
       </section>
 
@@ -176,14 +176,14 @@
         <h4 class="experiment-heading" id="a3-4-title"><span>3.4</span> Hybrid Images</h4>
       <p class="intro">A hybrid image looks like one thing up close and something else from far away, because we only notice fine detail when an image is big. Here the model generates them from scratch. At every step I take the blurry (low-frequency) part of one prompt's velocity and the detail (high-frequency) part of the other prompt's velocity, and add them, so the big shape follows one prompt and the fine texture follows the other. To get the high-frequency part, I subtract the blurred velocity from the original. To see both, look at the big image, then at the smaller copies, which act like stepping back from it (seeds 183 and 184).</p>
       <h5>A tennis racket made of spider web</h5>
-      <p class="intro">Far away: "a lithograph of a tennis racket". Up close: "a lithograph of a spider web".</p>
+      <p class="intro">Far away, "a lithograph of a tennis racket". Up close, "a lithograph of a spider web".</p>
       <div class="distance">
         <figure><img src="assets/a_hybrid_0.jpg" alt="Hybrid of a tennis racket and a spider web, large" /><figcaption><b>Up close</b><span>A spider web up close, a racket from far away</span></figcaption></figure>
         <figure><img src="assets/a_hybrid_0.jpg" alt="Hybrid of a tennis racket and a spider web, medium" /><figcaption><b>Farther</b></figcaption></figure>
         <figure><img src="assets/a_hybrid_0.jpg" alt="Hybrid of a tennis racket and a spider web, small" /><figcaption><b>Far away</b></figcaption></figure>
       </div>
       <h5>A guitar made of a city</h5>
-      <p class="intro">Far away: "a lithograph of an acoustic guitar". Up close: "a lithograph of a huge sprawling city seen from far away, thousands of tiny buildings and windows".</p>
+      <p class="intro">Far away, "a lithograph of an acoustic guitar". Up close, "a lithograph of a huge sprawling city seen from far away, thousands of tiny buildings and windows".</p>
       <div class="distance">
         <figure><img src="assets/a_hybrid_1.jpg" alt="Hybrid of a guitar and a city, large" /><figcaption><b>Up close</b><span>Apartment buildings up close, a guitar from far away</span></figcaption></figure>
         <figure><img src="assets/a_hybrid_1.jpg" alt="Hybrid of a guitar and a city, medium" /><figcaption><b>Farther</b></figcaption></figure>
@@ -218,7 +218,7 @@
       <section class="experiment" id="b1-1" aria-labelledby="b1-1-title">
         <h4 class="experiment-heading" id="b1-1-title"><span>1.1</span> Implementing the UNet</h4>
       <div class="prose">
-        <p>For Part B I built everything myself and trained it on MNIST, the dataset of handwritten digits. The network is a UNet, which shrinks the image down to a tiny summary and then builds it back up, with skip connections that pass the fine details straight across from the shrinking side to the growing side. Before doing any flow matching, I started with a simpler job: take a noisy digit and clean it up. I used seed 2026 to initialize the models and kept the test examples and sampling noise fixed for the epoch comparisons.</p>
+        <p>For Part B I built everything myself and trained it on MNIST, the dataset of handwritten digits. The network is a UNet, which shrinks the image down to a tiny summary and then builds it back up, with skip connections that pass the fine details straight across from the shrinking side to the growing side. Before doing any flow matching, I started by taking a noisy digit and cleaning it up. I used seed 2026 to initialize the models and kept the test examples and sampling noise fixed for the epoch comparisons.</p>
       </div>
       </section>
 
@@ -296,7 +296,7 @@
 
       <section class="experiment" id="b2-4" aria-labelledby="b2-4-title">
         <h4 class="experiment-heading" id="b2-4-title"><span>2.4</span> Adding Class-Conditioning to UNet</h4>
-      <p class="intro">To pick which digit I get, I also feed the model the class as a one-hot vector: ten entries, all zero except for a 1 at the requested digit. Two more fully connected blocks turn that label into features that scale the upsampling features, while the time features are added. During training I blank out the label 10% of the time, so the model also learns to work without a class. That lets me use classifier-free guidance when sampling, the same trick as in Part A 2.1.</p>
+      <p class="intro">To pick which digit I get, I also feed the model the class as a one-hot vector with ten entries, all zero except for a 1 at the requested digit. Two more fully connected blocks turn that label into features that scale the upsampling features, while the time features are added. During training I blank out the label 10% of the time, so the model also learns to work without a class. That lets me use classifier-free guidance when sampling, the same trick as in Part A 2.1.</p>
       </section>
 
       <section class="experiment" id="b2-5" aria-labelledby="b2-5-title">
@@ -317,7 +317,7 @@
         <figure><img src="assets/b_class_epoch10.jpg" alt="Class-conditioned samples after epoch 10" /><figcaption><b>Epoch 10</b></figcaption></figure>
       </div>
 
-      <h5 id="b2-6-scheduler">2.6 Experiment: removing the learning rate scheduler</h5>
+      <h5 id="b2-6-scheduler">2.6 Experiment with removing the learning rate scheduler</h5>
       <p class="intro">Normally the learning rate gets smaller as training goes on. To try removing that scheduler, I trained a fresh model with a smaller learning rate of 0.001 and left it there the whole time. The idea was to take smaller updates from the start instead of waiting for the scheduler to bring them down.</p>
       <p class="intro">By epoch ten the digits look about as good as with the scheduler, and the epoch-one grid even looks cleaner. Both models start with seed 2026 and use the same sampling noise, though their training batches aren't matched exactly.</p>
       <div class="gallery loss">
