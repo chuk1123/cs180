@@ -253,6 +253,7 @@
       <section class="experiment" id="b1-2-3" aria-labelledby="b1-2-3-title">
         <h4 class="experiment-heading" id="b1-2-3-title"><span>1.2.3</span> Denoising Pure Noise</h4>
       <p class="intro">Then I trained a fresh UNet where the input is pure noise with nothing of the digit in it. Every output comes out as the same blurry blob, no matter what noise goes in. Since the input tells the model nothing about which digit it should be, the best it can do to keep the squared error low is output the average of all the training digits, which is why the blob looks like all the digits from 0 to 9 stacked on top of each other. So this one-step MSE setup doesn't learn to generate different digits from noise. Flow matching gives it a different training target and a sequence of smaller steps.</p>
+      <p class="intro">Each grid shows outputs from 40 different random-noise inputs. I reused the same inputs after epochs 1 and 5 to compare training progress.</p>
       <div class="gallery loss">
         <figure><img src="assets/b_pure_noise_loss.jpg" alt="Pure-noise training loss" /></figure>
       </div>
