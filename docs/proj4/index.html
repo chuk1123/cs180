@@ -77,7 +77,7 @@
         \boldsymbol{\theta}=\begin{bmatrix}a&amp;b&amp;c&amp;d&amp;e&amp;f&amp;g&amp;h\end{bmatrix}^{\mathsf T}
         \]
       </div>
-      <p class="intro">With more than four pairs, small clicking errors mean no single H fits every equation exactly, so I use least squares, which finds the H that fits all the pairs as closely as possible overall. A few badly clicked points can still pull the fit off, so careful clicking matters.</p>
+      <p class="intro">With more than four pairs, small clicking errors mean no single H fits every equation exactly, so I use least squares, which finds the H that fits all the pairs as closely as possible overall.</p>
       </section>
 
       <section class="experiment" id="a2-2" aria-labelledby="a2-2-title">
@@ -202,19 +202,13 @@
 
       <section class="experiment" id="a4-2" aria-labelledby="a4-2-title">
         <h4 class="experiment-heading" id="a4-2-title"><span>A.4</span> Reducing edge artifacts</h4>
-      <p class="intro">Now all the photos sit on the same canvas, but where they overlap there are two possible colors for each pixel, and blending decides what to show. The easiest thing is to paste the photos on top of each other, but then the seam lands wherever the last photo's edge happens to be. The brightness changes a little between shots, and a photo's edge is also where its alignment is worst, so that cut is easy to see.</p>
-      <p class="intro">So I do the same thing as the blending in Project 2: cut, then blur the cut. First, each pixel goes to the photo whose center is closest, which gives one mask per photo that's 1 where that photo owns the pixel and 0 everywhere else. That puts the cut about halfway through each overlap, where the photos line up best. Then I blur each mask with a Gaussian, so instead of jumping from 1 to 0 at the cut it slides down gradually, and I multiply it by the photo's alpha mask so a photo never counts where it has no pixels. Each pixel becomes a weighted average of the photos with these blurred masks as the weights, so right at the cut it's half of each photo, and a little farther away it's all one photo. Outside the overlap only one photo has any weight, so that pixel just shows that photo. This hides the seam, but wherever the alignment is slightly off, the fade mixes detail from both photos, so edges look soft or doubled.</p>
-      <p class="intro">To keep the smooth fade without the softness, I split each photo into two layers, like a two-level version of the multiresolution blending from Project 2. The blurry layer holds the overall color and brightness, so I blend it with the blurred masks to hide the brightness change. The sharp layer, which is the photo minus its blurry version, holds the edges and texture, so I blend it with the hard masks instead and take it from only one photo at each pixel, which means edges never get doubled. Adding the two layers back together gives a smooth fade with sharp detail. This can't fix bad alignment, though, so a badly matched spot can still show a small jump. Here's the same spot on one of the Doe seams with each method. In the overwrite version, the right photo's edge is pasted on top of this spot, which is the cut you can see.</p>
-      <div class="gallery three">
-        <figure><img src="assets/seam_overwrite.jpg" alt="Doe seam with photos pasted on top of each other" /><figcaption><b>Overwrite</b></figcaption></figure>
-        <figure><img src="assets/seam_average.jpg" alt="Doe seam averaged with blurred masks" /><figcaption><b>Blurred mask average</b><span>Smooth, but a little soft</span></figcaption></figure>
-        <figure><img src="assets/seam_two_band.jpg" alt="Doe seam with two-band blending" /><figcaption><b>Two-band</b><span>Smooth and sharp</span></figcaption></figure>
-      </div>
+      <p class="intro">Now all the photos sit on the same canvas, but where they overlap there are two possible colors for each pixel, and blending decides what to show. If I just paste one photo over another, there's a visible line where the top photo ends, since the brightness changes a little between shots. So I do the same thing as the blending in Project 2: cut, then blur the cut. First, each pixel goes to the photo whose center is closest, which gives one mask per photo that's 1 where that photo owns the pixel and 0 everywhere else. That puts the cut about halfway through each overlap, where the photos line up best. Then I blur each mask with a Gaussian, so instead of jumping from 1 to 0 at the cut it slides down gradually, and I multiply it by the photo's alpha mask so a photo never counts where it has no pixels. Using these blurred masks as weights, right at the cut a pixel is half of each photo, and a little farther away it's all one photo. Outside the overlap only one photo has any weight, so it just shows that photo.</p>
+      <p class="intro">If the alignment is even slightly off, though, fading between the photos mixes detail from both, so edges look soft or doubled. To avoid that, I split each photo into two layers, like a two-level version of the multiresolution blending from Project 2. The blurry layer holds the overall color and brightness, so I blend it with the blurred masks to hide the brightness change. The sharp layer, which is the photo minus its blurry version, holds the edges and texture, so I blend it with the hard masks instead, taking it from only one photo at each pixel so edges never get doubled. Adding the two layers back together gives a smooth fade with sharp detail.</p>
       </section>
 
       <section class="experiment" id="a4-3" aria-labelledby="a4-3-title">
         <h4 class="experiment-heading" id="a4-3-title"><span>A.4</span> Mosaics</h4>
-      <p class="intro">Here are the three mosaics with their source photos, all blended with the two-band method. The slanted outlines are the edges of the warped photos, and the black areas aren't covered by any photo. The outer photos look stretched because they're being bent into the middle photo's flat view, and the farther a photo is turned away from it, the more it stretches.</p>
+      <p class="intro">Here are the three mosaics with their source photos. The slanted outlines are the edges of the warped photos, and the black areas aren't covered by any photo. The outer photos look stretched because they're being bent into the middle photo's flat view, and the farther a photo is turned away from it, the more it stretches.</p>
       <h5>Haas Pavilion</h5>
       <div class="gallery one">
         <figure><img src="assets/haas_sources.jpg" alt="Source photos for the Haas Pavilion mosaic" /><figcaption><b>Source photos</b></figcaption></figure>
@@ -235,12 +229,6 @@
       </section>
     </section>
 
-    <section id="takeaway">
-      <div class="section-heading"><span>★</span><h2>What I learned</h2></div>
-      <div class="prose">
-        <p>The most surprising part for me was how much a single 3×3 matrix can do, from straightening a building to stitching a whole panorama. It also showed me how much the input matters. Clicking points carefully and turning the phone without moving it made a bigger difference than anything fancy in the blending.</p>
-      </div>
-    </section>
   </main>
 </body>
 </html>
