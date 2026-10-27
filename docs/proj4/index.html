@@ -52,7 +52,7 @@
 
       <section class="experiment" id="a2-1" aria-labelledby="a2-1-title">
         <h4 class="experiment-heading" id="a2-1-title"><span>A.2</span> Setting up the equations</h4>
-      <p class="intro">H has eight parameters. To apply it to a point (x, y), I first write the point in homogeneous coordinates by adding a 1, giving (x, y, 1), so that a single 3×3 matrix multiplication can do the whole projective transform. Multiplying by H gives three numbers, and dividing the first two by the third brings the point back to regular pixel coordinates (x', y'), which works out to the formulas below.</p>
+      <p class="intro">H is a 3×3 matrix. To apply it to a point (x, y), I first write the point in homogeneous coordinates by adding a 1, giving (x, y, 1), so that a single matrix multiplication can do the whole projective transform. Multiplying by H gives three numbers, and dividing the first two by the third brings the point back to regular pixel coordinates (x', y'). Written out, that gives the formulas below.</p>
       <div class="math-block">
         \[
         H = \begin{bmatrix}a &amp; b &amp; c \\ d &amp; e &amp; f \\ g &amp; h &amp; 1\end{bmatrix},
@@ -61,7 +61,7 @@
         y'=\frac{dx+ey+f}{gx+hy+1}
         \]
       </div>
-      <p class="intro">Multiplying every entry of H by the same number cancels out in the division, so I fix its bottom-right entry to 1. That leaves eight unknowns. Rearranging the two coordinate equations makes each matching point pair give two linear equations:</p>
+      <p class="intro">H has nine entries, but only eight of them actually matter. If I multiply all of H by the same number, the top and bottom of each fraction get multiplied by it too, so it cancels and the point lands in the same place. That means I can set the bottom-right entry to 1, as shown above, which leaves eight unknowns, a through h. For each matching pair I know (x, y) from one photo and (x', y') from the other, so those eight entries are the only unknowns. Multiplying both sides of each formula by the bottom of the fraction and rearranging turns them into two equations that are linear in a through h:</p>
       <div class="math-block">
         \[
         \begin{aligned}
@@ -70,7 +70,7 @@
         \end{aligned}
         \]
       </div>
-      <p class="intro">Each pair supplies two equations, so at least four well-spread pairs are needed for the eight unknowns. My <code>computeH(im1_pts, im2_pts)</code> puts all the pairs into one system. Here, \(\boldsymbol{\theta}\) holds the eight unknown entries of H, while A and \(\mathbf{b}\) contain the clicked coordinates:</p>
+      <p class="intro">Since each pair gives two equations, I need at least four pairs to solve for eight unknowns, and they should be spread out rather than bunched together. My <code>computeH(im1_pts, im2_pts)</code> stacks the two equations from every pair into one system, where \(\boldsymbol{\theta}\) holds the eight unknowns and every two rows of A and \(\mathbf{b}\) come from one clicked pair:</p>
       <div class="math-block">
         \[
         A\boldsymbol{\theta}=\mathbf{b},\qquad
