@@ -52,7 +52,7 @@
 
       <section class="experiment" id="a2-1" aria-labelledby="a2-1-title">
         <h4 class="experiment-heading" id="a2-1-title"><span>A.2</span> Setting up the equations</h4>
-      <p class="intro">To apply H to a point (x, y), I first write the point in homogeneous coordinates by adding a 1, giving (x, y, 1), so H can be applied with one matrix multiplication. That gives three numbers, and dividing the first two by the third brings the point back to regular pixel coordinates (x', y'). Written out, that gives the formulas below.</p>
+      <p class="intro">To apply H to a point (x, y), I first write the point in homogeneous coordinates by adding a 1, giving (x, y, 1), so H can be applied with one matrix multiplication. That gives three numbers, and dividing the first two by the third brings the point back to regular pixel coordinates (x', y'). Written out, that gives the formulas below (the bottom-right entry of H only sets the overall scale, so I fix it to 1, which leaves eight unknowns, a through h).</p>
       <div class="math-block">
         \[
         H = \begin{bmatrix}a &amp; b &amp; c \\ d &amp; e &amp; f \\ g &amp; h &amp; 1\end{bmatrix},
@@ -61,7 +61,7 @@
         y'=\frac{dx+ey+f}{gx+hy+1}
         \]
       </div>
-      <p class="intro">The bottom-right entry of H only sets the overall scale, so I fix it to 1, which leaves eight unknowns, a through h. For each matching pair I know (x, y) and (x', y'), so multiplying both sides of each formula by the bottom of the fraction and rearranging gives two equations that are linear in the unknowns:</p>
+      <p class="intro">For each matching pair I know (x, y) and (x', y'), so multiplying both sides of each formula by the bottom of the fraction and rearranging gives two equations that are linear in the unknowns:</p>
       <div class="math-block">
         \[
         \begin{aligned}
