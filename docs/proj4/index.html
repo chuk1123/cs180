@@ -48,7 +48,7 @@
       <div class="section-heading"><span>A.2</span><h3>Recover Homographies</h3></div>
 
       <p class="intro">The first step is to describe where a feature in one photo should land in the next. For example, a window corner might appear near the right edge of the left photo and near the left edge of the next photo. Those two locations are a matching pair, also called a correspondence. I record each location as pixel coordinates (x, y), with x increasing to the right and y increasing downward.</p>
-      <p class="intro">Rather than moving each feature separately, I want one rule that maps the whole image. That rule is a homography, a 3×3 matrix H that can describe perspective changes while keeping straight lines straight. It applies to a flat surface viewed from different angles, or to a scene at different depths when the camera rotates around a fixed center. The matching points let me solve for H.</p>
+      <p class="intro">I want to move all of these points with one transform so they line up with their matches in the other photo. Since the camera only turned between shots, a projective transform, also called a homography, can do this. It is a 3×3 matrix H, and the matching points let me solve for it.</p>
 
       <section class="experiment" id="a2-1" aria-labelledby="a2-1-title">
         <h4 class="experiment-heading" id="a2-1-title"><span>A.2</span> Setting up the equations</h4>
