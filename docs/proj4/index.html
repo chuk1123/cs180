@@ -35,7 +35,7 @@
     <!-- ===================== A.1 ===================== -->
     <section class="chapter" id="a1">
       <div class="section-heading"><span>A.1</span><h3>Shoot the Pictures</h3></div>
-      <p class="intro">To join two photos, they need to overlap, meaning part of the scene shows up in both so I can use it to line them up. I kept the phone in the same spot and only turned it between shots. That matters because if the camera moves sideways, nearby objects shift more than faraway ones, and then no single projective transform can line both of them up. I also took each set quickly so people and lighting wouldn't change much in between. At Haas Pavilion and on Memorial Glade facing Doe Library I turned from left to right, and in the eucalyptus grove I tilted upward, so those photos go from the ground up to the treetops.</p>
+      <p class="intro">To join two photos, they need to overlap, meaning part of the scene shows up in both so I can use it to line them up. I kept the phone in the same spot and only turned it between shots. That matters because if the camera moves sideways, nearby objects shift more than faraway ones, and then no single transform can line both of them up. I also took each set quickly so people and lighting wouldn't change much in between. At Haas Pavilion and on Memorial Glade facing Doe Library I turned from left to right, and in the eucalyptus grove I tilted upward, so those photos go from the ground up to the treetops.</p>
       <div class="gallery one">
         <figure><img src="assets/haas_sources.jpg" alt="Two photos of the Haas Pavilion entrance, left and right" /><figcaption><b>Haas Pavilion</b><span>Left to right</span></figcaption></figure>
         <figure><img src="assets/doe_sources.jpg" alt="Three photos sweeping across Doe Library" /><figcaption><b>Doe Library</b><span>Left to right</span></figcaption></figure>
@@ -48,11 +48,11 @@
       <div class="section-heading"><span>A.2</span><h3>Recover Homographies</h3></div>
 
       <p class="intro">The first step is to describe where a feature in one photo should land in the next. For example, a window corner might appear near the right edge of the left photo and near the left edge of the next photo. Those two locations are a matching pair, also called a correspondence. I record each location as pixel coordinates (x, y), with x increasing to the right and y increasing downward.</p>
-      <p class="intro">Now I want one transform that moves every point in one photo onto its match in the other. Since the camera only turned between shots, a projective transform, also called a homography, can do this. It's a 3×3 matrix H, and the matching points are what I use to solve for it.</p>
+      <p class="intro">Now I want one transform that moves every point in one photo onto its match in the other. Because the camera only turned, a projective transform, also called a homography, can do this. It's a 3×3 matrix H, which I solve for using the matching points.</p>
 
       <section class="experiment" id="a2-1" aria-labelledby="a2-1-title">
         <h4 class="experiment-heading" id="a2-1-title"><span>A.2</span> Setting up the equations</h4>
-      <p class="intro">H is a 3×3 matrix. To apply it to a point (x, y), I first write the point in homogeneous coordinates by adding a 1, giving (x, y, 1), so that a single matrix multiplication can do the whole projective transform. Multiplying by H gives three numbers, and dividing the first two by the third brings the point back to regular pixel coordinates (x', y'). Written out, that gives the formulas below.</p>
+      <p class="intro">To apply H to a point (x, y), I first write the point in homogeneous coordinates by adding a 1, giving (x, y, 1), so H can be applied with one matrix multiplication. That gives three numbers, and dividing the first two by the third brings the point back to regular pixel coordinates (x', y'). Written out, that gives the formulas below.</p>
       <div class="math-block">
         \[
         H = \begin{bmatrix}a &amp; b &amp; c \\ d &amp; e &amp; f \\ g &amp; h &amp; 1\end{bmatrix},
@@ -61,7 +61,7 @@
         y'=\frac{dx+ey+f}{gx+hy+1}
         \]
       </div>
-      <p class="intro">The bottom-right entry of H only sets the overall scale, so I fix it to 1, which leaves eight unknowns, a through h. For each matching pair I know (x, y) from one photo and (x', y') from the other, so those eight entries are the only unknowns. Multiplying both sides of each formula by the bottom of the fraction and rearranging turns them into two equations that are linear in a through h:</p>
+      <p class="intro">The bottom-right entry of H only sets the overall scale, so I fix it to 1, which leaves eight unknowns, a through h. For each matching pair I know (x, y) and (x', y'), so multiplying both sides of each formula by the bottom of the fraction and rearranging gives two equations that are linear in the unknowns:</p>
       <div class="math-block">
         \[
         \begin{aligned}
@@ -70,7 +70,7 @@
         \end{aligned}
         \]
       </div>
-      <p class="intro">Since each pair gives two equations, I need at least four pairs to solve for eight unknowns, and they should be spread out rather than bunched together. My <code>computeH(im1_pts, im2_pts)</code> stacks the two equations from every pair into one system, where \(\boldsymbol{\theta}\) holds the eight unknowns and every two rows of A and \(\mathbf{b}\) come from one clicked pair:</p>
+      <p class="intro">Since each pair gives two equations, I need at least four pairs. My <code>computeH(im1_pts, im2_pts)</code> stacks the equations from every pair into one system, where \(\boldsymbol{\theta}\) holds a through h:</p>
       <div class="math-block">
         \[
         A\boldsymbol{\theta}=\mathbf{b},\qquad
@@ -94,7 +94,7 @@
 
       <section class="experiment" id="a2-3" aria-labelledby="a2-3-title">
         <h4 class="experiment-heading" id="a2-3-title"><span>A.2</span> System of equations and recovered homography</h4>
-      <p class="intro">Here is a numerical example for Haas. The first point I clicked goes from about (835.73, 1034.60) in the left photo to (167.88, 995.00) in the right photo. Substituting those coordinates into the equations produces the first two rows below, and the next pair produces the next two rows. The full system stacks the rows from every pair, and the recovered H maps the left photo into the right photo's view.</p>
+      <p class="intro">Here are the actual numbers for Haas. The first point I clicked goes from about (835.73, 1034.60) in the left photo to (167.88, 995.00) in the right photo, and plugging it into the two equations gives the first two rows below. The next pair gives the next two rows, and so on. The H at the bottom maps the left photo into the right photo's view.</p>
       <p class="math-label">First four rows of A and first four entries of \(\mathbf{b}\)</p>
       <div class="math-block math-wide">
         \[
