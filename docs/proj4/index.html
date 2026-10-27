@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="CS180 Project 4A covering homographies, inverse warping, rectification, and blended image mosaics." />
+  <title>Image Warping and Mosaicing | CS180</title>
+  <link rel="icon" href="../favicon.png" />
+  <link rel="stylesheet" href="style.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@4.0.0/tex-chtml.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="../">CS180</a>
+    <nav><a href="../">Projects</a><a class="active" href="./">proj4</a></nav>
+  </header>
+
+  <main>
+    <p class="eyebrow">Kevin Chu · Fall 2026</p>
+    <h1>Image Warping and Mosaicing</h1>
+    <p class="lede">One photo can only fit so much of a scene. For this project I took overlapping photos around campus and joined them into larger images called mosaics. The challenge is that turning the camera changes how the scene looks, so I can't just place the photos next to each other. I first find how matching features move between photos, reshape the images until those features line up, and blend the overlap to hide the seams.</p>
+
+    <!-- ===================== PART A ===================== -->
+    <div class="part-heading" id="part-a">
+      <p class="eyebrow">Part A</p>
+      <h2>Image Warping and Mosaicing</h2>
+      <nav class="contents section-contents" aria-label="Part A sections">
+        <a href="#a1"><b>A.1</b> Shoot the Pictures</a>
+        <a href="#a2"><b>A.2</b> Recover Homographies</a>
+        <a href="#a3"><b>A.3</b> Warp the Images</a>
+        <a href="#a4"><b>A.4</b> Blend the Images into a Mosaic</a>
+      </nav>
+    </div>
+
+    <!-- ===================== A.1 ===================== -->
+    <section class="chapter" id="a1">
+      <div class="section-heading"><span>A.1</span><h3>Shoot the Pictures</h3></div>
+      <p class="intro">Each pair needs an overlap: a part of the scene visible in both photos that I can use to line them up. I tried to keep the phone's lens in the same place while turning it between shots. If the camera moves sideways, nearby objects shift more than faraway ones, so the two photos can no longer be related by a single projective transform. Turning in place avoids this. I took the shots close together to limit changes in the scene. At Haas Pavilion and on Memorial Glade facing Doe Library, I turned left to right. In the eucalyptus grove I tilted upward, so the photos shown from left to right go from the ground toward the treetops.</p>
+      <div class="gallery one">
+        <figure><img src="assets/haas_sources.jpg" alt="Two photos of the Haas Pavilion entrance, left and right" /><figcaption><b>Haas Pavilion</b><span>Left to right</span></figcaption></figure>
+        <figure><img src="assets/doe_sources.jpg" alt="Three photos sweeping across Doe Library" /><figcaption><b>Doe Library</b><span>Left to right</span></figcaption></figure>
+        <figure><img src="assets/grove_sources.jpg" alt="Three photos tilting up a eucalyptus grove" /><figcaption><b>Eucalyptus grove</b><span>Bottom to top</span></figcaption></figure>
+      </div>
+    </section>
+
+    <!-- ===================== A.2 ===================== -->
+    <section class="chapter" id="a2">
+      <div class="section-heading"><span>A.2</span><h3>Recover Homographies</h3></div>
+
+      <p class="intro">The first step is to describe where a feature in one photo should land in the next. For example, a window corner might appear near the right edge of the left photo and near the left edge of the next photo. Those two locations are a matching pair, also called a correspondence. I record each location as pixel coordinates (x, y), with x increasing to the right and y increasing downward.</p>
+      <p class="intro">Rather than moving each feature separately, I want one rule that maps the whole image. That rule is a homography, a 3×3 matrix H that can describe perspective changes while keeping straight lines straight. It applies to a flat surface viewed from different angles, or to a scene at different depths when the camera rotates around a fixed center. The matching points let me solve for H.</p>
+
+      <section class="experiment" id="a2-1" aria-labelledby="a2-1-title">
+        <h4 class="experiment-heading" id="a2-1-title"><span>A.2</span> Setting up the equations</h4>
+      <p class="intro">H has eight numbers in it, and a point (x, y) moves to (x', y') using the formulas below. The top of each fraction shifts, rotates and stretches the point. The bottom changes across the image, so parts of the photo can shrink or grow, which is what makes the result look like a different viewing angle.</p>
+      <div class="math-block">
+        \[
+        H = \begin{bmatrix}a &amp; b &amp; c \\ d &amp; e &amp; f \\ g &amp; h &amp; 1\end{bmatrix},
+        \qquad
+        x'=\frac{ax+by+c}{gx+hy+1},\qquad
+        y'=\frac{dx+ey+f}{gx+hy+1}
+        \]
+      </div>
+      <p class="intro">Multiplying every entry of H by the same number cancels out in the division, so I fix its bottom-right entry to 1. That leaves eight unknowns. Rearranging the two coordinate equations makes each matching point pair give two linear equations:</p>
+      <div class="math-block">
+        \[
+        \begin{aligned}
+        ax+by+c-gxx'-hyx' &amp;= x' \\
+        dx+ey+f-gxy'-hyy' &amp;= y'
+        \end{aligned}
+        \]
+      </div>
+      <p class="intro">Each pair supplies two equations, so at least four well-spread pairs are needed for the eight unknowns. My <code>computeH(im1_pts, im2_pts)</code> puts all the pairs into one system. Here, \(\boldsymbol{\theta}\) holds the eight unknown entries of H, while A and \(\mathbf{b}\) contain the clicked coordinates:</p>
+      <div class="math-block">
+        \[
+        A\boldsymbol{\theta}=\mathbf{b},\qquad
+        \boldsymbol{\theta}=\begin{bmatrix}a&amp;b&amp;c&amp;d&amp;e&amp;f&amp;g&amp;h\end{bmatrix}^{\mathsf T}
+        \]
+      </div>
+      <p class="intro">With extra pairs, small clicking errors usually mean no H satisfies every equation exactly. Least squares finds the entries that minimize the total squared equation error, using all the pairs together. Inaccurate clicks can still hurt the fit.</p>
+      </section>
+
+      <section class="experiment" id="a2-2" aria-labelledby="a2-2-title">
+        <h4 class="experiment-heading" id="a2-2-title"><span>A.2</span> Correspondences</h4>
+      <p class="intro">For every pair of neighboring photos I clicked matching points across the overlap, where the same number marks the same spot in both photos. I picked sharp corners on things that don't move, like window frames, banner edges, the roofline, and knots and forks on the tree trunks, and spread them out so the fit holds across the whole overlap instead of just one area. For Doe, I later refined the clicked locations with local image matching and removed unreliable matches to reduce offsets at the seams. The homographies still use the same least-squares solver.</p>
+      <div class="gallery one">
+        <figure><img src="assets/haas_points.jpg" alt="Clicked correspondences between the two Haas Pavilion photos" /><figcaption><b>Haas Pavilion</b></figcaption></figure>
+        <figure><img src="assets/doe_points_1_2.jpg" alt="Clicked correspondences between the first and second Doe Library photos" /><figcaption><b>Doe Library, left and middle</b></figcaption></figure>
+        <figure><img src="assets/doe_points_2_3.jpg" alt="Clicked correspondences between the second and third Doe Library photos" /><figcaption><b>Doe Library, middle and right</b></figcaption></figure>
+        <figure><img src="assets/grove_points_1_2.jpg" alt="Clicked correspondences between the bottom and middle grove photos" /><figcaption><b>Eucalyptus grove, bottom and middle</b></figcaption></figure>
+        <figure><img src="assets/grove_points_2_3.jpg" alt="Clicked correspondences between the middle and top grove photos" /><figcaption><b>Eucalyptus grove, middle and top</b></figcaption></figure>
+      </div>
+      </section>
+
+      <section class="experiment" id="a2-3" aria-labelledby="a2-3-title">
+        <h4 class="experiment-heading" id="a2-3-title"><span>A.2</span> System of equations and recovered homography</h4>
+      <p class="intro">Here is a numerical example for Haas. The first point I clicked goes from about (835.73, 1034.60) in the left photo to (167.88, 995.00) in the right photo. Substituting those coordinates into the equations produces the first two rows below, and the next pair produces the next two rows. The full system stacks the rows from every pair, and the recovered H maps the left photo into the right photo's view.</p>
+      <p class="math-label">First four rows of A and first four entries of \(\mathbf{b}\)</p>
+      <div class="math-block math-wide">
+        \[
+        A_{1:4,:}=\begin{bmatrix}
+        835.73 &amp; 1034.60 &amp; 1 &amp; 0 &amp; 0 &amp; 0 &amp; -140298.04 &amp; -173683.77 \\
+        0 &amp; 0 &amp; 0 &amp; 835.73 &amp; 1034.60 &amp; 1 &amp; -831548.15 &amp; -1029425.76 \\
+        916.50 &amp; 1033.01 &amp; 1 &amp; 0 &amp; 0 &amp; 0 &amp; -233692.17 &amp; -263401.58 \\
+        0 &amp; 0 &amp; 0 &amp; 916.50 &amp; 1033.01 &amp; 1 &amp; -911917.34 &amp; -1027849.89
+        \end{bmatrix}
+        \]
+      </div>
+      <div class="math-block">
+        \[
+        \mathbf{b}_{1:4}=\begin{bmatrix}167.88\\995.00\\254.98\\995.00\end{bmatrix}
+        \]
+      </div>
+      <p class="math-label">Recovered homography, using all matching pairs</p>
+      <div class="math-block">
+        \[
+        H\approx\begin{bmatrix}
+        1.9294 &amp; -0.2292 &amp; -1101.5507 \\
+        0.8113 &amp; 1.6856 &amp; -792.1035 \\
+        0.0008 &amp; 0.0000 &amp; 1.0000
+        \end{bmatrix}
+        \]
+      </div>
+      <p class="intro">The other pairs use the same equations with their own clicked points. Each H below maps the first photo of the pair into the second.</p>
+      <p class="math-label">Doe Library, left to middle and middle to right</p>
+      <div class="math-block math-wide">
+        \[
+        H_{12}\approx\begin{bmatrix}
+        1.8858 &amp; -0.0094 &amp; -960.3754 \\
+        0.3419 &amp; 1.5606 &amp; -325.6921 \\
+        0.0006 &amp; 0.0000 &amp; 1.0000
+        \end{bmatrix},\qquad
+        H_{23}\approx\begin{bmatrix}
+        1.9754 &amp; -0.0137 &amp; -1035.7577 \\
+        0.3784 &amp; 1.6526 &amp; -494.0321 \\
+        0.0006 &amp; 0.0000 &amp; 1.0000
+        \end{bmatrix}
+        \]
+      </div>
+      <p class="math-label">Eucalyptus grove, bottom to middle and middle to top</p>
+      <div class="math-block math-wide">
+        \[
+        H_{12}\approx\begin{bmatrix}
+        0.8190 &amp; -0.1760 &amp; 101.0452 \\
+        -0.0148 &amp; 0.5120 &amp; 558.4553 \\
+        0.0000 &amp; -0.0003 &amp; 1.0000
+        \end{bmatrix},\qquad
+        H_{23}\approx\begin{bmatrix}
+        0.8606 &amp; -0.1479 &amp; 81.1357 \\
+        0.0263 &amp; 0.6148 &amp; 430.0155 \\
+        0.0000 &amp; -0.0002 &amp; 1.0000
+        \end{bmatrix}
+        \]
+      </div>
+      </section>
+    </section>
+
+    <!-- ===================== A.3 ===================== -->
+    <section class="chapter" id="a3">
+      <div class="section-heading"><span>A.3</span><h3>Warp the Images</h3></div>
+
+      <section class="experiment" id="a3-1" aria-labelledby="a3-1-title">
+        <h4 class="experiment-heading" id="a3-1-title"><span>A.3</span> Inverse warping</h4>
+      <p class="intro">H tells me where points move, but a photo also needs a color at every pixel in the new image. Warping is the step that builds that image. If I send each original pixel forward through H, some output pixels can be skipped when the image stretches. Instead, I work backward. I first push the image's four corners through H to find how big the output needs to be, and then for every output pixel I apply \(H^{-1}\) to see where it came from in the original. This visits every output pixel, avoiding gaps caused by pushing source pixels forward. Output pixels whose source falls outside the original have nothing to show, so I keep an alpha mask that marks them as empty, which later lets the mosaic ignore them instead of blending in black.</p>
+      <p class="intro">The source location may be something like (100.3, 80.7), between pixels rather than at a stored color. Interpolation means estimating the color at that location, and I wrote two versions from scratch. <code>warpImageNearestNeighbor</code> rounds to the closest pixel. <code>warpImageBilinear</code> takes the four pixels around the point and blends them, giving more weight to whichever ones are closer.</p>
+      </section>
+
+      <section class="experiment" id="a3-2" aria-labelledby="a3-2-title">
+        <h4 class="experiment-heading" id="a3-2-title"><span>A.3</span> Rectification</h4>
+      <p class="intro">Before joining photos, I tested the warp on a simpler problem: making an angled view of a flat rectangle look straight on. This is rectification. I clicked four corners on the walkway and on one flat section of the Valley Life Sciences Building, then used <code>computeH</code> to map those corners to an upright rectangle. The destination gives me a view from above the walkway or in front of the wall. Features outside that plane may still look distorted, so I crop around the selected rectangle.</p>
+      <div class="gallery three">
+        <figure><img src="assets/walkway_corners.jpg" alt="Brick walkway with the clicked rectangle outlined" /><figcaption><b>Walkway</b><span>The four corners I clicked</span></figcaption></figure>
+        <figure><img src="assets/walkway_nearest.jpg" alt="Walkway rectified with nearest neighbor" /><figcaption><b>Nearest neighbor</b></figcaption></figure>
+        <figure><img src="assets/walkway_rectified.jpg" alt="Walkway rectified with bilinear interpolation" /><figcaption><b>Bilinear</b></figcaption></figure>
+      </div>
+      <div class="gallery three">
+        <figure><img src="assets/vlsb_corners.jpg" alt="Valley Life Sciences Building with the clicked rectangle outlined" /><figcaption><b>Valley Life Sciences Building</b><span>The four corners I clicked</span></figcaption></figure>
+        <figure><img src="assets/vlsb_nearest.jpg" alt="Building rectified with nearest neighbor" /><figcaption><b>Nearest neighbor</b></figcaption></figure>
+        <figure><img src="assets/vlsb_rectified.jpg" alt="Building rectified with bilinear interpolation" /><figcaption><b>Bilinear</b></figcaption></figure>
+      </div>
+      <p class="intro">The destination rectangle's proportions matter too, since making every selection a square would squash or stretch what's inside it. So I gave each one a width-to-height ratio matching the object, a long thin strip for the walkway and a slightly wide rectangle for the wall. The results straighten the rows of bricks and the window frames.</p>
+      </section>
+
+      <section class="experiment" id="a3-3" aria-labelledby="a3-3-title">
+        <h4 class="experiment-heading" id="a3-3-title"><span>A.3</span> Nearest neighbor vs. bilinear</h4>
+      <p class="intro">At full size the two results look almost the same, so here is a close-up of the same spot in each. Nearest neighbor is faster since it reads just one pixel, but edges come out jagged and blocky because neighboring output pixels jump between whole source pixels. Bilinear reads four pixels and does a bit of math for each, which takes about twice as long, but the brick lines and window frames stay smooth. The extra time is small next to the better quality, so I used bilinear for everything after this.</p>
+      <div class="gallery one">
+        <figure><img src="assets/walkway_zoom.jpg" alt="Close-up of the rectified walkway with nearest neighbor and bilinear" /><figcaption><b>Walkway close-up</b></figcaption></figure>
+        <figure><img src="assets/vlsb_zoom.jpg" alt="Close-up of the rectified building with nearest neighbor and bilinear" /><figcaption><b>Building close-up</b></figcaption></figure>
+      </div>
+      </section>
+    </section>
+
+    <!-- ===================== A.4 ===================== -->
+    <section class="chapter" id="a4">
+      <div class="section-heading"><span>A.4</span><h3>Blend the Images into a Mosaic</h3></div>
+
+      <section class="experiment" id="a4-1" aria-labelledby="a4-1-title">
+        <h4 class="experiment-heading" id="a4-1-title"><span>A.4</span> Procedure</h4>
+      <p class="intro">Rectification maps a photo into a view I define myself. A mosaic uses the same warp, but the destination is another photo's view. For Doe and the grove, I keep the middle photo fixed and bring the two outer photos into its coordinates. If H maps the left photo to the middle, I use H directly; if H maps the middle to the right, I use its inverse to bring the right photo back to the middle. For the two-photo Haas set, the right photo stays fixed. Transforming all the corners gives me one canvas large enough to hold the images, including the parts outside the reference photo.</p>
+      </section>
+
+      <section class="experiment" id="a4-2" aria-labelledby="a4-2-title">
+        <h4 class="experiment-heading" id="a4-2-title"><span>A.4</span> Reducing edge artifacts</h4>
+      <p class="intro">The photos now share coordinates, but the overlap still contains more than one possible color at each pixel. Blending decides how to combine them. Just pasting the photos on top of each other can leave a visible seam where one photo ends, since the brightness changes a little between shots. To fade between them, every photo gets a weight that is highest at its center and drops to zero at its edges, and I warp that weight right along with the photo. A weighted average then blends the photos smoothly, but wherever the alignment is slightly off, it shows the detail from both photos at once, so things look soft or doubled.</p>
+      <p class="intro">To reduce this softness while keeping a smooth fade, I split each warped photo into a blurry low-frequency band and a sharp high-frequency band. The low band holds the overall color and brightness, so I blend it with the weighted average to hide the seam. The high band holds the edges and texture, so for each pixel I take it only from the photo with the biggest weight there, which keeps details from being averaged into ghosts. Adding the bands back together keeps more detail while smoothing brightness changes. It doesn't fix incorrect alignment, and switching between high-frequency bands can still leave artifacts. Here is the same spot on one of the Doe seams with each method.</p>
+      <div class="gallery three">
+        <figure><img src="assets/seam_overwrite.jpg" alt="Doe seam with photos pasted on top of each other" /><figcaption><b>Overwrite</b></figcaption></figure>
+        <figure><img src="assets/seam_average.jpg" alt="Doe seam with a weighted average" /><figcaption><b>Weighted average</b><span>Smooth, but a little soft</span></figcaption></figure>
+        <figure><img src="assets/seam_two_band.jpg" alt="Doe seam with two-band blending" /><figcaption><b>Two-band</b><span>Smooth and sharp</span></figcaption></figure>
+      </div>
+      </section>
+
+      <section class="experiment" id="a4-3" aria-labelledby="a4-3-title">
+        <h4 class="experiment-heading" id="a4-3-title"><span>A.4</span> Mosaics</h4>
+      <p class="intro">Here are the three mosaics with their source photos, all blended with the two-band method. The slanted outlines are the boundaries of the warped photos. Black regions lie outside every photo, so they contain no image data. The outer views can stretch because I am fitting a wider scene onto the reference photo's flat image plane; I kept those boundaries visible to show the full result.</p>
+      <h5>Haas Pavilion</h5>
+      <div class="gallery one">
+        <figure><img src="assets/haas_sources.jpg" alt="Source photos for the Haas Pavilion mosaic" /><figcaption><b>Source photos</b></figcaption></figure>
+        <figure><img src="assets/haas_mosaic.jpg" alt="Mosaic of the Haas Pavilion entrance" /><figcaption><b>Mosaic</b><span>The whole entrance, which didn't fit in one shot</span></figcaption></figure>
+      </div>
+      <h5>Doe Library</h5>
+      <div class="gallery one">
+        <figure><img src="assets/doe_sources.jpg" alt="Source photos for the Doe Library mosaic" /><figcaption><b>Source photos</b></figcaption></figure>
+        <figure><img src="assets/doe_mosaic.jpg" alt="Mosaic of Doe Library and the Campanile" /><figcaption><b>Mosaic</b><span>The library and the Campanile behind it in one frame</span></figcaption></figure>
+      </div>
+      <h5>Eucalyptus grove</h5>
+      <div class="gallery one">
+        <figure><img src="assets/grove_sources.jpg" alt="Source photos for the eucalyptus grove mosaic" /><figcaption><b>Source photos</b><span>Bottom to top</span></figcaption></figure>
+      </div>
+      <div class="gallery narrow">
+        <figure><img src="assets/grove_mosaic.jpg" alt="Vertical mosaic of the eucalyptus grove" /><figcaption><b>Mosaic</b><span>From the leaves on the ground up to the treetops</span></figcaption></figure>
+      </div>
+      </section>
+    </section>
+
+    <section id="takeaway">
+      <div class="section-heading"><span>★</span><h2>What I learned</h2></div>
+      <div class="prose">
+        <p>The most surprising part for me was how much a single 3×3 matrix can do, from straightening a building to stitching a whole panorama. It also showed me how much the input matters. Clicking points carefully and turning the phone without moving it made a bigger difference than anything fancy in the blending.</p>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

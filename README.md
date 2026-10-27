@@ -32,6 +32,8 @@ docs/
   proj0/              # Project 0 page and its assets
   proj1/              # Project 1 report and assets
   proj2/              # Project 2 report and assets
+  proj3/              # Project 3 report and assets
+  proj4/              # Project 4 report and assets
 ```
 
 Each future project gets its own `docs/projN/` directory with an `index.html`,
@@ -48,6 +50,7 @@ project0/      # camera originals (dolly zoom, etc.)
 project1/      # Project 1 code, data, outputs
 project2/      # Project 2 code (main.py), inputs in data/, results in output/
 project3/      # Project 3 notebooks: partA/ (flow models), partB/ (flow matching)
+project4/      # Project 4 code; photos in data/, results in output/ (see project4/README.md)
 submissions/   # what was turned in, e.g. submissions/project2/submission.zip
 ```
 
