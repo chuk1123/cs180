@@ -52,7 +52,7 @@
 
       <section class="experiment" id="a2-1" aria-labelledby="a2-1-title">
         <h4 class="experiment-heading" id="a2-1-title"><span>A.2</span> Setting up the equations</h4>
-      <p class="intro">H has eight parameters. To move a point (x, y), I add a 1 to it to get (x, y, 1) and multiply by H, which gives three numbers. Dividing the first two by the third gives the new point (x', y'), which works out to the formulas below.</p>
+      <p class="intro">H has eight parameters. To apply it to a point (x, y), I first write the point in homogeneous coordinates by adding a 1, giving (x, y, 1), so that a single 3×3 matrix multiplication can do the whole projective transform. Multiplying by H gives three numbers, and dividing the first two by the third brings the point back to regular pixel coordinates (x', y'), which works out to the formulas below.</p>
       <div class="math-block">
         \[
         H = \begin{bmatrix}a &amp; b &amp; c \\ d &amp; e &amp; f \\ g &amp; h &amp; 1\end{bmatrix},
