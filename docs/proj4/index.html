@@ -95,20 +95,21 @@
       <section class="experiment" id="a2-3" aria-labelledby="a2-3-title">
         <h4 class="experiment-heading" id="a2-3-title"><span>A.2</span> System of equations and recovered homography</h4>
       <p class="intro">Here are the actual numbers for Haas. The first point I clicked goes from about (835.73, 1034.60) in the left photo to (167.88, 995.00) in the right photo, and plugging it into the two equations gives the first two rows below. The next pair gives the next two rows, and so on. The H at the bottom maps the left photo into the right photo's view.</p>
-      <p class="math-label">First four rows of A and first four entries of \(\mathbf{b}\)</p>
+      <p class="math-label">The 27 point pairs give 54 equations, so A has 54 rows and 8 columns and \(\mathbf{b}\) has 54 entries. The first four rows are shown as an example, with dots for the rest.</p>
       <div class="math-block math-wide">
         \[
-        A_{1:4,:}=\begin{bmatrix}
+        A=\begin{bmatrix}
         835.73 &amp; 1034.60 &amp; 1 &amp; 0 &amp; 0 &amp; 0 &amp; -140298.04 &amp; -173683.77 \\
         0 &amp; 0 &amp; 0 &amp; 835.73 &amp; 1034.60 &amp; 1 &amp; -831548.15 &amp; -1029425.76 \\
         916.50 &amp; 1033.01 &amp; 1 &amp; 0 &amp; 0 &amp; 0 &amp; -233692.17 &amp; -263401.58 \\
-        0 &amp; 0 &amp; 0 &amp; 916.50 &amp; 1033.01 &amp; 1 &amp; -911917.34 &amp; -1027849.89
+        0 &amp; 0 &amp; 0 &amp; 916.50 &amp; 1033.01 &amp; 1 &amp; -911917.34 &amp; -1027849.89 \\
+        \vdots &amp; \vdots &amp; \vdots &amp; \vdots &amp; \vdots &amp; \vdots &amp; \vdots &amp; \vdots
         \end{bmatrix}
         \]
       </div>
       <div class="math-block">
         \[
-        \mathbf{b}_{1:4}=\begin{bmatrix}167.88\\995.00\\254.98\\995.00\end{bmatrix}
+        \mathbf{b}=\begin{bmatrix}167.88\\995.00\\254.98\\995.00\\\vdots\end{bmatrix}
         \]
       </div>
       <p class="math-label">Recovered homography, using all matching pairs</p>
