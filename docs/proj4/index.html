@@ -197,7 +197,7 @@
 
       <section class="experiment" id="a4-1" aria-labelledby="a4-1-title">
         <h4 class="experiment-heading" id="a4-1-title"><span>A.4</span> Procedure</h4>
-      <p class="intro">Rectification warps a photo into a view I choose myself. A mosaic uses the same warp, but the target view is one of the photos. For Doe and the grove, I keep the middle photo as it is and warp the other two into its view, since the middle one overlaps both and keeps the stretching about even on each side. My homographies go from each photo to the next one, so for the left photo I use H as it is, and for the right photo I use its inverse to go backward into the middle photo. For Haas there are only two photos, so the right one stays put. Pushing every photo's corners through its H tells me how big the final canvas needs to be to fit everything.</p>
+      <p class="intro">Rectification warps a photo into a view I choose myself. A mosaic uses the same warp, but the target view is one of the photos. For Doe and the grove, I keep the middle photo as it is and warp the other two into its view, since the middle one overlaps both and keeps the stretching about even on each side. My homographies go from each photo to the next one, so for the left photo I use H as it is, and for the right photo I use its inverse to go backward into the middle photo. For Haas there are only two photos, so the right one stays put. To find how big the canvas needs to be, I push every photo's four corners through its H and take the farthest ones out in each direction, the smallest and largest x and y.</p>
       </section>
 
       <section class="experiment" id="a4-2" aria-labelledby="a4-2-title">
