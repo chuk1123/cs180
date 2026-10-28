@@ -167,7 +167,7 @@
 
       <section class="experiment" id="a3-2" aria-labelledby="a3-2-title">
         <h4 class="experiment-heading" id="a3-2-title"><span>A.3</span> Rectification</h4>
-      <p class="intro">Before joining photos, I tested the warp on a simpler problem: making an angled view of a flat rectangle look straight on. This is rectification. I clicked four corners on the walkway and on one flat section of the Valley Life Sciences Building, then used <code>computeH</code> to map those corners to an upright rectangle. The destination gives me a view from above the walkway or in front of the wall. Features outside that plane may still look distorted, so I crop around the selected rectangle.</p>
+      <p class="intro">Before joining photos, I tested the warp on a simpler problem: making an angled view of a flat rectangle look straight on. This is rectification. I clicked four corners on the walkway and on one flat section of the Valley Life Sciences Building (VLSB), then used <code>computeH</code> to map those corners to an upright rectangle. The result looks like a view from straight above the walkway or straight in front of VLSB.</p>
       <div class="gallery three">
         <figure><img src="assets/walkway_corners.jpg" alt="Brick walkway with the clicked rectangle outlined" /><figcaption><b>Walkway</b><span>The four corners I clicked</span></figcaption></figure>
         <figure><img src="assets/walkway_nearest.jpg" alt="Walkway rectified with nearest neighbor" /><figcaption><b>Nearest neighbor</b></figcaption></figure>
@@ -178,7 +178,6 @@
         <figure><img src="assets/vlsb_nearest.jpg" alt="Building rectified with nearest neighbor" /><figcaption><b>Nearest neighbor</b></figcaption></figure>
         <figure><img src="assets/vlsb_rectified.jpg" alt="Building rectified with bilinear interpolation" /><figcaption><b>Bilinear</b></figcaption></figure>
       </div>
-      <p class="intro">The destination rectangle's proportions matter too, since making every selection a square would squash or stretch what's inside it. So I gave each one a width-to-height ratio matching the object, a long thin strip for the walkway and a slightly wide rectangle for the wall. The results straighten the rows of bricks and the window frames.</p>
       </section>
 
       <section class="experiment" id="a3-3" aria-labelledby="a3-3-title">
