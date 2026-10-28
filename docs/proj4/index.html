@@ -182,7 +182,7 @@
 
       <section class="experiment" id="a3-3" aria-labelledby="a3-3-title">
         <h4 class="experiment-heading" id="a3-3-title"><span>A.3</span> Nearest neighbor vs. bilinear</h4>
-      <p class="intro">At full size the two results look almost the same, so here is a close-up of the same spot in each. Nearest neighbor is faster since it reads just one pixel, but edges come out jagged and blocky because neighboring output pixels jump between whole source pixels. Bilinear reads four pixels and does a bit of math for each, which takes about twice as long, but the brick lines and window frames stay smooth. The extra time is small next to the better quality, so I used bilinear for everything after this.</p>
+      <p class="intro">At full size the two results look almost the same, so here is a close-up of the same spot in each. Nearest neighbor is faster since it reads just one pixel, but edges come out jagged and blocky because neighboring output pixels jump between whole source pixels. Bilinear takes a weighted average of the four nearest pixels, which takes a little more than twice as long, but the brick lines and window frames stay smooth. The extra time is small next to the better quality, so I used bilinear for everything after this.</p>
       <div class="gallery one">
         <figure><img src="assets/walkway_zoom.jpg" alt="Close-up of the rectified walkway with nearest neighbor and bilinear" /><figcaption><b>Walkway close-up</b></figcaption></figure>
         <figure><img src="assets/vlsb_zoom.jpg" alt="Close-up of the rectified building with nearest neighbor and bilinear" /><figcaption><b>Building close-up</b></figcaption></figure>
