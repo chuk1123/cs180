@@ -323,3 +323,8 @@ figcaption .method { font-family: ui-monospace, SFMono-Regular, Menlo, monospace
   .math-block { padding: 10px; font-size: .9rem; }
   .math-wide { font-size: .75rem; }
 }
+
+.gallery.blend-example { max-width: 800px; }
+
+.blend-steps { padding-left: 1.5em; }
+.blend-steps li + li { margin-top: 8px; }

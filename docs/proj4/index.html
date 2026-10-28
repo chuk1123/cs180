@@ -52,7 +52,7 @@
 
       <section class="experiment" id="a2-1" aria-labelledby="a2-1-title">
         <h4 class="experiment-heading" id="a2-1-title"><span>A.2</span> Setting up the equations</h4>
-      <p class="intro">To apply H to a point (x, y), I first write the point in homogeneous coordinates by adding a 1, giving (x, y, 1), so H can be applied with one matrix multiplication. That gives three numbers, and dividing the first two by the third brings the point back to regular pixel coordinates (x', y'). Written out, that gives the formulas below (the bottom-right entry of H only sets the overall scale, so I fix it to 1, which leaves eight unknowns, a through h).</p>
+      <p class="intro">To apply H to a point (x, y), I first write the point in homogeneous coordinates by adding a 1, giving (x, y, 1), so H can be applied with one matrix multiplication. That gives three numbers, and dividing the first two by the third brings the point back to regular pixel coordinates (x', y'). Written out, that gives the formulas below Multiplying all nine entries of H by the same nonzero number leaves the final coordinates unchanged because that factor cancels in the division. I use that freedom to fix the bottom-right entry to 1, leaving eight unknowns, a through h.</p>
       <div class="math-block">
         \[
         H = \begin{bmatrix}a &amp; b &amp; c \\ d &amp; e &amp; f \\ g &amp; h &amp; 1\end{bmatrix},
@@ -61,7 +61,7 @@
         y'=\frac{dx+ey+f}{gx+hy+1}
         \]
       </div>
-      <p class="intro">For each matching pair I know (x, y) and (x', y'), so multiplying both sides of each formula by the bottom of the fraction and rearranging gives two equations that are linear in the unknowns:</p>
+      <p class="intro">For each matching pair I know (x, y) and (x', y'), so multiplying both sides of each formula by the bottom of the fraction and rearranging gives two equations that are linear in the unknowns.</p>
       <div class="math-block">
         \[
         \begin{aligned}
@@ -70,19 +70,19 @@
         \end{aligned}
         \]
       </div>
-      <p class="intro">Since each pair gives two equations, I need at least four pairs. My <code>computeH(im1_pts, im2_pts)</code> stacks the equations from every pair into one system, where \(\boldsymbol{\theta}\) holds a through h:</p>
+      <p class="intro">Since each pair gives two equations, I need at least four pairs spread across the image, rather than lying along one line. My <code>computeH(im1_pts, im2_pts)</code> stacks the equations from every pair into one system, where \(\boldsymbol{\theta}\) holds a through h.</p>
       <div class="math-block">
         \[
         A\boldsymbol{\theta}=\mathbf{b},\qquad
         \boldsymbol{\theta}=\begin{bmatrix}a&amp;b&amp;c&amp;d&amp;e&amp;f&amp;g&amp;h\end{bmatrix}^{\mathsf T}
         \]
       </div>
-      <p class="intro">With more than four pairs, small clicking errors mean no single H fits every equation exactly, so I use least squares, which finds the H that fits all the pairs as closely as possible overall.</p>
+      <p class="intro">With more than four pairs, small clicking errors mean no single H fits every equation exactly, so I use least squares, which minimizes the sum of squared errors in the stacked linear equations. Using extra pairs makes the fit less sensitive to any one click.</p>
       </section>
 
       <section class="experiment" id="a2-2" aria-labelledby="a2-2-title">
         <h4 class="experiment-heading" id="a2-2-title"><span>A.2</span> Correspondences</h4>
-      <p class="intro">For every pair of neighboring photos I clicked matching points across the overlap, where the same number marks the same spot in both photos. I picked sharp corners that are easy to spot in both photos, like window frames, banner edges, the roofline, and knots and forks on the tree trunks, and spread them out so the fit holds across the whole overlap instead of just one area.</p>
+      <p class="intro">For every pair of neighboring photos I clicked matching points across the overlap, where the same number marks the same spot in both photos. I picked sharp corners that are easy to spot in both photos, like window frames, banner edges, the roofline, and knots and forks on the tree trunks, and spread them out so the fit holds across the whole overlap instead of just one area. The Doe points were later refined with local image matching, and unreliable matches were removed to improve alignment.</p>
       <div class="gallery one">
         <figure><img src="assets/haas_points.jpg" alt="Clicked correspondences between the two Haas Pavilion photos" /><figcaption><b>Haas Pavilion</b></figcaption></figure>
         <figure><img src="assets/doe_points_1_2.jpg" alt="Clicked correspondences between the first and second Doe Library photos" /><figcaption><b>Doe Library, left and middle</b></figcaption></figure>
@@ -95,20 +95,21 @@
       <section class="experiment" id="a2-3" aria-labelledby="a2-3-title">
         <h4 class="experiment-heading" id="a2-3-title"><span>A.2</span> System of equations and recovered homography</h4>
       <p class="intro">Here are the actual numbers for Haas. The first point I clicked goes from about (835.73, 1034.60) in the left photo to (167.88, 995.00) in the right photo, and plugging it into the two equations gives the first two rows below. The next pair gives the next two rows, and so on. The H at the bottom maps the left photo into the right photo's view.</p>
-      <p class="math-label">First four rows of A and first four entries of \(\mathbf{b}\)</p>
+      <p class="math-label">The 27 point pairs give 54 equations, so A has 54 rows and 8 columns and \(\mathbf{b}\) has 54 entries. The first four rows are shown as an example, with dots for the rest.</p>
       <div class="math-block math-wide">
         \[
-        A_{1:4,:}=\begin{bmatrix}
+        A=\begin{bmatrix}
         835.73 &amp; 1034.60 &amp; 1 &amp; 0 &amp; 0 &amp; 0 &amp; -140298.04 &amp; -173683.77 \\
         0 &amp; 0 &amp; 0 &amp; 835.73 &amp; 1034.60 &amp; 1 &amp; -831548.15 &amp; -1029425.76 \\
         916.50 &amp; 1033.01 &amp; 1 &amp; 0 &amp; 0 &amp; 0 &amp; -233692.17 &amp; -263401.58 \\
-        0 &amp; 0 &amp; 0 &amp; 916.50 &amp; 1033.01 &amp; 1 &amp; -911917.34 &amp; -1027849.89
+        0 &amp; 0 &amp; 0 &amp; 916.50 &amp; 1033.01 &amp; 1 &amp; -911917.34 &amp; -1027849.89 \\
+        \vdots &amp; \vdots &amp; \vdots &amp; \vdots &amp; \vdots &amp; \vdots &amp; \vdots &amp; \vdots
         \end{bmatrix}
         \]
       </div>
       <div class="math-block">
         \[
-        \mathbf{b}_{1:4}=\begin{bmatrix}167.88\\995.00\\254.98\\995.00\end{bmatrix}
+        \mathbf{b}=\begin{bmatrix}167.88\\995.00\\254.98\\995.00\\\vdots\end{bmatrix}
         \]
       </div>
       <p class="math-label">Recovered homography, using all matching pairs</p>
@@ -161,13 +162,27 @@
 
       <section class="experiment" id="a3-1" aria-labelledby="a3-1-title">
         <h4 class="experiment-heading" id="a3-1-title"><span>A.3</span> Inverse warping</h4>
-      <p class="intro">H tells me where each point moves, but to make a new image I need a color for every pixel in it. The obvious way is to push each original pixel forward through H, but when the image gets stretched, some output pixels never receive anything and are left as holes. So I go backward instead. I push the four corners through H to see how big the output needs to be, and then for every output pixel I use the inverse, \(H^{-1}\), to find where it came from in the original photo, so every output pixel gets filled. Some output pixels land outside the original photo and have nothing to show, so I also keep an alpha mask, which is 1 where the pixel came from the photo and 0 where it's empty. The mosaic uses it later so the empty black areas don't get blended in.</p>
-      <p class="intro">The source location may be something like (100.3, 80.7), between pixels rather than at a stored color. Interpolation means estimating the color at that location, and I wrote two versions from scratch. <code>warpImageNearestNeighbor</code> rounds to the closest pixel. <code>warpImageBilinear</code> takes the four pixels around the point and blends them, giving more weight to whichever ones are closer.</p>
+      <p class="intro">At the end of A.2, I have a matrix that tells me where points in one photo belong in another view, but that only gives me coordinates, so I still need to turn those coordinates into an image by finding a color for every pixel in the destination view. That step is called warping.</p>
+      <p class="intro">To give the warped photo enough room, I first transform its four corners through H and take the smallest and largest x and y values, which gives me the bounds of a rectangular output canvas. Those bounds can extend to negative coordinates, and keeping that extra space means I don't cut off parts of the photo just because they land outside the original frame.</p>
+      <p class="intro">Once I have that canvas, I need to fill it with colors, and although sending each original pixel forward through H sounds natural, stretching can spread those pixels apart and leave gaps. Instead, I visit each output pixel and use \(H^{-1}\) to find where it came from in the original photo, which is called inverse warping because I'm working backward from the image I want to make to the image I already have.</p>
+      <p class="intro">The source location might be something like (100.3, 80.7), which falls between stored pixels, so I need interpolation to estimate a color there. I wrote two versions from scratch, with <code>warpImageNearestNeighbor</code> rounding the location and copying the closest pixel's color, while <code>warpImageBilinear</code> takes a weighted average of the four surrounding pixels and gives more weight to the closer ones. Both follow the same inverse mapping, so the difference is how they read the color once they get there.</p>
       </section>
 
       <section class="experiment" id="a3-2" aria-labelledby="a3-2-title">
         <h4 class="experiment-heading" id="a3-2-title"><span>A.3</span> Rectification</h4>
-      <p class="intro">Before joining photos, I tested the warp on a simpler problem: making an angled view of a flat rectangle look straight on. This is rectification. I clicked four corners on the walkway and on one flat section of the Valley Life Sciences Building (VLSB), then used <code>computeH</code> to map those corners to an upright rectangle. The result looks like a view from straight above the walkway or straight in front of VLSB.</p>
+      <p class="intro">Before trying to line up several photos, I tested the warp on a rectangle photographed at an angle, since mapping its four corners to an upright rectangle should straighten the lines on that surface and give me an easy way to see whether the mapping works. This is called rectification, and I tried it on the walkway and on a flat section of the Valley Life Sciences Building (VLSB).</p>
+      <p class="intro">The homography solver still needs two sets of points as in A.2, but this time the second set doesn't come from another photo. Instead, I match the four corners I clicked to four corners of a rectangle I define myself, keeping both lists in top-left, top-right, bottom-right, bottom-left order. In the destination points below, W sets the rectangle's width and r is its width-to-height ratio, so the height is W/r.</p>
+      <div class="math-block">
+        \[
+        \text{destination points}=\begin{bmatrix}
+        0 &amp; 0 \\
+        W &amp; 0 \\
+        W &amp; W/r \\
+        0 &amp; W/r
+        \end{bmatrix}
+        \]
+      </div>
+      <p class="intro">I use r = 0.25 for the long strip of walkway and r = 1.36 for the wall section, which are estimated proportions rather than measured dimensions and determine how wide or tall each surface looks. After solving for H from these corner pairs, I run the inverse warp with each interpolation method, and the results below show the brick rows from above and the wall with its window frames straightened.</p>
       <div class="gallery three">
         <figure><img src="assets/walkway_corners.jpg" alt="Brick walkway with the clicked rectangle outlined" /><figcaption><b>Walkway</b><span>The four corners I clicked</span></figcaption></figure>
         <figure><img src="assets/walkway_nearest.jpg" alt="Walkway rectified with nearest neighbor" /><figcaption><b>Nearest neighbor</b></figcaption></figure>
@@ -182,7 +197,8 @@
 
       <section class="experiment" id="a3-3" aria-labelledby="a3-3-title">
         <h4 class="experiment-heading" id="a3-3-title"><span>A.3</span> Nearest neighbor vs. bilinear</h4>
-      <p class="intro">At full size the two results look almost the same, so here is a close-up of the same spot in each. Nearest neighbor is faster since it reads just one pixel, but edges come out jagged and blocky because neighboring output pixels jump between whole source pixels. Bilinear takes a weighted average of the four nearest pixels, which takes a little more than twice as long, but the brick lines and window frames stay smooth. The extra time is small next to the better quality, so I used bilinear for everything after this.</p>
+      <p class="intro">Both methods straighten the same lines, but the full images make their differences hard to see, so I cropped the same spot from each result to compare the detail. Nearest neighbor has blockier edges because its chosen source pixel changes in whole-pixel jumps, while bilinear mixes nearby colors and makes the brick lines and window frames smoother, though that mixing can soften fine detail.</p>
+      <p class="intro">The crop titles show the time for each full rectification, and bilinear took a little more than twice as long in these runs because it combines four colors instead of copying one. I used it for the mosaics because the smoother edges were worth that extra time.</p>
       <div class="gallery one">
         <figure><img src="assets/walkway_zoom.jpg" alt="Close-up of the rectified walkway with nearest neighbor and bilinear" /><figcaption><b>Walkway close-up</b></figcaption></figure>
         <figure><img src="assets/vlsb_zoom.jpg" alt="Close-up of the rectified building with nearest neighbor and bilinear" /><figcaption><b>Building close-up</b></figcaption></figure>
@@ -196,18 +212,36 @@
 
       <section class="experiment" id="a4-1" aria-labelledby="a4-1-title">
         <h4 class="experiment-heading" id="a4-1-title"><span>A.4</span> Procedure</h4>
-      <p class="intro">Rectification warps a photo into a view I choose myself. A mosaic uses the same warp, but the target view is one of the photos. For Doe and the grove, I keep the middle photo as it is and warp the other two into its view, since the middle one overlaps both and keeps the stretching about even on each side. My homographies go from each photo to the next one, so for the left photo I use H as it is, and for the right photo I use its inverse to go backward into the middle photo. For Haas there are only two photos, so the right one stays put. Pushing every photo's corners through its H tells me how big the final canvas needs to be to fit everything.</p>
+      <p class="intro">With the warp tested, I can use it to bring the photos into one shared view, so a matching corner lands at the same canvas location regardless of which photo it came from. For Doe and the grove, I use the middle photo as the reference because it overlaps both neighbors, while for the two-photo Haas set I use the right photo.</p>
+      <p class="intro">To bring the other photos into that reference view, I have to pay attention to which way each H maps. For a three-photo set, \(H_{12}\) already takes the first photo into the middle, so I use it directly, while \(H_{23}\) goes from the middle to the third, so I invert it to bring the third back into the middle. The reference photo keeps its own coordinates, and for the grove the same process runs bottom to top rather than left to right.</p>
+      <p class="intro">Once those transforms are known, I can find the size of the whole mosaic by transforming every photo's corners into the reference view and taking the outermost bounds across them. I then inverse-warp each photo onto that same canvas, which gives me a stack of aligned images covering different parts of the scene, with enough space for the outer photos to extend beyond the reference photo's edges.</p>
       </section>
 
       <section class="experiment" id="a4-2" aria-labelledby="a4-2-title">
         <h4 class="experiment-heading" id="a4-2-title"><span>A.4</span> Reducing edge artifacts</h4>
-      <p class="intro">Now all the photos sit on the same canvas, but where they overlap there are two possible colors for each pixel, and blending decides what to show. If I just paste one photo over another, there's a visible line where the top photo ends, since the brightness changes a little between shots. So I do the same thing as the blending in Project 2: cut, then blur the cut. First, each pixel goes to the photo whose center is closest, which gives one mask per photo that's 1 where that photo owns the pixel and 0 everywhere else. That puts the cut about halfway through each overlap, where the photos line up best. Then I blur each mask with a Gaussian, so instead of jumping from 1 to 0 at the cut it slides down gradually, and I multiply it by the photo's alpha mask so a photo never counts where it has no pixels. Using these blurred masks as weights, right at the cut a pixel is half of each photo, and a little farther away it's all one photo. Outside the overlap only one photo has any weight, so it just shows that photo.</p>
-      <p class="intro">If the alignment is even slightly off, though, fading between the photos mixes detail from both, so edges look soft or doubled. To avoid that, I split each photo into two layers, like a two-level version of the multiresolution blending from Project 2. The blurry layer holds the overall color and brightness, so I blend it with the blurred masks to hide the brightness change. The sharp layer, which is the photo minus its blurry version, holds the edges and texture, so I blend it with the hard masks instead, taking it from only one photo at each pixel so edges never get doubled. Adding the two layers back together gives a smooth fade with sharp detail.</p>
+      <p class="intro">Each warped photo covers part of the canvas, shown by its alpha mask. Where several photos cover the same pixel, I choose the one whose warped center is closest, which gives each photo a hard mask showing which pixels to take from it. Below are the middle Doe photo's coverage and hard mask, with white for 1 and black for 0, followed by the mosaic made by applying all three hard masks.</p>
+      <div class="gallery one blend-example">
+        <figure><img src="assets/doe_blend_masks.jpg" alt="Middle Doe photo's alpha mask showing its coverage beside its hard mask showing which pixels are selected" /><figcaption><b>Middle Doe photo</b><span>Where the photo covers the canvas and where it is selected</span></figcaption></figure>
+        <figure><img src="assets/doe_hard_mask_mosaic.jpg" alt="Doe mosaic assembled using only hard masks, before smoothing the transitions between photos" /><figcaption><b>Hard masks applied</b><span>Each pixel comes from one photo, with no fade between them</span></figcaption></figure>
+      </div>
+      <p class="intro">The hard masks put the photos together, but switching directly between them can leave brightness seams, so I use two-band blending from class to smooth the transitions. I get the blend weights in two steps.</p>
+      <ol class="intro blend-steps">
+        <li>Apply a Gaussian blur to the hard selection masks to soften transitions between photos.</li>
+        <li>Fade the weights toward zero near each warped photo's original alpha-mask border, where its valid pixels end, so the contribution fades out gradually instead of cutting off suddenly.</li>
+      </ol>
+      <p class="intro">I use these weights to average the low-frequency colors. For pixel \(p\), the blend of two photos is given below, where L is a photo's low-frequency color and w is its soft weight. The same sum extends to three photos.</p>
+      <div class="math-block">
+        \[
+        \text{For pixel }p,\qquad L_{\mathrm{blend}}(p)=
+        \frac{w_A(p)\,L_A(p)+w_B(p)\,L_B(p)}{w_A(p)+w_B(p)}
+        \]
+      </div>
+      <p class="intro">Where photos overlap, their low-frequency colors contribute according to these weights, and where only one photo covers the pixel, dividing by its weight leaves its color unchanged. I add back the high-frequency detail selected by the hard masks, so a pixel covered by only one photo keeps that photo's original color. Pixels with no coverage stay empty, and no colors are extended beyond a photo's boundary.</p>
       </section>
 
       <section class="experiment" id="a4-3" aria-labelledby="a4-3-title">
         <h4 class="experiment-heading" id="a4-3-title"><span>A.4</span> Mosaics</h4>
-      <p class="intro">Here are the three mosaics with their source photos. The slanted outlines are the edges of the warped photos, and the black areas aren't covered by any photo. The outer photos look stretched because they're being bent into the middle photo's flat view, and the farther a photo is turned away from it, the more it stretches.</p>
+      <p class="intro">Here are the three mosaics after two-band blending.</p>
       <h5>Haas Pavilion</h5>
       <div class="gallery one">
         <figure><img src="assets/haas_sources.jpg" alt="Source photos for the Haas Pavilion mosaic" /><figcaption><b>Source photos</b></figcaption></figure>
