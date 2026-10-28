@@ -209,7 +209,7 @@
       <p class="intro">The hard masks put the photos together, but switching directly between them can leave brightness seams, so I use two-band blending from class to smooth the transitions. I get the blend weights in two steps.</p>
       <ol class="intro blend-steps">
         <li>Apply a Gaussian blur to the hard selection masks to soften transitions between photos.</li>
-        <li>Fade the weights toward zero near each warped photo's original alpha-mask border, where its valid pixels end, so the contribution fades out gradually instead of cutting off suddenly.</li>
+        <li>Fade the weights toward zero near each warped photo's original alpha-mask border, where its valid pixels end, so the contribution fades out gradually instead of cutting off suddenly at its borders.</li>
       </ol>
       <p class="intro">I use these weights to average the low-frequency colors. For pixel \(p\), the blend of two photos is given below, where L is a photo's low-frequency color and w is its soft weight. The same sum extends to three photos.</p>
       <div class="math-block">
